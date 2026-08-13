@@ -245,9 +245,20 @@ export const whatsappTools = [
     name: 'wa_inbox_health',
     title: 'Check WhatsApp campaign health for an inbox',
     description:
-      'WABA health and campaign-sending readiness for one inbox. Check this when a preflight blocks or sends start failing — ' +
-      'quality-rating drops and messaging limits show up here before they show up as delivery errors.',
-    inputSchema: z.object({ inbox_id: z.number().int() }),
-    handler: async ({ inbox_id }, { client }) => json(await client.request(`/inboxes/${inbox_id}/whatsapp_campaign_health`)),
+      'Quality rating, messaging limits, and recent send volume for an inbox’s WhatsApp number, plus plain-language `alerts`. ' +
+      'Check this when a preflight blocks or sends start failing — a quality drop or lowered limit shows up here before it ' +
+      'shows up as delivery errors.\n\n' +
+      'Report `alerts` verbatim rather than re-deriving them from `quality_rating`; Meta returns that field with different ' +
+      'vocabularies (GREEN/YELLOW/RED or high/medium/low) depending on API version. ' +
+      '`latest` can be stale — an alert is raised when the snapshot is over 24 hours old. Pass `refresh: true` to capture a ' +
+      'live snapshot from Meta, which is slower and consumes Graph API quota.',
+    inputSchema: z.object({
+      inbox_id: z.number().int(),
+      refresh: z.boolean().optional().describe('Capture a live snapshot from Meta before responding'),
+      since: z.string().optional().describe('Start of the snapshot window (YYYY-MM-DD). Defaults to 30 days ago.'),
+      until: z.string().optional().describe('End of the snapshot window (YYYY-MM-DD). Defaults to today.'),
+    }),
+    handler: async ({ inbox_id, ...query }, { client }) =>
+      json(await client.request(`/inboxes/${inbox_id}/whatsapp_campaign_health`, { query })),
   }),
 ];
