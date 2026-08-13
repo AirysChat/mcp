@@ -50,6 +50,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
 function required(env: NodeJS.ProcessEnv, name: string): string {
   const value = env[name];
   if (!value) throw new ConfigError(`${name} is required`);
+
+  // Claude Code expands ${VAR} in .mcp.json, but when the variable is unset and has no
+  // `:-default` it passes the placeholder through verbatim. That is a non-empty string,
+  // so a plain presence check would accept it and the server would authenticate with
+  // the literal text "${AIRYSCHAT_API_KEY}" — surfacing as a confusing 401 instead of
+  // the real problem, which is an unset variable on the user's machine.
+  if (/^\$\{.*\}$/.test(value.trim())) {
+    throw new ConfigError(`${name} was passed unexpanded as "${value}" — the referenced environment variable is not set on your machine`);
+  }
+
   return value;
 }
 
