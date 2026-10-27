@@ -1,6 +1,6 @@
 {
   "name": "@airyschat/mcp",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "MCP server for AirysChat \u2014 conversations, contacts, CRM, AI agents, and WhatsApp campaigns for Claude, Codex, Gemini, Antigravity, and any MCP client",
   "type": "module",
   "bin": {
