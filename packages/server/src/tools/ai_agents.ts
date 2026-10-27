@@ -340,7 +340,7 @@ export const aiAgentsTools: AnyToolDefinition[] = [
 
   defineTool({
     name: 'conversation_ai_usage',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Get Conversation AI Token & Cost Usage',
     description:
       'Fetch aggregated AI token usage (`total_input`, `total_output`, `total_tokens`, `request_count`, `total_cost_microcents`) and up to 50 recent `AiUsageRecord` entries for a conversation.',
@@ -359,10 +359,22 @@ export const aiAgentsTools: AnyToolDefinition[] = [
       let targetId = conversation_id;
       if (!is_internal_id) {
         try {
-          const conv = await client.request<{ id?: number }>(`/conversations/${conversation_id}`);
-          if (typeof conv?.id === 'number') targetId = conv.id;
+          const dealResp = await client.request<{
+            deal?: { conversation?: { id?: number } } | null;
+          }>(`/conversations/${conversation_id}/crm_deal`, { prefix: 'saas' });
+          if (typeof dealResp?.deal?.conversation?.id === 'number') {
+            targetId = dealResp.deal.conversation.id;
+          } else {
+            const conv = await client.request<{ id?: number }>(`/conversations/${conversation_id}`);
+            if (typeof conv?.id === 'number') targetId = conv.id;
+          }
         } catch {
-          // Fall back to passing conversation_id directly if display_id lookup fails.
+          try {
+            const conv = await client.request<{ id?: number }>(`/conversations/${conversation_id}`);
+            if (typeof conv?.id === 'number') targetId = conv.id;
+          } catch {
+            // Fall back to passing conversation_id directly if display_id lookup fails.
+          }
         }
       }
       const data = await client.request(`/conversations/${targetId}/ai_usage`, { prefix: 'saas' });
@@ -372,7 +384,7 @@ export const aiAgentsTools: AnyToolDefinition[] = [
 
   defineTool({
     name: 'llm_models_list',
-    stability: 'beta',
+    stability: 'stable',
     title: 'List Available LLM Models & Health',
     description:
       'List LLM models configured in AirysChat (`GET /llm/models` — id, provider, display_name, credit_multiplier) and optionally check LLM/pgvector/Redis subsystem health (`include_health: true`).',

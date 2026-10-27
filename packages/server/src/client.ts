@@ -49,13 +49,16 @@ export class ApiError extends Error {
   }
 
   /**
-   * A 403 carrying an `error` body from a /saas endpoint means the account's plan or
-   * feature flags do not include the capability — the credentials are fine. Telling
-   * the caller to check their API key here sends them down the wrong path entirely.
+   * A 403 carrying an `error` body from a /saas or /meta_agent endpoint (or matching
+   * Concerns::Saas::FeatureGate's plan messages) means the account's plan or feature
+   * flags do not include the capability — the credentials are fine. Telling the caller
+   * to check their API key here sends them down the wrong path entirely.
    */
   get isPlanGate(): boolean {
-    if (this.status !== 403 || !this.url.includes('/saas/api/') || this.detail === undefined) return false;
-    return !/not authorized|permission|administrator/i.test(this.detail);
+    if (this.status !== 403 || this.detail === undefined) return false;
+    if (/not authorized|permission|administrator/i.test(this.detail)) return false;
+    if (this.url.includes('/saas/api/') || this.url.includes('/meta_agent')) return true;
+    return /plano atual|limite do plano/i.test(this.detail);
   }
 }
 
