@@ -1,0 +1,48 @@
+{
+  "name": "@airyschat/mcp",
+  "version": "0.1.0",
+  "description": "MCP server for AirysChat — conversations, contacts, CRM, AI agents, and WhatsApp campaigns for Claude, Codex, Gemini, Antigravity, and any MCP client",
+  "type": "module",
+  "bin": {
+    "airyschat-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AirysChat/mcp.git",
+    "directory": "packages/server"
+  },
+  "homepage": "https://github.com/AirysChat/mcp#readme",
+  "bugs": "https://github.com/AirysChat/mcp/issues",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build",
+    "smoke": "pnpm build && node scripts/smoke.mjs"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "airyschat",
+    "chatwoot",
+    "whatsapp",
+    "crm"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
