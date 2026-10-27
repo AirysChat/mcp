@@ -1,20 +1,63 @@
 # @airyschat/mcp
 
 MCP server for [AirysChat](https://github.com/AirysChat/AirysChat) — drive WhatsApp
-campaigns, message templates, and conversations from Claude Code, Codex, or Gemini CLI.
+campaigns, message templates, conversations, contacts, CRM, and AI agents from Claude Code,
+Claude Desktop, Codex, Gemini CLI, Antigravity, Cursor, or any MCP client.
 
-**Status: v0.1.0, unreleased.** Verified end-to-end against a mock API
-(`npm run smoke`), not yet against a live AirysChat instance.
+**Status: v0.2.0 (pre-1.0, GitHub Packages).** 29 curated tools + embedded 807-endpoint API
+catalog (`airyschat_api_search` + `airyschat_api`), verified against `staging.airys.app`
+account 6 and the end-to-end stdio smoke suite (`pnpm smoke`).
 
 ## Install
 
+Until v1.0.0, `@airyschat/mcp` is published to **GitHub Packages** (`npm.pkg.github.com`)
+under the private `AirysChat/mcp` repository (ADR 0003). Point the `@airyschat` scope at
+GitHub Packages in `~/.npmrc` (using a GitHub token with `read:packages`):
+
+```ini
+@airyschat:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+### Claude Code
+
+Install the bundled plugin (MCP server + `airyschat-ops` safety skill) from the repository
+marketplace:
+
+```bash
+claude plugin marketplace add AirysChat/mcp
+claude plugin install airyschat@airyschat
+```
+
+Or register the MCP server directly:
+
 ```bash
 claude mcp add airyschat \
-  --env AIRYSCHAT_BASE_URL=https://app.airyschat.com \
+  --env AIRYSCHAT_BASE_URL=https://app.airys.chat \
   --env AIRYSCHAT_API_KEY=... \
   --env AIRYSCHAT_ACCOUNT_ID=5 \
   -- npx -y @airyschat/mcp
 ```
+
+<details>
+<summary>Claude Desktop — <code>~/Library/Application Support/Claude/claude_desktop_config.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "airyschat": {
+      "command": "npx",
+      "args": ["-y", "@airyschat/mcp"],
+      "env": {
+        "AIRYSCHAT_BASE_URL": "https://app.airys.chat",
+        "AIRYSCHAT_API_KEY": "...",
+        "AIRYSCHAT_ACCOUNT_ID": "5"
+      }
+    }
+  }
+}
+```
+</details>
 
 <details>
 <summary>Codex — <code>~/.codex/config.toml</code></summary>
@@ -23,7 +66,7 @@ claude mcp add airyschat \
 [mcp_servers.airyschat]
 command = "npx"
 args = ["-y", "@airyschat/mcp"]
-env = { AIRYSCHAT_BASE_URL = "https://app.airyschat.com", AIRYSCHAT_API_KEY = "...", AIRYSCHAT_ACCOUNT_ID = "5" }
+env = { AIRYSCHAT_BASE_URL = "https://app.airys.chat", AIRYSCHAT_API_KEY = "...", AIRYSCHAT_ACCOUNT_ID = "5" }
 ```
 </details>
 
@@ -37,7 +80,47 @@ env = { AIRYSCHAT_BASE_URL = "https://app.airyschat.com", AIRYSCHAT_API_KEY = ".
       "command": "npx",
       "args": ["-y", "@airyschat/mcp"],
       "env": {
-        "AIRYSCHAT_BASE_URL": "https://app.airyschat.com",
+        "AIRYSCHAT_BASE_URL": "https://app.airys.chat",
+        "AIRYSCHAT_API_KEY": "...",
+        "AIRYSCHAT_ACCOUNT_ID": "5"
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Google Antigravity — <code>~/.gemini/antigravity/mcp_config.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "airyschat": {
+      "command": "npx",
+      "args": ["-y", "@airyschat/mcp"],
+      "env": {
+        "AIRYSCHAT_BASE_URL": "https://app.airys.chat",
+        "AIRYSCHAT_API_KEY": "...",
+        "AIRYSCHAT_ACCOUNT_ID": "5"
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Cursor — <code>.cursor/mcp.json</code> or <code>~/.cursor/mcp.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "airyschat": {
+      "command": "npx",
+      "args": ["-y", "@airyschat/mcp"],
+      "env": {
+        "AIRYSCHAT_BASE_URL": "https://app.airys.chat",
         "AIRYSCHAT_API_KEY": "...",
         "AIRYSCHAT_ACCOUNT_ID": "5"
       }
@@ -64,7 +147,7 @@ rather than as a confusing tool error mid-conversation.
 
 ## Tools
 
-28 tools. Reads are unrestricted; writes are gated (see Safety).
+29 tools. Reads are unrestricted; writes are gated (see Safety).
 
 **`core`** — `conversations_list`, `conversation_get`, `conversation_messages`,
 `conversation_reply`\*, `conversation_update`\*, `contacts_search`, `contact_get`,
@@ -75,22 +158,23 @@ rather than as a confusing tool error mid-conversation.
 `wa_audience_estimate`, `wa_campaign_preflight`, `wa_campaign_create`\*,
 `wa_campaign_launch`\*, `wa_campaign_cancel`\*, `wa_campaign_test_send`\*, `wa_inbox_health`
 
-**Always on** — `airyschat_api`\*, the raw-endpoint escape hatch.
+**Always on** — `airyschat_api_search` (catalog discovery) and `airyschat_api`\* (catalog-validated escape hatch).
 
 \* write
 
 ### Why not a tool per endpoint
 
-AirysChat serves ~480 endpoints. One tool each would bury the useful ones and bloat
+AirysChat serves ~807 account-scoped endpoints. One tool each would bury the useful ones and bloat
 every client's tool list, so verb families are collapsed (`conversation_update` covers
-status, priority, assignment, and labels) and everything else goes through
-`airyschat_api`. That mirrors what `chatwoot api` does in Chatwoot's own CLI.
+status, priority, assignment, and labels) and everything else is discoverable through
+`airyschat_api_search` and callable through `airyschat_api`.
 
-`airyschat_api` needs a `prefix`, because AirysChat serves two account-scoped trees:
+`airyschat_api` validates every call against the embedded catalog and routes across four prefixes:
 
 | prefix | resolves to | holds |
 |---|---|---|
 | `core` | `/api/v1/accounts/{id}{path}` | features extending a Chatwoot resource |
+| `core_v2` | `/api/v2/accounts/{id}{path}` | analytics and v2 summary reports |
 | `saas` | `/saas/api/v1/accounts/{id}{path}` | AirysChat-only: AI agents, CRM, Meta Business Agent, billing |
 | `raw` | `{path}` | non-account-scoped, e.g. `/api/v1/profile` |
 
@@ -118,7 +202,7 @@ gives the human a chance to stop it, not a security boundary.
 **Tool annotations** carry `readOnlyHint` / `destructiveHint` / `idempotentHint` so
 hosts can apply their own gating.
 
-**`AIRYSCHAT_READ_ONLY=1`** unregisters every write tool, including the escape hatch.
+**`AIRYSCHAT_READ_ONLY=1`** unregisters every write tool and restricts `airyschat_api` to `GET` only.
 
 ### Known behaviours worth reading
 
