@@ -2,7 +2,7 @@
 
 | ID | P | Size | Task | Done when | Status |
 |---|---|---|---|---|---|
-| WAR-01 | P0 | M | Domain briefs `whatsapp.md` (templates, scheduled, calls) and `reports.md` | Briefs reviewed | Planned |
+| WAR-01 | P0 | M | Domain briefs `whatsapp.md` (templates, scheduled, calls) and `reports.md` | Briefs reviewed | Done (2026-10-27) |
 | WAR-02 | P0 | M | Template create/edit/delete (irreversible + confirm), sync, quality | staging WABA evidence | Planned |
 | WAR-03 | P1 | S | Template rejection explainer (reason → fix suggestions) | smoke | Planned |
 | WAR-04 | P0 | M | Scheduled messages list/create/cancel | staging evidence | Planned |

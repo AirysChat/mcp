@@ -74,6 +74,17 @@ task AIA-08 P2 004 v0.4.0 meta_agent "MBA evals experimental"
 task AIA-10 P1 004 v0.4.0 plugins    "Skill agent-supervision (daily health of AI agents + MBA, handoff gaps)"
 task AIA-11 P0 004 v0.4.0 ai_agents  "Promotions, changeset, coverage update"
 
+# --- v0.5.0: tasks of lane 006 (WhatsApp complete & reports) ---
+task WAR-01 P0 006 v0.5.0 whatsapp   "Domain briefs whatsapp.md (templates, scheduled, calls) and reports.md"
+task WAR-02 P0 006 v0.5.0 whatsapp   "Template create/edit/delete (irreversible + confirm), sync, quality"
+task WAR-03 P1 006 v0.5.0 whatsapp   "Template rejection explainer (reason -> fix suggestions)"
+task WAR-04 P0 006 v0.5.0 whatsapp   "Scheduled messages list/create/cancel"
+task WAR-05 P2 006 v0.5.0 whatsapp   "Contact call history"
+task WAR-06 P0 006 v0.5.0 whatsapp   "Campaign results metrics"
+task WAR-07 P0 006 v0.5.0 reports    "reports toolset: summary, agents, inboxes, labels, teams, CSAT, SLA, heatmap, bot metrics"
+task WAR-08 P1 006 v0.5.0 plugins    "Skill campaign-retro"
+task WAR-09 P0 006 v0.5.0 whatsapp   "Promotions, changeset, coverage"
+
 
 # --- one epic per release ---
 epic() { # milestone lane title

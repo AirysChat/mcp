@@ -32,3 +32,11 @@ Executed on `2026-10-27` against `https://staging.airys.app` (account `6`, "Airy
   - **35 unit tests passed** (`99.67%` line coverage, `95.88%` branch coverage, `98.11%` function coverage).
   - **52 end-to-end stdio smoke checks passed**, covering all `ai_agents` (24 tools) and `meta_agent` (17 tools) read, write, ownership preflight, confirmation, and `experimental` (`mba_evals`) flows.
   - **Inventory check passed**: `807` endpoints, `124` tools (`252/775` addressable endpoints curated = `33%`; `meta_agent` `94/94` = `100%`; `ai_agents` `45/45` non-Captain endpoints = `100%`).
+
+## 4. Release Evidence (`@airyschat/mcp@0.4.0`)
+
+- **Release PR**: `#103` (`chore(release): @airyschat/mcp 0.4.0`) merged into `main` (`06e5ec4`).
+- **Release Workflow**: `release.yml` run `40555916974` succeeded in 37s.
+- **GitHub Release & Tag**: [`@airyschat/mcp@0.4.0`](https://github.com/AirysChat/mcp/releases/tag/%40airyschat/mcp%400.4.0).
+- **Milestone `v0.4.0`**: Closed on `2026-10-27` (`13` closed issues, `0` open issues).
+
