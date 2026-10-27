@@ -15,6 +15,7 @@ import { McpServer } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { AirysChatClient } from './client.js';
 import { ConfigError, loadConfig } from './config.js';
+import { aiAgentsTools } from './tools/ai_agents.js';
 import { catalogTools } from './tools/catalog.js';
 import { coreTools } from './tools/core.js';
 import { crmTools } from './tools/crm.js';
@@ -45,6 +46,7 @@ async function main(): Promise<void> {
   if (config.toolsets.has('core')) selected.push(...coreTools);
   if (config.toolsets.has('whatsapp')) selected.push(...whatsappTools);
   if (config.toolsets.has('crm')) selected.push(...crmTools);
+  if (config.toolsets.has('ai_agents')) selected.push(...aiAgentsTools);
 
   const registered = registerTools(server, selected, context);
 
