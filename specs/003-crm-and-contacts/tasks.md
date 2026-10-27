@@ -13,9 +13,9 @@
 | CRM-09 | P1 | S | `crm_insights`, close/loss reasons, saved views | live readback | MERGED_AWAITING_RELEASE_EVIDENCE (2026-10-27) |
 | CRM-10 | P1 | S | `conversation_deal_get` / `conversation_deal_update` | live readback | MERGED_AWAITING_RELEASE_EVIDENCE (2026-10-27) |
 | CRM-11 | P2 | L | Phase B config tools (pipelines/stages CRUD, automations, follow-up rules, settings, business hours, conversion settings) `experimental` | smoke + 403 handling for non-admins | Done (2026-10-27) |
-| CRM-12 | P0 | M | Contacts writes: create, update, delete, labels set, merge | live on fictitious contact; merge/delete confirm | Planned |
+| CRM-12 | P0 | M | Contacts writes: create, update, delete, labels set, merge | live on fictitious contact; merge/delete confirm | MERGED_AWAITING_RELEASE_EVIDENCE (2026-10-27) |
 | CRM-13 | P1 | S | Companies list/get/create/update | live readback | OBSOLETE (2026-10-27 — `CompaniesController` is a stub in `AirysChat@090c8ae510` with no `Company` model; `contact.additional_attributes.company_name` is used instead) |
-| CRM-14 | P0 | S | `conversation_labels_add` (merge semantics; never replace) | smoke asserts existing labels preserved | Planned |
-| CRM-15 | P1 | S | `canned_responses_list`, global `search`, `notifications_list`, `custom_filters_list` | live readback | Planned |
+| CRM-14 | P0 | S | `conversation_labels_add` (merge semantics; never replace) | smoke asserts existing labels preserved | Done (2026-10-27) |
+| CRM-15 | P1 | S | `canned_responses_list`, global `search`, `notifications_list`, `custom_filters_list` | live readback | MERGED_AWAITING_RELEASE_EVIDENCE (2026-10-27) |
 | CRM-16 | P1 | S | Skill `plugins/claude/.../crm-pipeline-review` (stuck deals, next actions) | Skill invoked end-to-end on staging | Planned |
 | CRM-17 | P0 | XS | Promote read tools to `stable`; changeset; coverage ≥ 60% `crm` | `inventory:check` + release notes | Planned |

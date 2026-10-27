@@ -99,6 +99,24 @@
     ["saas", "PUT", "/crm_stage_automations/{}", "crm_automation_upsert", "0.3.0"],
     ["saas", "GET", "/whatsapp_conversion_settings", "crm_conversion_settings_get", "0.3.0"],
     ["saas", "PATCH", "/whatsapp_conversion_settings", "crm_conversion_settings_update", "0.3.0"],
-    ["saas", "PUT", "/whatsapp_conversion_settings", "crm_conversion_settings_update", "0.3.0"]
+    ["saas", "PUT", "/whatsapp_conversion_settings", "crm_conversion_settings_update", "0.3.0"],
+    ["core", "GET", "/conversations/{}/labels", "conversation_labels_add", "0.3.0"],
+    ["core", "POST", "/contacts", "contact_create", "0.3.0"],
+    ["core", "PATCH", "/contacts/{}", "contact_update", "0.3.0"],
+    ["core", "PUT", "/contacts/{}", "contact_update", "0.3.0"],
+    ["core", "DELETE", "/contacts/{}", "contact_delete", "0.3.0"],
+    ["core", "GET", "/contacts/{}/labels", "contact_labels_set", "0.3.0"],
+    ["core", "POST", "/contacts/{}/labels", "contact_labels_set", "0.3.0"],
+    ["core", "POST", "/actions/contact_merge", "contacts_merge", "0.3.0"],
+    ["core", "GET", "/canned_responses", "canned_responses_list", "0.3.0"],
+    ["core", "GET", "/search", "search", "0.3.0"],
+    ["core", "GET", "/search/conversations", "search", "0.3.0"],
+    ["core", "GET", "/search/contacts", "search", "0.3.0"],
+    ["core", "GET", "/search/messages", "search", "0.3.0"],
+    ["core", "GET", "/search/articles", "search", "0.3.0"],
+    ["core", "GET", "/notifications", "notifications_list", "0.3.0"],
+    ["core", "GET", "/notifications/unread_count", "notifications_list", "0.3.0"],
+    ["core", "GET", "/custom_filters", "custom_filters_list", "0.3.0"],
+    ["core", "GET", "/custom_filters/{}", "custom_filters_list", "0.3.0"]
   ]
 }
