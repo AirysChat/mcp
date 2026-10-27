@@ -36,9 +36,16 @@ The inventory is the backlog for "every AirysChat action" (ADR 0002). It is rege
      it there with `[toolset, release]` (or to `exclude` with a reason) and re-run.
    - Rows with `coverage=removed` mean AirysChat dropped an endpoint. If a curated tool used it,
      open a task in the owning lane (`IMPLEMENTED_BUT_DOC_STALE` or a fix).
-4. **Check**: `pnpm inventory:check`.
-5. **Commit** on a branch `chore/002-inventory-<sha>`: `chore(inventory): sync with AirysChat@<sha>`.
-6. Clean up: `git -C ~/AirysChat worktree remove /tmp/airyschat-routes --force`.
+4. **Params from swagger** (inherited Chatwoot endpoints only):
+
+   ```bash
+   git -C ~/AirysChat show origin/develop:swagger/tag_groups/application_swagger.json > /tmp/app_swagger.json
+   node scripts/inventory/extract-swagger-params.mjs --swagger /tmp/app_swagger.json --source "AirysChat@$SHA"
+   ```
+
+5. **Check**: `pnpm inventory:check`.
+6. **Commit** on a branch `chore/002-inventory-<sha>`: `chore(inventory): sync with AirysChat@<sha>`.
+7. Clean up: `git -C ~/AirysChat worktree remove /tmp/airyschat-routes --force`.
 
 ## Notes
 
