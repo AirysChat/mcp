@@ -8,6 +8,7 @@
   },
   "files": [
     "dist",
+    "catalog.json",
     "README.md"
   ],
   "engines": {
@@ -21,13 +22,14 @@
   "homepage": "https://github.com/AirysChat/mcp#readme",
   "bugs": "https://github.com/AirysChat/mcp/issues",
   "scripts": {
-    "build": "tsc",
+    "build": "node ../../scripts/inventory/build-catalog.mjs --stats && tsc",
     "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "prepublishOnly": "pnpm build",
     "smoke": "pnpm build && node scripts/smoke.mjs",
     "live-verify": "pnpm build && node scripts/live-verify.mjs",
-    "test": "node --import tsx --test --experimental-test-coverage --test-coverage-include='src/**' --test-coverage-exclude='src/tools/**' --test-coverage-exclude='src/index.ts' --test-coverage-lines=80 --test-coverage-branches=80 --test-coverage-functions=80 'test/**/*.test.ts'"
+    "test": "node --import tsx --test --experimental-test-coverage --test-coverage-include='src/**' --test-coverage-exclude='src/tools/**' --test-coverage-exclude='src/index.ts' --test-coverage-lines=80 --test-coverage-branches=80 --test-coverage-functions=80 'test/**/*.test.ts'",
+    "catalog": "node ../../scripts/inventory/build-catalog.mjs --stats"
   },
   "keywords": [
     "mcp",
