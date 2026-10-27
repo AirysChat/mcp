@@ -22,8 +22,8 @@ without losing safety or control.
 5. **Feature control**: per-tool `stability` + `AIRYSCHAT_FEATURES` filter (ADR 0003).
 6. **Protocol currency**: SDK 2.4.x, `outputSchema` + `structuredContent` for read tools, version
    read from `package.json`, spike on elicitation/MRTR for confirmations.
-7. **Truth**: live-verify v0.1 tools on staging account 6; remove references to the nonexistent
-   `swagger/tag_groups/airyschat_swagger.json`.
+7. **Truth**: live-verify v0.1 tools on staging account 6; remove references to a swagger file
+   and stub markers that do not exist in AirysChat.
 8. **Agent tooling**: `AGENTS.md`, `.agents/rules`, `.agents/skills`, `.agents/agents` (subagents),
    mirrored for Claude Code.
 9. **Claude plugin** imported from `~/airyschat-claude-plugin` with history.

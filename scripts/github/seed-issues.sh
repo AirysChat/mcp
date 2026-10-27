@@ -32,7 +32,7 @@ task FND-09 P1 001 v0.2.0 server  "outputSchema and structuredContent for read t
 task FND-10 P0 001 v0.2.0 server  "Live-verify v0.1 tools on staging account 6"
 task FND-11 P1 001 v0.2.0 server  "Publish to GitHub Packages and client install docs"
 task FND-12 P2 001 v0.2.0 server  "Spike: elicitation/MRTR confirmations (ADR 0005)"
-task FND-13 P0 001 v0.2.0 server  "Remove references to nonexistent airyschat_swagger.json"
+task FND-13 P0 001 v0.2.0 server  "Remove references to a nonexistent swagger file"
 task FND-14 P1 001 v0.2.0 server  "Read server version from package.json"
 task CAT-02 P1 002 v0.2.0 catalog "Inventory drift automation"
 task CAT-03 P0 002 v0.2.0 catalog "Catalog params from application_swagger.json"

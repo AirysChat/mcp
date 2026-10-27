@@ -15,8 +15,8 @@ response shape or status code.
    `saas/app/controllers/saas/api/v1/**`, `enterprise/app/controllers/**`. Read the strong params,
    the policy (Pundit) and what the action renders (jbuilder under `app/views/api/**`).
 2. **Request specs** under `spec/` (and `saas/spec/` if present) — they show real payloads.
-3. **Swagger** `swagger/tag_groups/application_swagger.json` (Chatwoot-inherited) and, when present,
-   the AirysChat swagger. Operations marked `x-airys-stub: true` are unverified.
+3. **Swagger** `swagger/tag_groups/application_swagger.json` — Chatwoot-inherited endpoints only.
+   AirysChat-only (`saas`) endpoints have no swagger; never assume one exists.
 4. **The active AirysChat Spec Kit lane** for the domain (`~/AirysChat/specs/0NN-*`), e.g.
    `024-crm-v2` for CRM, `014-meta-business-agent` for MBA.
 5. **Live readback** on `staging.airys.app` account 6, GET only, sanitized

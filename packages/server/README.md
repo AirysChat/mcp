@@ -93,9 +93,11 @@ status, priority, assignment, and labels) and everything else goes through
 | `saas` | `/saas/api/v1/accounts/{id}{path}` | AirysChat-only: AI agents, CRM, Meta Business Agent, billing |
 | `raw` | `{path}` | non-account-scoped, e.g. `/api/v1/profile` |
 
-Endpoint reference: `swagger/tag_groups/airyschat_swagger.json` in the AirysChat repo.
-Operations marked `x-airys-stub: true` are placeholders whose shapes are not yet
-documented — treat them as unverified.
+Endpoint reference: every account-scoped route is listed in
+[`docs/api/inventory.csv`](../../docs/api/inventory.csv). Inherited Chatwoot endpoints are
+documented in `swagger/tag_groups/application_swagger.json` in the AirysChat repo;
+AirysChat-only (`saas`) endpoints have no published schema yet — their controllers are the
+source of truth, so treat request shapes as unverified.
 
 ## Safety
 
