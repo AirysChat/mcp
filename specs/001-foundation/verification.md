@@ -54,3 +54,11 @@ content is fenced on every tool that returns it.
 | CI on `main` after merge | pass |
 | Dependabot open alerts | 0 (4 advisories on the old `package-lock.json` cleared by SDK ≥ 2.4.0 / zod ≥ 4.6.7) |
 | Release workflow on `main` | fail at PR creation — enterprise policy: "GitHub Actions is not permitted to create or approve pull requests" (FND-04) |
+
+## 2026-10-27 — FND-04 first release through the gh-CLI flow
+
+| Step | Result |
+|---|---|
+| `pnpm release:prepare` | PR #45 `chore(release): v0.1.1` (changeset consumed, CHANGELOG created, plugin manifest bumped in lockstep) |
+| CI on #45 | pass (`check`, node 20, node 22) |
+| `release.yml` on `main` | success — Decide → Check → Publish **skipped** (`PUBLISH_ENABLED` unset) → tag `@airyschat/mcp@0.1.1` + GitHub pre-release |
