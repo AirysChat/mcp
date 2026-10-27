@@ -18,16 +18,18 @@ function stubFetch(status: number, body: string) {
   return calls;
 }
 
-test('core, saas and raw prefixes build the right URLs', async () => {
+test('core, core_v2, saas and raw prefixes build the right URLs', async () => {
   const calls = stubFetch(200, '{}');
   const client = new AirysChatClient(config);
   await client.request('/campaigns');
+  await client.request('/reports/summary', { prefix: 'core_v2' });
   await client.request('ai_agents', { prefix: 'saas' });
   await client.request('/api/v1/profile', { prefix: 'raw' });
   assert.deepEqual(
     calls.map((call) => call.url),
     [
       'https://h.example/api/v1/accounts/6/campaigns',
+      'https://h.example/api/v2/accounts/6/reports/summary',
       'https://h.example/saas/api/v1/accounts/6/ai_agents',
       'https://h.example/api/v1/profile',
     ],

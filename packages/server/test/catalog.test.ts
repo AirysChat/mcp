@@ -36,12 +36,17 @@ test('path params come from the route; swagger params enrich documented endpoint
 });
 
 test('irreversible classification covers sends, Meta writes, deal won and deletes', () => {
-  const reason = (method: string, prefix: 'core' | 'saas', path: string) => matchEndpoint(catalog, method, prefix, path)?.irreversible;
+  const reason = (method: string, prefix: 'core' | 'saas' | 'raw', path: string) => matchEndpoint(catalog, method, prefix, path)?.irreversible;
   assert.match(reason('POST', 'core', '/conversations/1/messages') ?? '', /customer receives/);
   assert.match(reason('POST', 'core', '/campaigns/7/launch') ?? '', /Meta bills/);
   assert.match(reason('POST', 'saas', '/crm_deals/3/won') ?? '', /Conversions API/);
+  assert.match(reason('POST', 'core', '/conversations/1/transcript') ?? '', /email/);
+  assert.match(reason('POST', 'core', '/macros/9/execute') ?? '', /macro/);
+  assert.match(reason('POST', 'raw', '/api/v1/profile/mfa/backup_codes') ?? '', /backup codes/);
   assert.match(reason('DELETE', 'core', '/labels/4') ?? '', /Deletes/);
   assert.equal(reason('POST', 'core', '/campaigns/preflight'), undefined, 'preflight is a check, not an effect');
+  assert.equal(reason('POST', 'core', '/meta_agent/inboxes/2/playground'), undefined, 'playground is a test, not a live Meta change');
+  assert.equal(reason('POST', 'saas', '/ai_manager/inboxes/2/meta_business_agent/tests'), undefined, 'test runs do not change live state');
   assert.equal(matchEndpoint(catalog, 'GET', 'core', '/labels')?.write, undefined);
 });
 
