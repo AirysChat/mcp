@@ -1,6 +1,6 @@
 ---
 name: release
-description: Cut a release of @airyschat/mcp (and plugin versions) with Changesets — readiness check, Version Packages PR, tag, publish, GitHub Release, release evidence. Use when the owner asks to release, or a milestone's tasks are all closed.
+description: Cut a release of @airyschat/mcp (and plugin versions) with Changesets — readiness check, release PR via gh CLI, tag, publish, GitHub Release, release evidence. Use when the owner asks to release, or a milestone's tasks are all closed.
 ---
 
 # Release
@@ -18,21 +18,32 @@ ls .changeset/*.md                                  # pending changesets exist
 
 Cross-check each lane `tasks.md` for the release. Anything open → ask the owner: defer or wait.
 
-## 2. Version Packages PR
+## 2. Release PR (gh CLI)
 
-The `release.yml` workflow opens/updates **"Version Packages"** on `main` from pending changesets.
+The enterprise policy forbids GitHub Actions from opening PRs, so the release PR is opened from a
+local checkout (by the owner or an agent) with gh CLI:
+
+```bash
+git checkout main && git pull
+pnpm release:prepare --dry-run   # preview the bump
+pnpm release:prepare             # changeset version + plugin manifests + PR "chore(release): vX.Y.Z"
+```
+
 Review it: version bump matches intent (pre-1.0: breaking = minor, with a callout), CHANGELOG reads
-well for users, plugin manifests (`plugins/*/.claude-plugin/plugin.json`, etc.) bumped to the same
-version.
+well for users, plugin manifests (`plugins/*/.claude-plugin/plugin.json`) carry the same version.
+Squash-merge after CI is green.
 
-## 3. Publish
+## 3. Tag, publish, GitHub Release
 
-Merging the Version Packages PR runs `changeset publish`:
-- **Pre-1.0**: GitHub Packages (`npm.pkg.github.com`), only after FND-11 enables the publish step.
-- **1.0+**: public npm with provenance + MCP Registry `server.json` publish (lane 010).
+Merging the release PR runs `release.yml` on `main`: it sees no pending changesets, a CHANGELOG
+entry for the new version and no existing tag, then:
+- runs `pnpm check`;
+- publishes when the repository variable `PUBLISH_ENABLED=true` —
+  **pre-1.0** GitHub Packages (`npm.pkg.github.com`, enabled by FND-11);
+  **1.0+** public npm with provenance + MCP Registry `server.json` (lane 010);
+- pushes tag `@airyschat/mcp@X.Y.Z` and creates the GitHub Release (pre-release while `0.x`).
 
-Tags follow `@airyschat/mcp@X.Y.Z`. Create the GitHub Release from the tag with the CHANGELOG
-section if the action did not.
+Re-run with `gh workflow run release.yml` if a step failed after the merge.
 
 ## 4. Hosted service (from 0.6.0)
 

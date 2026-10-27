@@ -18,7 +18,7 @@ lane (specs/0NN-*) → task (e.g. CRM-04) → issue → branch → PR + changese
 4. **Changeset** if users see a difference: `pnpm changeset`.
 5. **PR** title = Conventional Commit; body links the task and `Closes #NN`. Fill the template's
    safety checklist. `pnpm check` must pass; CI is required.
-6. **Squash merge** to `main`. Releases are cut by the Changesets "Version Packages" PR.
+6. **Squash merge** to `main`. Releases are cut by a release PR opened with `pnpm release:prepare` (see `.agents/skills/release`).
 
 ## Feature control
 

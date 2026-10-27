@@ -1,45 +1,86 @@
 name: Release
 
+# Tags, publishes and creates the GitHub Release after a release PR lands on main.
+#
+# Versioning happens in the release PR opened by `pnpm release:prepare` (scripts/release/
+# prepare.sh, run with gh CLI). The enterprise policy forbids GitHub Actions from opening
+# pull requests, so the Changesets bot flow is not used (FND-04). This job only needs to push
+# a tag and create a release, which GITHUB_TOKEN may do.
+
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency: release-${{ github.ref }}
 
 permissions:
   contents: write
-  pull-requests: write
   packages: write
   id-token: write
 
 jobs:
   release:
-    name: Version Packages / publish
+    name: Tag / publish / GitHub Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decide
+        id: decide
+        run: |
+          pending=$(find .changeset -name '*.md' ! -name README.md | wc -l | tr -d ' ')
+          version=$(node -p "require('./packages/server/package.json').version")
+          tag="@airyschat/mcp@${version}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          if [ "$pending" -gt 0 ]; then
+            echo "::notice::${pending} pending changeset(s); run 'pnpm release:prepare' to open the release PR."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          elif git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "Tag ${tag} already exists; nothing to do."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          elif ! grep -qx "## ${version}" packages/server/CHANGELOG.md 2>/dev/null; then
+            echo "::notice::No CHANGELOG entry for ${version}; not a release commit."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: pnpm/action-setup@v6
+        if: steps.decide.outputs.release == 'true'
       - uses: actions/setup-node@v7
+        if: steps.decide.outputs.release == 'true'
         with:
           node-version-file: .nvmrc
           cache: pnpm
           registry-url: https://npm.pkg.github.com
           scope: '@airyschat'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm check
+      - name: Check
+        if: steps.decide.outputs.release == 'true'
+        run: pnpm install --frozen-lockfile && pnpm check
 
-      # Opens/updates the "Version Packages" PR while changesets are pending.
-      # Publishing stays disabled until FND-11 sets the repository variable
-      # PUBLISH_ENABLED=true (GitHub Packages before 1.0, public npm at 1.0 — ADR 0003).
-      - name: Changesets
-        uses: changesets/action@v1
-        with:
-          title: 'chore(release): version packages'
-          commit: 'chore(release): version packages'
-          version: pnpm version-packages
-          publish: ${{ vars.PUBLISH_ENABLED == 'true' && 'pnpm release' || '' }}
-          createGithubReleases: true
+      # Disabled until FND-11 sets the repository variable PUBLISH_ENABLED=true
+      # (GitHub Packages before 1.0, public npm at 1.0 — ADR 0003).
+      - name: Publish
+        if: steps.decide.outputs.release == 'true' && vars.PUBLISH_ENABLED == 'true'
+        run: pnpm --filter @airyschat/mcp publish --no-git-checks
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and GitHub Release
+        if: steps.decide.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.decide.outputs.version }}
+          TAG: ${{ steps.decide.outputs.tag }}
+        run: |
+          awk -v v="## ${VERSION}" '$0==v{f=1;next} /^## /{f=0} f' packages/server/CHANGELOG.md > /tmp/notes.md
+          git tag "${TAG}" "${GITHUB_SHA}"
+          git push origin "refs/tags/${TAG}"
+          prerelease=""
+          case "${VERSION}" in 0.*) prerelease="--prerelease" ;; esac
+          gh release create "${TAG}" --title "@airyschat/mcp ${VERSION}" --notes-file /tmp/notes.md --verify-tag ${prerelease}

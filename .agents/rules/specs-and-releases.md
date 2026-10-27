@@ -18,7 +18,7 @@ idea ─▶ lane (specs/0NN-*) ─▶ tasks.md item ─▶ branch ─▶ PR (+ch
 3. **Changeset** when the tool surface or config changes (see `.changeset/README.md`).
 4. **Close a task only with evidence**: code + test for behaviour; live readback for promotion to
    `stable`. Update `tasks.md` and `verification.md` in the same PR.
-5. **Releases** are cut by the Changesets release PR on `main` (`.agents/skills/release`). A release
+5. **Releases** are cut by a release PR opened with `pnpm release:prepare` (gh CLI; `.agents/skills/release`). A release
    is published only when every lane task targeted at it is closed or explicitly deferred.
 
 ## Feature control
