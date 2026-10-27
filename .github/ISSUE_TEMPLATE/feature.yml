@@ -1,0 +1,33 @@
+name: Feature / tool request
+description: Ask for a new tool, toolset or capability
+labels: [type:feat]
+body:
+  - type: input
+    id: action
+    attributes:
+      label: AirysChat action
+      description: What should an agent be able to do? (e.g. "move a CRM deal to another stage")
+    validations:
+      required: true
+  - type: input
+    id: endpoint
+    attributes:
+      label: Endpoint(s), if known
+      description: Method and path from docs/api/inventory.csv
+  - type: dropdown
+    id: toolset
+    attributes:
+      label: Toolset
+      options: [core, whatsapp, crm, ai_agents, meta_agent, reports, admin, help_center, platform, catalog, not sure]
+  - type: dropdown
+    id: effect
+    attributes:
+      label: Effect
+      options: [read-only, write (internal), irreversible (customer sees it / Meta bills / delete)]
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Use case
+      description: Who uses it and how. No customer data.

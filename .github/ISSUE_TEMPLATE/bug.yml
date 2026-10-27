@@ -1,0 +1,27 @@
+name: Bug
+description: A tool misbehaves or the server fails
+labels: [type:bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version / install
+      description: e.g. 0.2.0 via npx, plugin, hosted
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: Client
+      description: Claude Code, Codex, Gemini CLI, Antigravity, Cursor, Claude.ai, ChatGPT, Muse...
+  - type: input
+    id: tool
+    attributes:
+      label: Tool
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened vs. what you expected
+      description: Remove tokens, phone numbers, emails, names and message text before posting.
+    validations:
+      required: true
