@@ -8,16 +8,17 @@
     { "method": "(POST|PUT|PATCH)", "path": "^/conversations/:conversation_id/scheduled_whatsapp_messages(/:id)?$", "reason": "Schedules a WhatsApp message the customer will receive." },
     { "method": "POST", "path": "^/campaigns/:id/(launch|test_send)$", "reason": "Sends WhatsApp messages to customers; Meta bills for them and they cannot be recalled." },
     { "method": "POST", "path": "^/campaigns/batch_draft_campaigns$|^/campaigns/qualified_audience_apply$", "reason": "Creates campaigns or changes a campaign audience in bulk." },
-    { "method": "POST", "path": "^/portals/:id/send_instructions$", "reason": "Sends an email." },
+    { "method": "POST", "path": "^/portals/:id/send_instructions$|^/conversations/:id/transcript$|^/api/v1/profile/resend_confirmation$", "reason": "Sends an email to the recipient." },
     { "method": "POST", "path": "^/whatsapp_calls/(initiate|:id/(accept|reject|terminate))$", "reason": "Places or answers a WhatsApp call the customer sees." },
     { "method": "POST", "path": "^/inboxes/:inbox_id/calling/request_permission$", "reason": "Sends a call-permission request to the customer." },
 
     { "method": "POST", "path": "^/actions/contact_merge$", "reason": "Merges two contacts; the merge cannot be undone." },
-    { "method": "POST", "path": "^/bulk_actions$|^/captain/bulk_actions$|^/crm_deals/bulk$|^/agents/bulk_create$|^/contacts/bulk_enrich_whatsapp$", "reason": "Changes many records at once." },
-    { "method": "PATCH", "path": "^/portals/:portal_id/articles/bulk_actions/", "reason": "Changes many help-center articles at once." },
+    { "method": "POST", "path": "^/bulk_actions$|^/captain/bulk_actions$|^/crm_deals/bulk$|^/agents/bulk_create$|^/contacts/bulk_enrich_whatsapp$|^/whatsapp_contact_preferences/backfill_apply$", "reason": "Changes many records at once." },
+    { "method": "POST", "path": "^/macros/:id/execute$", "reason": "Executes a macro across conversations; may send messages or change state in bulk." },
+    { "method": "(POST|PATCH)", "path": "^/portals/:portal_id/articles/bulk_actions/", "reason": "Changes many help-center articles at once." },
     { "method": "POST", "path": "^/notifications/destroy_all$", "reason": "Deletes all notifications." },
     { "method": "POST", "path": "^/(companies|contacts)/:id/destroy_custom_attributes$", "reason": "Deletes custom attribute values." },
-    { "method": "POST", "path": "^/contacts/import$|^/data_imports(/:id/start)?$", "reason": "Imports records into the account in bulk." },
+    { "method": "POST", "path": "^/contacts/import$|^/data_imports(/:id/(start|retry))?$", "reason": "Imports records into the account in bulk." },
 
     { "method": "POST", "path": "^/crm_deals/:id/won$", "reason": "Closes the deal as won; may send a Meta Conversions API Purchase event." },
     { "method": "POST", "path": "^/crm_deals/:id/lost$", "reason": "Closes the deal as lost." },
@@ -27,13 +28,15 @@
     { "method": "(POST|PUT|PATCH)", "path": "^/message_templates(/:id)?(/appeal|/duplicate)?$", "reason": "Creates, edits or appeals a WhatsApp template at Meta (review and quality effects)." },
     { "method": "POST", "path": "^/inboxes/:inbox_id/csat_template$", "reason": "Creates a CSAT WhatsApp template at Meta (submitted for review)." },
     { "method": "(POST|PUT|PATCH)", "path": "^/whatsapp_flows(/:id)?(/publish|/deprecate)?$", "reason": "Changes a WhatsApp Flow at Meta; publishing and deprecation are one-way." },
-    { "method": "(POST|PUT|PATCH)", "path": "^/meta_agent/", "reason": "Changes the Meta Business Agent configuration at Meta; customers may be answered differently." },
-    { "method": "(POST|PUT|PATCH)", "path": "^/ai_manager/inboxes/:inbox_id/meta_business_agent/(?!preflight$|eligibility/check$)", "reason": "Changes the Meta Business Agent at Meta or hands conversations over; customers may be answered differently." },
+    { "method": "(POST|PUT|PATCH)", "path": "^/meta_agent/(?!inboxes/:inbox_id/(playground|agent/eligibility)$)", "reason": "Changes the Meta Business Agent configuration at Meta; customers may be answered differently." },
+    { "method": "(POST|PUT|PATCH)", "path": "^/ai_manager/inboxes/:inbox_id/meta_business_agent/(?!preflight$|eligibility/check$|evals/runs$|tests$)", "reason": "Changes the Meta Business Agent at Meta or hands conversations over; customers may be answered differently." },
     { "method": "POST", "path": "^/conversations/:conversation_id/meta_business_agent_control$", "reason": "Changes who answers the customer (Meta Business Agent vs. humans)." },
     { "method": "POST", "path": "^/ai_agents/mode_transition$|^/ai_agents/:id/publish_workflow$|^/ai_agents/:id/versions/:version_number/restore$", "reason": "Changes which AI agent answers customers live." },
     { "method": "POST", "path": "^/integrations/meta_ads/campaigns/:campaign_id/status$", "reason": "Pauses or resumes a paid Meta Ads campaign." },
+    { "method": "POST", "path": "^/inboxes/:inbox_id/phone_verification/(request_code|verify_code|update_display_name)$|^/inboxes/:inbox_id/username$", "reason": "Triggers a verification code or changes the phone number identity at Meta." },
+    { "method": "POST", "path": "^/salvy/(create_virtual_number|register_number)$", "reason": "Provisions or registers a virtual phone number." },
 
-    { "method": "POST", "path": "/reset_(access_token|secret)$|^/inboxes/:id/reset_secret$", "reason": "Rotates a credential; integrations using the old one stop working." },
+    { "method": "POST", "path": "/reset_(access_token|secret)$|^/inboxes/:id/reset_secret$|^/api/v1/profile/mfa/backup_codes$", "reason": "Rotates a credential or backup codes; previous ones stop working." },
     { "method": "POST", "path": "^/inboxes/:id/(enable|disable)_whatsapp_calling$|^/inboxes/:id/set_inbound_calls$", "reason": "Changes WhatsApp calling for the number at Meta." }
   ]
 }

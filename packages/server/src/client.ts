@@ -1,11 +1,12 @@
 /**
  * HTTP client for the AirysChat API.
  *
- * AirysChat serves two account-scoped prefixes and they are not interchangeable:
+ * AirysChat serves account-scoped prefixes that are not interchangeable:
  *
- *   core — /api/v1/accounts/{id}        features extending an existing Chatwoot resource
- *   saas — /saas/api/v1/accounts/{id}   AirysChat-only features
- *   raw  — no prefix                    non-account-scoped endpoints, e.g. /api/v1/profile
+ *   core    — /api/v1/accounts/{id}        features extending an existing Chatwoot resource
+ *   core_v2 — /api/v2/accounts/{id}        analytics and v2 summary reports
+ *   saas    — /saas/api/v1/accounts/{id}   AirysChat-only features
+ *   raw     — no prefix                    non-account-scoped endpoints, e.g. /api/v1/profile
  *
  * Both authenticate with the same header, but `saas` controllers add feature-flag and
  * plan-entitlement gates that answer 403 with a JSON `error`. That is not an auth
@@ -14,7 +15,7 @@
 
 import type { Config } from './config.js';
 
-export type Prefix = 'core' | 'saas' | 'raw';
+export type Prefix = 'core' | 'core_v2' | 'saas' | 'raw';
 
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
@@ -82,10 +83,11 @@ export class AirysChatClient {
 
   private buildUrl(path: string, prefix: Prefix, query?: Record<string, unknown>): string {
     const suffix = path.startsWith('/') ? path : `/${path}`;
+    const apiVersion = prefix === 'core_v2' ? 'v2' : 'v1';
     const base =
       prefix === 'raw'
         ? `${this.config.baseUrl}${suffix}`
-        : `${this.config.baseUrl}${prefix === 'saas' ? '/saas' : ''}/api/v1/accounts/${this.config.accountId}${suffix}`;
+        : `${this.config.baseUrl}${prefix === 'saas' ? '/saas' : ''}/api/${apiVersion}/accounts/${this.config.accountId}${suffix}`;
 
     const url = new URL(base);
     for (const [key, value] of Object.entries(query ?? {})) {

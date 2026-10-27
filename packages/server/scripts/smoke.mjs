@@ -32,6 +32,7 @@ const mock = createServer((req, res) => {
   }
   if (url.pathname === '/api/v1/accounts/5/campaigns/7') return send(200, { id: 7, title: 'Black Friday' });
   if (url.pathname === '/api/v1/accounts/5/campaigns/7/launch') return send(200, { id: 7, campaign_status: 'scheduled' });
+  if (url.pathname === '/api/v2/accounts/5/reports/summary') return send(200, { conversations_count: 42 });
   // A /saas endpoint gated by plan entitlement.
   if (url.pathname === '/saas/api/v1/accounts/5/ai_agents') return send(403, { error: 'Meta Business Agent is not enabled' });
 
@@ -148,9 +149,29 @@ check('saas 403 is reported as a plan limit, not an auth failure', () => {
 });
 
 const rawWrite = await session.call('tools/call', { name: 'airyschat_api', arguments: { path: '/campaigns/7/launch', method: 'POST' } });
-check('raw non-GET is refused without confirm', () => {
+check('raw non-GET is refused without confirm and cites catalog irreversible reason + dedicated tool', () => {
   assert.equal(rawWrite.isError, true);
   assert.match(text(rawWrite), /not reversible/);
+  assert.match(text(rawWrite), /Meta bills/);
+  assert.match(text(rawWrite), /wa_campaign_launch/);
+});
+
+const beforeCatalogChecks = requests.length;
+const unknownRoute = await session.call('tools/call', { name: 'airyschat_api', arguments: { path: '/not_a_real_endpoint' } });
+const excludedRoute = await session.call('tools/call', { name: 'airyschat_api', arguments: { path: '/assignment_policies/new' } });
+check('raw refuses unknown and excluded routes before calling the API', () => {
+  assert.equal(unknownRoute.isError, true);
+  assert.match(text(unknownRoute), /airyschat_api_search/);
+  assert.equal(excludedRoute.isError, true);
+  assert.match(text(excludedRoute), /cannot be called through MCP/);
+  assert.equal(requests.length, beforeCatalogChecks, 'must not have called the API');
+});
+
+const v2Summary = await session.call('tools/call', { name: 'airyschat_api', arguments: { path: '/reports/summary', prefix: 'core_v2' } });
+check('core_v2 prefix routes to /api/v2/accounts/{id}', () => {
+  assert.ok(!v2Summary.isError, text(v2Summary));
+  assert.match(text(v2Summary), /conversations_count/);
+  assert.ok(requests.some((r) => r.path === '/api/v2/accounts/5/reports/summary'));
 });
 
 const noInbox = await session.call('tools/call', { name: 'wa_campaign_preflight', arguments: { campaign_id: 7 } }).catch((error) => ({ isError: true, content: [{ text: error.message }] }));

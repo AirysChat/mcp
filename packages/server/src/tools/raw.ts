@@ -1,17 +1,20 @@
 /**
  * The escape hatch.
  *
- * AirysChat serves ~480 endpoints. Generating a tool per endpoint would bury the
- * curated ones and blow up every client's tool list, so anything without a first-class
- * tool goes through here — the same trade-off `chatwoot api` makes in Chatwoot's CLI.
+ * AirysChat serves ~800 account-scoped endpoints. Generating a tool per endpoint would
+ * bury the curated ones and blow up every client's tool list, so anything without a
+ * first-class tool goes through here — paired with `airyschat_api_search` for discovery.
  *
- * It is deliberately the least convenient option: no response shaping, an explicit
- * prefix argument, and a confirmation gate on every non-GET.
+ * Every call is validated against the embedded catalog (`catalog.json`): unknown routes
+ * and excluded endpoints are refused locally, and every non-GET requires `confirm: true`
+ * with a preview showing the catalog's irreversible classification when present.
  */
 
 import { z } from 'zod';
+import { loadCatalog, matchEndpoint } from '../catalog.js';
+import type { Prefix } from '../client.js';
 import { defineTool } from '../toolsets.js';
-import { readOnlyRefusal, requireConfirmation, untrustedJson } from '../result.js';
+import { failure, readOnlyRefusal, requireConfirmation, untrustedJson } from '../result.js';
 
 export const rawTools = [
   defineTool({
@@ -19,24 +22,24 @@ export const rawTools = [
     stability: 'stable',
     title: 'Call an AirysChat API endpoint directly',
     description:
-      'Call any AirysChat endpoint that has no dedicated tool. Prefer dedicated tools when one exists — they carry the ' +
-      'argument validation and the safety notes this does not.\n\n' +
-      'Choose `prefix` carefully, because the two account-scoped trees are different APIs:\n' +
-      '  core — /api/v1/accounts/{account_id}{path}       features extending a Chatwoot resource\n' +
-      '  saas — /saas/api/v1/accounts/{account_id}{path}  AirysChat-only features (AI agents, CRM, Meta Business Agent, billing)\n' +
-      '  raw  — {path} verbatim, for non-account-scoped endpoints such as /api/v1/profile\n\n' +
-      'Pass `path` WITHOUT the prefix for core and saas — "/campaigns/12", not "/api/v1/accounts/5/campaigns/12". ' +
-      'Any method other than GET requires `confirm: true`; with AIRYSCHAT_READ_ONLY set, only GET is allowed.\n\n' +
-      'Endpoint reference: inherited Chatwoot endpoints (core) are documented in swagger/tag_groups/application_swagger.json ' +
-      'in the AirysChat repo. AirysChat-only endpoints (saas) have no published schema: their behaviour is defined by ' +
-      'their controllers, so inspect a GET response before writing and treat request shapes as unverified.',
+      'Call any AirysChat endpoint from the catalog that has no dedicated tool. Prefer dedicated tools when one exists — ' +
+      'they carry argument validation and tailored responses. Use `airyschat_api_search` first to find the exact `method`, ' +
+      '`prefix`, `path`, and parameters.\n\n' +
+      'Choose `prefix` carefully, because the account-scoped trees are different APIs:\n' +
+      '  core    — /api/v1/accounts/{account_id}{path}       features extending a Chatwoot resource\n' +
+      '  core_v2 — /api/v2/accounts/{account_id}{path}       analytics and v2 summary reports\n' +
+      '  saas    — /saas/api/v1/accounts/{account_id}{path}  AirysChat-only features (AI agents, CRM, Meta Business Agent)\n' +
+      '  raw     — {path} verbatim, for non-account-scoped endpoints such as /api/v1/profile\n\n' +
+      'Pass `path` WITHOUT the prefix for core, core_v2, and saas — "/campaigns/12", not "/api/v1/accounts/5/campaigns/12". ' +
+      'Unknown or excluded endpoints are refused before calling the API. Any method other than GET requires `confirm: true`; ' +
+      'with AIRYSCHAT_READ_ONLY set, only GET is allowed.',
     write: true,
     // Stays available in read-only builds for GET; the handler refuses every other method.
     readOnlyCapable: true,
     inputSchema: z.object({
       path: z.string().min(1).describe('Path without the account prefix, e.g. "/whatsapp_flows"'),
       method: z.enum(['GET', 'POST', 'PATCH', 'PUT', 'DELETE']).optional().describe('Defaults to GET'),
-      prefix: z.enum(['core', 'saas', 'raw']).optional().describe('Defaults to core'),
+      prefix: z.enum(['core', 'core_v2', 'saas', 'raw']).optional().describe('Defaults to core'),
       query: z.record(z.string(), z.unknown()).optional(),
       body: z.record(z.string(), z.unknown()).optional(),
       confirm: z.boolean().optional().describe('Required for any method other than GET'),
@@ -46,11 +49,24 @@ export const rawTools = [
       const prefix = args.prefix ?? 'core';
 
       if (method !== 'GET' && config.readOnly) return readOnlyRefusal(`airyschat_api ${method}`);
+
+      const entry = matchEndpoint(loadCatalog(), method, prefix, args.path);
+      if (!entry) {
+        return failure(
+          `No AirysChat endpoint matches ${method} (${prefix}) ${args.path}. ` +
+            'Call `airyschat_api_search` to find the exact method, prefix, and path template.',
+        );
+      }
+      if (entry.excluded) {
+        return failure(`${method} (${prefix}) ${entry.path} cannot be called through MCP: ${entry.excluded}.`);
+      }
+
       if (method !== 'GET') {
+        const detail = entry.irreversible ?? `Writes to ${entry.action}${entry.summary ? ` (${entry.summary})` : ''}.`;
+        const hint = entry.tool ? ` Prefer the dedicated tool \`${entry.tool}\` when possible.` : '';
         const refusal = requireConfirmation(
           args.confirm,
-          `${method} ${describePath(prefix, args.path, config.accountId)}${args.body ? ` with body ${JSON.stringify(args.body)}` : ''}. ` +
-            'Effects of an arbitrary endpoint call are unknown to this server and may reach customers.',
+          `${method} ${describePath(prefix, args.path, config.accountId)}${args.body ? ` with body ${JSON.stringify(args.body)}` : ''}. ${detail}${hint}`,
         );
         if (refusal) return refusal;
       }
@@ -60,7 +76,8 @@ export const rawTools = [
   }),
 ];
 
-function describePath(prefix: string, path: string, accountId: number): string {
+function describePath(prefix: Prefix, path: string, accountId: number): string {
   if (prefix === 'raw') return path;
-  return `${prefix === 'saas' ? '/saas' : ''}/api/v1/accounts/${accountId}${path.startsWith('/') ? path : `/${path}`}`;
+  const apiVersion = prefix === 'core_v2' ? 'v2' : 'v1';
+  return `${prefix === 'saas' ? '/saas' : ''}/api/${apiVersion}/accounts/${accountId}${path.startsWith('/') ? path : `/${path}`}`;
 }
