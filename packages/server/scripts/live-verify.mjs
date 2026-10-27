@@ -14,7 +14,11 @@
  *     node scripts/live-verify.mjs conversation_get '{"conversation_id": 1}'
  *
  * Any host other than staging.airys.app must be named explicitly by the owner via
- * LIVE_VERIFY_ALLOW_HOST=<host>; it stays read-only either way.
+ * LIVE_VERIFY_ALLOW_HOST=<host>.
+ *
+ * Writes: off by default. LIVE_VERIFY_WRITE=<tool> enables exactly ONE named write tool for
+ * this run (owner-approved, staging fixtures only, e.g. a draft campaign). Tools annotated
+ * destructive/irreversible are always refused — sends and Meta writes never run from here.
  */
 
 import { spawn } from 'node:child_process';
@@ -37,9 +41,12 @@ if (host !== DEFAULT_HOST && process.env.LIVE_VERIFY_ALLOW_HOST !== host) {
 
 const [onlyTool, rawArgs] = process.argv.slice(2);
 const toolArgs = rawArgs ? JSON.parse(rawArgs) : {};
+const writeTool = process.env.LIVE_VERIFY_WRITE;
+if (writeTool && writeTool !== onlyTool) fail('LIVE_VERIFY_WRITE must name the single tool passed as the first argument');
+if (writeTool && host !== DEFAULT_HOST) fail('writes are only allowed against ' + DEFAULT_HOST);
 
 const child = spawn(process.execPath, ['dist/index.js'], {
-  env: { ...process.env, AIRYSCHAT_READ_ONLY: '1', AIRYSCHAT_FEATURES: process.env.AIRYSCHAT_FEATURES ?? 'experimental' },
+  env: { ...process.env, AIRYSCHAT_READ_ONLY: writeTool ? '' : '1', AIRYSCHAT_FEATURES: process.env.AIRYSCHAT_FEATURES ?? 'experimental' },
   stdio: ['pipe', 'pipe', 'inherit'],
 });
 
@@ -107,8 +114,9 @@ const targets = onlyTool
   ? tools.filter((tool) => tool.name === onlyTool)
   : tools.filter((tool) => tool.annotations?.readOnlyHint && !(tool.inputSchema?.required?.length) && tool.name !== 'airyschat_api');
 if (onlyTool && targets.length === 0) fail(`tool ${onlyTool} not registered (read-only mode hides write tools)`);
+if (writeTool && targets[0].annotations?.destructiveHint) fail(`${writeTool} is irreversible; live-verify never runs it`);
 
-console.log(`# live-verify ${new Date().toISOString().slice(0, 10)} · host ${host} · account ${process.env.AIRYSCHAT_ACCOUNT_ID} · read-only · ${tools.length} tools registered`);
+console.log(`# live-verify ${new Date().toISOString().slice(0, 10)} · host ${host} · account ${process.env.AIRYSCHAT_ACCOUNT_ID} · ${writeTool ? `WRITE: ${writeTool}` : 'read-only'} · ${tools.length} tools registered`);
 console.log('| Tool | Result | ms |');
 console.log('|---|---|---:|');
 for (const tool of targets) {

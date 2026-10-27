@@ -37,6 +37,11 @@ AIRYSCHAT_ACCOUNT_ID=6 \
 # one tool with args:  node scripts/live-verify.mjs conversation_get '{"conversation_id": 1}'
 ```
 
+**Approved writes** (staging fixtures only, owner approval in the conversation): set
+`LIVE_VERIFY_WRITE=<tool>` to enable exactly that one tool for the run. The driver refuses any tool
+annotated destructive/irreversible (sends, launches, Meta writes), refuses other hosts, and prints
+shapes only. Name fixtures `mcp-verify-*` and delete them afterwards.
+
 Do not use `npx @modelcontextprotocol/inspector -e AIRYSCHAT_API_KEY=…` for live runs: the token
 would appear in the process list.
 

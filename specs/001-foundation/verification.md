@@ -39,7 +39,7 @@ token from the macOS Keychain injected as env only. Driver: `packages/server/scr
 | `wa_inbox_health` | ok — `{latest{10}, snapshots[76], campaign_volume[0], alerts[0]}` | 200 | |
 | `wa_campaign_preflight` (with `inbox_id`) | ok — `allowed`, `status`, `risk_score`, `blocking_issues[1]`, `warnings[2]`, … (16 keys) | 204 | blocked check returns 200 as documented |
 | `wa_campaign_preflight` (no args) | **error** — 404 "Resource could not be found" + misleading campaign-ID hint | 54 | → FND-17 |
-| `wa_campaign_get`, `wa_campaign_metrics` | not run — no campaign on account 6 | | → FND-19 |
+| `wa_campaign_get`, `wa_campaign_metrics` | see FND-19 below | | |
 | `airyschat_api` (GET) | not registered in read-only mode | | → FND-18 |
 
 Write tools were not exercised (GET-only run). Result: **18/18 runnable read tools pass**; customer
@@ -62,3 +62,21 @@ content is fenced on every tool that returns it.
 | `pnpm release:prepare` | PR #45 `chore(release): v0.1.1` (changeset consumed, CHANGELOG created, plugin manifest bumped in lockstep) |
 | CI on #45 | pass (`check`, node 20, node 22) |
 | `release.yml` on `main` | success — Decide → Check → Publish **skipped** (`PUBLISH_ENABLED` unset) → tag `@airyschat/mcp@0.1.1` + GitHub pre-release |
+
+## 2026-10-27 — FND-19 campaign reads with a draft fixture
+
+Owner approved creating one **draft** campaign on staging account 6. Verified in AirysChat source
+first: `save_mode: "draft"` sets `campaign_status=draft`, `enabled=false`, `scheduled_at=nil`, so
+`Campaign#enqueue_whatsapp_if_immediate` never enqueues a send. Driver run with
+`LIVE_VERIFY_WRITE=wa_campaign_create` (single named, non-destructive write tool).
+
+| Step | Result (shape only) | ms |
+|---|---|---:|
+| `wa_campaign_create` (draft, WhatsApp inbox, approved template, no audience) | ok — 28 keys; readback `campaign_status=draft`, `enabled=false`, `scheduled_at=null` | 222 |
+| `wa_campaign_get` | ok — 28 keys, untrusted-fenced | 162 |
+| `wa_campaign_metrics` | ok — `{campaign{28}, metrics{0}, campaign_messages[0]}`, untrusted-fenced | 161 |
+| `wa_campaigns_list` | ok — `payload[1]` | 158 |
+| `wa_campaign_preflight` with `campaign_id` only | **error** — 404: `PreflightRiskService` always does `account.inboxes.find(params[:inbox_id])`, so `inbox_id` is required even for a saved campaign | 154 |
+| Cleanup: `DELETE /campaigns/:id` | HTTP 200; `mcp-verify-*` fixtures left: 0 | |
+
+Nothing was sent; no launch or test-send tool was called (the driver refuses destructive tools).
