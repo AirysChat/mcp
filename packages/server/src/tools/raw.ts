@@ -16,6 +16,7 @@ import { readOnlyRefusal, requireConfirmation, untrustedJson } from '../result.j
 export const rawTools = [
   defineTool({
     name: 'airyschat_api',
+    stability: 'stable',
     title: 'Call an AirysChat API endpoint directly',
     description:
       'Call any AirysChat endpoint that has no dedicated tool. Prefer dedicated tools when one exists — they carry the ' +

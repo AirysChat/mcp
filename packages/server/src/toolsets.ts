@@ -9,7 +9,7 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import type { z } from 'zod';
 import type { AirysChatClient } from './client.js';
-import type { Config } from './config.js';
+import { STABILITY_RANK, type Config, type Stability } from './config.js';
 import { fromError, readOnlyRefusal, type ToolResult } from './result.js';
 
 export interface ToolContext {
@@ -19,6 +19,13 @@ export interface ToolContext {
 
 interface ToolMetadata {
   name: string;
+  /**
+   * Maturity (ADR 0003). Non-stable tools are hidden unless AIRYSCHAT_FEATURES opts in.
+   * Promotion to `stable` needs live evidence on staging and a changeset.
+   */
+  stability: Stability;
+  /** For `deprecated` tools: the tool that replaces it, named in the description. */
+  replacedBy?: string;
   title: string;
   description: string;
   /** True when the tool changes state. Drives the read-only gate and the destructive hint. */
@@ -57,14 +64,16 @@ export function defineTool<Schema extends z.ZodType>(
 /** Registers every tool the current config allows. Returns how many were registered. */
 export function registerTools(server: McpServer, tools: AnyToolDefinition[], context: ToolContext): number {
   const readOnly = context.config.readOnly;
-  const enabled = readOnly ? tools.filter((tool) => !tool.write || tool.readOnlyCapable) : tools;
+  const enabled = tools
+    .filter((tool) => isVisible(tool.stability, context.config.features))
+    .filter((tool) => !readOnly || !tool.write || tool.readOnlyCapable);
 
   for (const tool of enabled) {
     server.registerTool(
       tool.name,
       {
         title: tool.title,
-        description: tool.description,
+        description: describe(tool),
         inputSchema: tool.inputSchema,
         annotations: {
           title: tool.title,
@@ -90,4 +99,24 @@ export function registerTools(server: McpServer, tools: AnyToolDefinition[], con
   }
 
   return enabled.length;
+}
+
+/** Deprecated tools keep working for one minor release, so they count as stable for visibility. */
+function isVisible(stability: Stability, features: Config['features']): boolean {
+  const rank = stability === 'deprecated' ? STABILITY_RANK.stable : STABILITY_RANK[stability];
+  return rank <= STABILITY_RANK[features];
+}
+
+/** Non-stable tools say so up front, so the model and the human both see the maturity. */
+function describe(tool: AnyToolDefinition): string {
+  switch (tool.stability) {
+    case 'beta':
+      return `[beta] ${tool.description}`;
+    case 'experimental':
+      return `[experimental — may change or break] ${tool.description}`;
+    case 'deprecated':
+      return `DEPRECATED${tool.replacedBy ? ` — use ${tool.replacedBy}` : ''}. ${tool.description}`;
+    default:
+      return tool.description;
+  }
 }

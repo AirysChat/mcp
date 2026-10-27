@@ -12,11 +12,18 @@ export type ToolsetName = (typeof TOOLSET_NAMES)[number];
 
 const DEFAULT_TOOLSETS: ToolsetName[] = ['core', 'whatsapp'];
 
+/** Tool maturity, lowest to highest risk. `deprecated` is visible like `stable`. */
+export const STABILITY_LEVELS = ['stable', 'beta', 'experimental'] as const;
+export type Stability = (typeof STABILITY_LEVELS)[number] | 'deprecated';
+export const STABILITY_RANK: Record<Exclude<Stability, 'deprecated'>, number> = { stable: 0, beta: 1, experimental: 2 };
+
 export interface Config {
   baseUrl: string;
   apiKey: string;
   accountId: number;
   toolsets: Set<ToolsetName>;
+  /** Highest maturity exposed (AIRYSCHAT_FEATURES). Default `stable`. */
+  features: Exclude<Stability, 'deprecated'>;
   readOnly: boolean;
   timeoutMs: number;
 }
@@ -40,6 +47,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     apiKey,
     accountId,
     toolsets: parseToolsets(env.AIRYSCHAT_TOOLSETS),
+    features: parseFeatures(env.AIRYSCHAT_FEATURES),
     // Opt-in read-only. The inverse default would be safer in isolation but would
     // silently break every write tool for users who never set the variable.
     readOnly: isTruthy(env.AIRYSCHAT_READ_ONLY),
@@ -73,6 +81,15 @@ function parseToolsets(raw: string | undefined): Set<ToolsetName> {
   }
 
   return new Set(requested as ToolsetName[]);
+}
+
+function parseFeatures(raw: string | undefined): Exclude<Stability, 'deprecated'> {
+  const value = raw?.trim().toLowerCase();
+  if (!value) return 'stable';
+  if (!(STABILITY_LEVELS as readonly string[]).includes(value)) {
+    throw new ConfigError(`AIRYSCHAT_FEATURES must be one of: ${STABILITY_LEVELS.join(', ')} (got "${raw}")`);
+  }
+  return value as Exclude<Stability, 'deprecated'>;
 }
 
 function isTruthy(value: string | undefined): boolean {

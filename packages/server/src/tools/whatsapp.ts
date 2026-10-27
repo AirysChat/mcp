@@ -28,6 +28,7 @@ const audienceSelector = z
 export const whatsappTools = [
   defineTool({
     name: 'wa_templates_list',
+    stability: 'stable',
     title: 'List WhatsApp message templates',
     description:
       'List message templates, most recently updated first. Returns a bare array with no pagination — this is the complete ' +
@@ -42,6 +43,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_template_get',
+    stability: 'stable',
     title: 'Get a WhatsApp message template',
     description: 'Fetch one template, including its Meta approval status and the rejection reason in `metadata` when there is one.',
     inputSchema: z.object({ template_id: z.number().int() }),
@@ -50,6 +52,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_template_analytics',
+    stability: 'stable',
     title: 'Get template analytics',
     description:
       'Delivery and engagement figures for one template, fetched live from Meta. Returns `{"analytics": {}}` with a 200 — ' +
@@ -65,6 +68,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_templates_sync',
+    stability: 'beta',
     title: 'Sync templates from Meta',
     description:
       'Pull template definitions and approval statuses from Meta into AirysChat. With `inbox_id`, syncs that inbox only; ' +
@@ -79,6 +83,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_campaigns_list',
+    stability: 'stable',
     title: 'List campaigns',
     description:
       'List campaigns, newest first, 15 per page. Both live-chat (`ongoing`) and WhatsApp broadcast (`one_off`) campaigns ' +
@@ -98,6 +103,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_campaign_get',
+    stability: 'stable',
     title: 'Get a campaign',
     description:
       'Fetch one campaign by its display ID. Prefer `lifecycle_permissions` (editable / launchable / cancellable) over ' +
@@ -108,6 +114,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_campaign_metrics',
+    stability: 'stable',
     title: 'Get campaign delivery metrics',
     description:
       'Aggregate counters plus the per-contact delivery log, newest first. The log is NOT paginated — for a large ' +
@@ -118,6 +125,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_audience_estimate',
+    stability: 'stable',
     title: 'Estimate a campaign audience',
     description:
       'Resolve audience selectors and count the matching contacts, before any campaign exists. Read-only. ' +
@@ -132,6 +140,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_campaign_preflight',
+    stability: 'stable',
     title: 'Run a campaign preflight risk check',
     description:
       'Evaluate an audience, template, and send window against suppression rules, WABA health, template approval, and ' +
@@ -154,6 +163,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_campaign_create',
+    stability: 'beta',
     title: 'Create a campaign',
     description:
       'Create a campaign. Creating does NOT send anything — use wa_campaign_launch for that. ' +
@@ -177,6 +187,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_campaign_launch',
+    stability: 'beta',
     title: 'Launch a campaign',
     description:
       'ONE-WAY DOOR. Schedules the campaign for delivery to its entire audience; once sending starts, messages cannot be ' +
@@ -204,6 +215,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_campaign_cancel',
+    stability: 'beta',
     title: 'Cancel a scheduled campaign',
     description:
       'Move a scheduled campaign to cancelled. Only works while `lifecycle_permissions.cancellable` is true — a campaign ' +
@@ -220,6 +232,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_campaign_test_send',
+    stability: 'beta',
     title: 'Send a campaign to one contact as a test',
     description:
       'NOT A DRY RUN. Delivers a real, billed WhatsApp message to the given contact. Point it at an internal test contact, ' +
@@ -244,6 +257,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_inbox_health',
+    stability: 'stable',
     title: 'Check WhatsApp campaign health for an inbox',
     description:
       'Quality rating, messaging limits, and recent send volume for an inbox’s WhatsApp number, plus plain-language `alerts`. ' +

@@ -38,7 +38,7 @@ async function main(): Promise<void> {
 
   process.stderr.write(
     `airyschat-mcp ${VERSION} → ${config.baseUrl} (account ${config.accountId}) | ` +
-      `toolsets: ${[...config.toolsets].join(', ') || 'none'} | tools: ${registered}` +
+      `toolsets: ${[...config.toolsets].join(', ') || 'none'} | features: ${config.features} | tools: ${registered}` +
       `${config.readOnly ? ' | READ-ONLY' : ''}\n`,
   );
 
@@ -55,6 +55,7 @@ main().catch((error: unknown) => {
         '  AIRYSCHAT_ACCOUNT_ID  numeric account ID\n\n' +
         'Optional:\n' +
         '  AIRYSCHAT_TOOLSETS    comma-separated: core, whatsapp (default: both)\n' +
+        '  AIRYSCHAT_FEATURES    stable (default), beta or experimental — highest tool maturity to expose\n' +
         '  AIRYSCHAT_READ_ONLY   1 to disable every write tool\n' +
         '  AIRYSCHAT_TIMEOUT_MS  request timeout, default 30000\n',
     );
