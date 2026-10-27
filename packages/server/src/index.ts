@@ -21,6 +21,7 @@ import { coreTools } from './tools/core.js';
 import { crmTools } from './tools/crm.js';
 import { metaAgentTools } from './tools/meta_agent.js';
 import { rawTools } from './tools/raw.js';
+import { reportsTools } from './tools/reports.js';
 import { whatsappTools } from './tools/whatsapp.js';
 import { registerTools, type AnyToolDefinition } from './toolsets.js';
 
@@ -49,6 +50,7 @@ async function main(): Promise<void> {
   if (config.toolsets.has('crm')) selected.push(...crmTools);
   if (config.toolsets.has('ai_agents')) selected.push(...aiAgentsTools);
   if (config.toolsets.has('meta_agent')) selected.push(...metaAgentTools);
+  if (config.toolsets.has('reports')) selected.push(...reportsTools);
 
   const registered = registerTools(server, selected, context);
 
@@ -70,7 +72,7 @@ main().catch((error: unknown) => {
         '  AIRYSCHAT_API_KEY     agent or admin access token (sent as the api_access_token header)\n' +
         '  AIRYSCHAT_ACCOUNT_ID  numeric account ID\n\n' +
         'Optional:\n' +
-        '  AIRYSCHAT_TOOLSETS    comma-separated: core, whatsapp, crm, ai_agents, meta_agent (default: core, whatsapp)\n' +
+        '  AIRYSCHAT_TOOLSETS    comma-separated: core, whatsapp, crm, ai_agents, meta_agent, reports (default: core, whatsapp)\n' +
         '  AIRYSCHAT_FEATURES    stable (default), beta or experimental — highest tool maturity to expose\n' +
         '  AIRYSCHAT_READ_ONLY   1 to disable every write tool\n' +
         '  AIRYSCHAT_TIMEOUT_MS  request timeout, default 30000\n',

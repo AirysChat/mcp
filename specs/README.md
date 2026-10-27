@@ -56,7 +56,7 @@ gantt
 | [003-crm-and-contacts](003-crm-and-contacts/tasks.md) | CRM | Done (2026-10-27) |
 | [004-ai-agents-and-meta-agent](004-ai-agents-and-meta-agent/tasks.md) | AIA | Done (2026-10-27) |
 | [005-hosted-mcp](005-hosted-mcp/tasks.md) | REM | Planned |
-| [006-whatsapp-and-reports](006-whatsapp-and-reports/tasks.md) | WAR | Planned |
+| [006-whatsapp-and-reports](006-whatsapp-and-reports/tasks.md) | WAR | Done (2026-10-27) |
 | [007-apps-elicitation-tasks](007-apps-elicitation-tasks/tasks.md) | APP | Planned |
 | [008-admin-and-help-center](008-admin-and-help-center/tasks.md) | ADM | Planned |
 | [009-airys-platform-toolset](009-airys-platform-toolset/tasks.md) | PLT | Planned |
