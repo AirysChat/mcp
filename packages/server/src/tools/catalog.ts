@@ -31,6 +31,11 @@ export const catalogTools = [
       toolset: z.string().optional().describe('Only endpoints planned for this toolset, e.g. "crm"'),
       limit: z.number().int().min(1).max(50).optional().describe('Default 10'),
     }),
+    outputSchema: z.object({
+      source: z.string(),
+      hint: z.string(),
+      results: z.array(z.record(z.string(), z.unknown())),
+    }),
     handler: async ({ query, method, domain, toolset, limit }) => {
       const catalog = loadCatalog();
       const results = searchCatalog(catalog, query, { method, domain, toolset, limit });

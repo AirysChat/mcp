@@ -9,7 +9,7 @@ import { defineTool, registerTools, type AnyToolDefinition } from '../src/toolse
 
 interface Registered {
   name: string;
-  meta: { description: string; annotations: Record<string, boolean> };
+  meta: { description: string; outputSchema?: z.ZodType; annotations: Record<string, boolean> };
   handler: (args: unknown) => Promise<{ isError?: boolean; content: Array<{ text?: string }> }>;
 }
 
@@ -27,8 +27,9 @@ function context(env: Record<string, string> = {}) {
 }
 
 const ok = async () => json('ok');
+const outSchema = z.object({ ok: z.boolean() });
 const tools: AnyToolDefinition[] = [
-  defineTool({ name: 'read_stable', stability: 'stable', title: 't', description: 'Reads.', inputSchema: z.object({}), handler: ok }),
+  defineTool({ name: 'read_stable', stability: 'stable', title: 't', description: 'Reads.', inputSchema: z.object({}), outputSchema: outSchema, handler: ok }),
   defineTool({ name: 'write_beta', stability: 'beta', title: 't', description: 'Writes.', write: true, inputSchema: z.object({}), handler: ok }),
   defineTool({ name: 'send_beta', stability: 'beta', title: 't', description: 'Sends.', write: true, irreversible: true, inputSchema: z.object({}), handler: ok }),
   defineTool({ name: 'lab', stability: 'experimental', title: 't', description: 'Lab.', inputSchema: z.object({}), handler: ok }),
@@ -73,6 +74,8 @@ test('annotations follow write and irreversible metadata', () => {
   assert.equal(annotations('write_beta').destructiveHint, false);
   assert.equal(annotations('send_beta').destructiveHint, true);
   assert.equal(annotations('read_stable').openWorldHint, true);
+  assert.equal(registered.find((tool) => tool.name === 'read_stable')!.meta.outputSchema, outSchema);
+  assert.equal(registered.find((tool) => tool.name === 'write_beta')!.meta.outputSchema, undefined);
 });
 
 test('read-only drops writes but keeps readOnlyCapable tools, annotated read-only', () => {
