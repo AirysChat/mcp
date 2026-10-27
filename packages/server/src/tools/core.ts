@@ -30,6 +30,17 @@ export const coreTools = [
       query: z.string().optional().describe('Full-text search over message content'),
       page: z.number().int().min(1).optional(),
     }),
+    outputSchema: z
+      .object({
+        _untrusted: z.string(),
+        data: z
+          .object({
+            meta: z.record(z.string(), z.unknown()),
+            payload: z.array(z.record(z.string(), z.unknown())),
+          })
+          .loose(),
+      })
+      .loose(),
     handler: async (args, { client }) => untrustedJson(await client.request('/conversations', { query: args })),
   }),
 
@@ -171,6 +182,7 @@ export const coreTools = [
       'WhatsApp inboxes have channel type `Channel::Whatsapp`, and only those with provider `whatsapp_cloud` support ' +
       'templates and campaigns.',
     inputSchema: z.object({}),
+    outputSchema: z.object({ payload: z.array(z.record(z.string(), z.unknown())) }).loose(),
     handler: async (_args, { client }) => json(await client.request('/inboxes')),
   }),
 
@@ -180,6 +192,7 @@ export const coreTools = [
     title: 'List agents',
     description: 'List account agents. Returns a bare array, not a paginated envelope. Use this to resolve an assignee ID before assigning.',
     inputSchema: z.object({}),
+    outputSchema: z.array(z.record(z.string(), z.unknown())),
     handler: async (_args, { client }) => json(await client.request('/agents')),
   }),
 
@@ -189,6 +202,7 @@ export const coreTools = [
     title: 'List labels',
     description: 'List labels defined on the account. Label IDs are what campaign audiences select on.',
     inputSchema: z.object({}),
+    outputSchema: z.object({ payload: z.array(z.record(z.string(), z.unknown())) }).loose(),
     handler: async (_args, { client }) => json(await client.request('/labels')),
   }),
 
@@ -197,6 +211,7 @@ export const coreTools = [
     stability: 'stable',
     title: 'List teams',
     inputSchema: z.object({}),
+    outputSchema: z.array(z.record(z.string(), z.unknown())),
     description: 'List teams defined on the account.',
     handler: async (_args, { client }) => json(await client.request('/teams')),
   }),
@@ -207,6 +222,11 @@ export const coreTools = [
     title: 'Show the authenticated user',
     description: 'Identify which user the configured API key belongs to. Useful for confirming the server is wired to the right account.',
     inputSchema: z.object({}),
+    outputSchema: z.object({
+      account_id: z.number().int(),
+      base_url: z.string(),
+      profile: z.record(z.string(), z.unknown()),
+    }),
     handler: async (_args, { client, config }) => {
       const profile = await client.request('/api/v1/profile', { prefix: 'raw' });
       return json({ account_id: config.accountId, base_url: config.baseUrl, profile });

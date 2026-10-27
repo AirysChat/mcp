@@ -49,12 +49,14 @@ interface ToolMetadata {
  */
 export interface AnyToolDefinition extends ToolMetadata {
   inputSchema: z.ZodType;
+  outputSchema?: z.ZodType;
   handler: (args: unknown, context: ToolContext) => Promise<ToolResult>;
 }
 
 export function defineTool<Schema extends z.ZodType>(
   definition: ToolMetadata & {
     inputSchema: Schema;
+    outputSchema?: z.ZodType;
     handler: (args: z.infer<Schema>, context: ToolContext) => Promise<ToolResult>;
   },
 ): AnyToolDefinition {
@@ -75,6 +77,7 @@ export function registerTools(server: McpServer, tools: AnyToolDefinition[], con
         title: tool.title,
         description: describe(tool),
         inputSchema: tool.inputSchema,
+        ...(tool.outputSchema ? { outputSchema: tool.outputSchema } : {}),
         annotations: {
           title: tool.title,
           readOnlyHint: !tool.write || (readOnly && Boolean(tool.readOnlyCapable)),
