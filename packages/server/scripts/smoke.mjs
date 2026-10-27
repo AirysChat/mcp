@@ -165,6 +165,16 @@ check('404 outside campaign routes does not blame campaign display IDs', () => {
   assert.doesNotMatch(text(missingInbox), /display IDs/);
 });
 
+const search = await session.call('tools/call', { name: 'airyschat_api_search', arguments: { query: 'deal won' } });
+check('catalog search returns ready-to-call endpoints without calling the API', () => {
+  const before = requests.length;
+  const payload = JSON.parse(text(search));
+  assert.equal(payload.results[0].call.path, '/crm_deals/:id/won');
+  assert.equal(payload.results[0].call.prefix, 'saas');
+  assert.match(payload.results[0].irreversible, /Conversions API/);
+  assert.equal(requests.length, before);
+});
+
 const arrayQuery = await session.call('tools/call', { name: 'wa_campaigns_list', arguments: { inbox_ids: [3, 9] } });
 check('array query params are sent as repeated key[]', () => {
   void arrayQuery;

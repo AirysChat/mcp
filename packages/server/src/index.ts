@@ -15,6 +15,7 @@ import { McpServer } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { AirysChatClient } from './client.js';
 import { ConfigError, loadConfig } from './config.js';
+import { catalogTools } from './tools/catalog.js';
 import { coreTools } from './tools/core.js';
 import { rawTools } from './tools/raw.js';
 import { whatsappTools } from './tools/whatsapp.js';
@@ -37,9 +38,9 @@ async function main(): Promise<void> {
     },
   );
 
-  // The escape hatch is always on: it is the only route to the ~325 endpoints that do
-  // not have a dedicated tool yet.
-  const selected: AnyToolDefinition[] = [...rawTools];
+  // The escape hatch and its catalog search are always on: together they are the route to
+  // every endpoint that does not have a dedicated tool yet.
+  const selected: AnyToolDefinition[] = [...catalogTools, ...rawTools];
   if (config.toolsets.has('core')) selected.push(...coreTools);
   if (config.toolsets.has('whatsapp')) selected.push(...whatsappTools);
 
