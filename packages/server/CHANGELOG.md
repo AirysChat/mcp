@@ -1,5 +1,15 @@
 # @airyschat/mcp
 
+## 0.3.0
+
+### Minor Changes
+
+- a60d024: Add contact write and merge tools (`contact_create`, `contact_update`, `contact_delete`, `contact_labels_set`, `contacts_merge`), non-destructive conversation label addition (`conversation_labels_add`), and account productivity read tools (`canned_responses_list`, `search`, `notifications_list`, `custom_filters_list`) in the `core` toolset.
+- 7b99219: Add 14 Phase B `experimental` CRM configuration tools (`crm_pipeline_upsert`, `crm_stage_upsert`, `crm_close_reason_upsert`, `crm_view_upsert`, `crm_settings_get`, `crm_settings_update`, `crm_business_hours_get`, `crm_business_hours_update`, `crm_follow_up_rules_list`, `crm_follow_up_rule_upsert`, `crm_automations_list`, `crm_automation_upsert`, `crm_conversion_settings_get`, `crm_conversion_settings_update`) and report Pundit authorization refusals (`You are not authorized to do this action`) as permission errors rather than invalid API keys.
+- 73507f5: Promote live-verified CRM and core read tools (`crm_pipelines_list`, `crm_pipeline_get`, `crm_deals_search`, `crm_deal_get`, `crm_deal_timeline`, `crm_deal_notes_list`, `crm_activities_list`, `conversation_deal_get`, `crm_insights`, `crm_close_reasons_list`, `crm_loss_reasons_list`, `crm_views_list`, `canned_responses_list`, `search`, `custom_filters_list`) to `stable`, normalize `crm_deals_search` status/stale/no_activity filters and `crm_stage_upsert` stage types against `AirysChat` CRM v2 models, and add the `/airyschat:crm-pipeline-review` skill.
+- 5543ca1: Add the `crm` toolset (`AIRYSCHAT_TOOLSETS=crm`, off by default) with Phase A read tools (`crm_pipelines_list`, `crm_pipeline_get`, `crm_deals_search`, `crm_deal_get`, `crm_deal_timeline`, `crm_insights`, `crm_close_reasons_list`, `crm_loss_reasons_list`, `crm_views_list`).
+- ebc4ec3: Add CRM Phase A write and lifecycle tools (`crm_deal_create`, `crm_deal_update`, `crm_deal_move`, `crm_deal_close`, `crm_deal_delete`, `crm_deals_bulk_update`, `crm_deal_notes_list`, `crm_deal_note_create`, `crm_deal_note_update`, `crm_deal_note_delete`, `crm_activities_list`, `crm_activity_create`, `crm_activity_update`, `crm_activity_complete`, `crm_activity_postpone`, `crm_activity_delete`, `conversation_deal_get`, `conversation_deal_update`).
+
 ## 0.2.0
 
 ### Minor Changes
