@@ -14,6 +14,7 @@
     "check": "pnpm typecheck && pnpm test && pnpm smoke && pnpm inventory:check",
     "inventory": "node scripts/inventory/build-inventory.mjs",
     "inventory:check": "node scripts/inventory/build-inventory.mjs --check",
+    "inventory:sync": "bash scripts/inventory/sync.sh",
     "changeset": "changeset",
     "release:prepare": "bash scripts/release/prepare.sh",
     "test": "pnpm -r test"
