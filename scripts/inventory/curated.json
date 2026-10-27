@@ -1,0 +1,38 @@
+{
+  "$comment": "Endpoints served by a curated (hand-written) tool. Path params are normalized to `{}`. Fifth element: the release the tool shipped in. `pnpm inventory:check` fails when a tool named here does not exist in packages/server/src/tools, or when a curated tool is missing from this list.",
+  "unmapped_tools": {
+    "airyschat_api": "Escape hatch; reaches every endpoint with coverage `raw`"
+  },
+  "endpoints": [
+    ["core", "GET", "/conversations", "conversations_list", "0.1.0"],
+    ["core", "GET", "/conversations/{}", "conversation_get", "0.1.0"],
+    ["core", "GET", "/conversations/{}/messages", "conversation_messages", "0.1.0"],
+    ["core", "POST", "/conversations/{}/messages", "conversation_reply", "0.1.0"],
+    ["core", "POST", "/conversations/{}/toggle_status", "conversation_update", "0.1.0"],
+    ["core", "POST", "/conversations/{}/toggle_priority", "conversation_update", "0.1.0"],
+    ["core", "POST", "/conversations/{}/assignments", "conversation_update", "0.1.0"],
+    ["core", "POST", "/conversations/{}/labels", "conversation_update", "0.1.0"],
+    ["core", "GET", "/contacts/search", "contacts_search", "0.1.0"],
+    ["core", "GET", "/contacts/{}", "contact_get", "0.1.0"],
+    ["core", "GET", "/contacts/{}/conversations", "contact_conversations", "0.1.0"],
+    ["core", "GET", "/inboxes", "inboxes_list", "0.1.0"],
+    ["core", "GET", "/agents", "agents_list", "0.1.0"],
+    ["core", "GET", "/labels", "labels_list", "0.1.0"],
+    ["core", "GET", "/teams", "teams_list", "0.1.0"],
+    ["raw", "GET", "/api/v1/profile", "me", "0.1.0"],
+    ["core", "GET", "/message_templates", "wa_templates_list", "0.1.0"],
+    ["core", "GET", "/message_templates/{}", "wa_template_get", "0.1.0"],
+    ["core", "GET", "/message_templates/{}/analytics", "wa_template_analytics", "0.1.0"],
+    ["core", "POST", "/message_templates/sync", "wa_templates_sync", "0.1.0"],
+    ["core", "GET", "/campaigns", "wa_campaigns_list", "0.1.0"],
+    ["core", "GET", "/campaigns/{}", "wa_campaign_get", "0.1.0"],
+    ["core", "GET", "/campaigns/{}/metrics", "wa_campaign_metrics", "0.1.0"],
+    ["core", "POST", "/campaigns/audience_estimate", "wa_audience_estimate", "0.1.0"],
+    ["core", "POST", "/campaigns/preflight", "wa_campaign_preflight", "0.1.0"],
+    ["core", "POST", "/campaigns", "wa_campaign_create", "0.1.0"],
+    ["core", "POST", "/campaigns/{}/launch", "wa_campaign_launch", "0.1.0"],
+    ["core", "POST", "/campaigns/{}/cancel", "wa_campaign_cancel", "0.1.0"],
+    ["core", "POST", "/campaigns/{}/test_send", "wa_campaign_test_send", "0.1.0"],
+    ["core", "GET", "/inboxes/{}/whatsapp_campaign_health", "wa_inbox_health", "0.1.0"]
+  ]
+}

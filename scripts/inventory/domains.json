@@ -1,0 +1,322 @@
+{
+  "$comment": "Default toolset and target release for every AirysChat API domain (the first path segment after the account prefix). Edit here, then run `pnpm inventory`. Rows already in docs/api/inventory.csv keep their own toolset/release; these defaults only seed new rows. `exclude` marks domains that cannot be driven through MCP as-is, with the reason recorded in the row.",
+  "core": {
+    "conversations": [
+      "core",
+      "0.3.0"
+    ],
+    "contacts": [
+      "core",
+      "0.3.0"
+    ],
+    "agents": [
+      "core",
+      "0.3.0"
+    ],
+    "labels": [
+      "core",
+      "0.3.0"
+    ],
+    "teams": [
+      "core",
+      "0.3.0"
+    ],
+    "search": [
+      "core",
+      "0.3.0"
+    ],
+    "canned_responses": [
+      "core",
+      "0.3.0"
+    ],
+    "custom_filters": [
+      "core",
+      "0.3.0"
+    ],
+    "notifications": [
+      "core",
+      "0.3.0"
+    ],
+    "contact_inboxes": [
+      "core",
+      "0.3.0"
+    ],
+    "bulk_actions": [
+      "core",
+      "0.3.0"
+    ],
+    "actions": [
+      "core",
+      "0.3.0"
+    ],
+    "assignable_agents": [
+      "core",
+      "0.3.0"
+    ],
+    "inboxes": [
+      "admin",
+      "0.8.0"
+    ],
+    "inbox_members": [
+      "admin",
+      "0.8.0"
+    ],
+    "automation_rules": [
+      "admin",
+      "0.8.0"
+    ],
+    "macros": [
+      "admin",
+      "0.8.0"
+    ],
+    "webhooks": [
+      "admin",
+      "0.8.0"
+    ],
+    "integrations": [
+      "admin",
+      "0.8.0"
+    ],
+    "agent_capacity_policies": [
+      "admin",
+      "0.8.0"
+    ],
+    "assignment_policies": [
+      "admin",
+      "0.8.0"
+    ],
+    "sla_policies": [
+      "admin",
+      "0.8.0"
+    ],
+    "applied_slas": [
+      "admin",
+      "0.8.0"
+    ],
+    "custom_roles": [
+      "admin",
+      "0.8.0"
+    ],
+    "custom_attribute_definitions": [
+      "admin",
+      "0.8.0"
+    ],
+    "dashboard_apps": [
+      "admin",
+      "0.8.0"
+    ],
+    "data_imports": [
+      "admin",
+      "0.8.0"
+    ],
+    "branded_email_layout": [
+      "admin",
+      "0.8.0"
+    ],
+    "saml_settings": [
+      "admin",
+      "0.8.0"
+    ],
+    "notification_settings": [
+      "admin",
+      "0.8.0"
+    ],
+    "onboarding": [
+      "admin",
+      "0.8.0"
+    ],
+    "audit_logs": [
+      "admin",
+      "0.8.0"
+    ],
+    "message_templates": [
+      "whatsapp",
+      "0.6.0"
+    ],
+    "campaigns": [
+      "whatsapp",
+      "0.6.0"
+    ],
+    "campaign_intelligence_reports": [
+      "whatsapp",
+      "0.6.0"
+    ],
+    "whatsapp": [
+      "whatsapp",
+      "0.6.0"
+    ],
+    "whatsapp_flows": [
+      "whatsapp",
+      "0.6.0"
+    ],
+    "whatsapp_stickers": [
+      "whatsapp",
+      "0.6.0"
+    ],
+    "whatsapp_contact_preferences": [
+      "whatsapp",
+      "0.6.0"
+    ],
+    "whatsapp_calls": [
+      "whatsapp",
+      "0.6.0"
+    ],
+    "calls": [
+      "whatsapp",
+      "0.6.0"
+    ],
+    "salvy": [
+      "whatsapp",
+      "0.6.0"
+    ],
+    "companies": [
+      "crm",
+      "0.3.0"
+    ],
+    "orders": [
+      "crm",
+      "0.3.0"
+    ],
+    "captain": [
+      "ai_agents",
+      "0.4.0"
+    ],
+    "agent_bots": [
+      "ai_agents",
+      "0.4.0"
+    ],
+    "meta_agent": [
+      "meta_agent",
+      "0.4.0"
+    ],
+    "portals": [
+      "help_center",
+      "0.8.0"
+    ],
+    "csat_survey_responses": [
+      "reports",
+      "0.6.0"
+    ]
+  },
+  "core_v2": {
+    "reports": [
+      "reports",
+      "0.6.0"
+    ],
+    "summary_reports": [
+      "reports",
+      "0.6.0"
+    ],
+    "live_reports": [
+      "reports",
+      "0.6.0"
+    ],
+    "year_in_review": [
+      "reports",
+      "0.6.0"
+    ]
+  },
+  "saas": {
+    "crm_deals": [
+      "crm",
+      "0.3.0"
+    ],
+    "crm_activities": [
+      "crm",
+      "0.3.0"
+    ],
+    "crm_follow_up_rules": [
+      "crm",
+      "0.3.0"
+    ],
+    "crm_saved_views": [
+      "crm",
+      "0.3.0"
+    ],
+    "crm_stage_automations": [
+      "crm",
+      "0.3.0"
+    ],
+    "crm_business_hours": [
+      "crm",
+      "0.3.0"
+    ],
+    "crm_pipeline_settings": [
+      "crm",
+      "0.3.0"
+    ],
+    "crm_dashboard": [
+      "crm",
+      "0.3.0"
+    ],
+    "crm_results": [
+      "crm",
+      "0.3.0"
+    ],
+    "pipelines": [
+      "crm",
+      "0.3.0"
+    ],
+    "closure_reasons": [
+      "crm",
+      "0.3.0"
+    ],
+    "whatsapp_conversion_settings": [
+      "crm",
+      "0.3.0"
+    ],
+    "whatsapp_conversion_events": [
+      "crm",
+      "0.3.0"
+    ],
+    "conversations": [
+      "crm",
+      "0.3.0"
+    ],
+    "contacts": [
+      "crm",
+      "0.3.0"
+    ],
+    "ai_agents": [
+      "ai_agents",
+      "0.4.0"
+    ],
+    "llm": [
+      "ai_agents",
+      "0.4.0"
+    ],
+    "captain_assistants": [
+      "ai_agents",
+      "0.4.0"
+    ],
+    "captain_inboxes": [
+      "ai_agents",
+      "0.4.0"
+    ],
+    "ai_manager": [
+      "meta_agent",
+      "0.4.0"
+    ],
+    "calls": [
+      "whatsapp",
+      "0.6.0"
+    ]
+  },
+  "raw": {
+    "api": [
+      "core",
+      "0.3.0"
+    ]
+  },
+  "exclude": {
+    "google": "OAuth authorize redirect for channel setup; browser-only flow",
+    "instagram": "OAuth authorize redirect for channel setup; browser-only flow",
+    "microsoft": "OAuth authorize redirect for channel setup; browser-only flow",
+    "notion": "OAuth authorize redirect for integration setup; browser-only flow",
+    "tiktok": "OAuth authorize redirect for channel setup; browser-only flow",
+    "twitter": "OAuth authorize redirect for channel setup; browser-only flow",
+    "channels": "Channel provisioning callback; browser-only flow",
+    "callbacks": "Facebook/Instagram page registration callbacks; browser-only flow",
+    "upload": "Multipart file upload; needs an MCP file/resource design before exposure"
+  }
+}
