@@ -38,3 +38,16 @@ All `510` write endpoints (`POST`, `PUT`, `PATCH`, `DELETE`) across `docs/api/in
    - Bulk/macro operations: `POST /macros/:id/execute`, `POST /portals/:portal_id/articles/bulk_actions/translate`, `POST /whatsapp_contact_preferences/backfill_apply`, `POST /data_imports/:id/retry`
    - Meta phone identity & Salvy provisioning: `POST /inboxes/:inbox_id/phone_verification/(request_code|verify_code|update_display_name)`, `POST /inboxes/:inbox_id/username`, `POST /salvy/(create_virtual_number|register_number)`
    - Credential rotation: `POST /api/v1/profile/mfa/backup_codes`
+
+## 2026-10-27 — v0.2.0 release
+
+| Item | Value |
+|---|---|
+| Release PR | #63 (`chore(release): v0.2.0`), merged as `aa2df85` |
+| Version & Tag | `@airyschat/mcp@0.2.0` |
+| `release.yml` CI Run | `40532498661` (`success`) |
+| GitHub Packages | `https://github.com/orgs/AirysChat/packages/npm/mcp/1455315467` (`npm.pkg.github.com`) |
+| GitHub Release | `https://github.com/AirysChat/mcp/releases/tag/%40airyschat/mcp%400.2.0` |
+| Milestone `v0.2.0` | Closed (`39` closed issues, `0` open) |
+
+
