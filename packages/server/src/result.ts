@@ -61,7 +61,10 @@ function describeApiError(error: ApiError): string {
     case 403:
       return `Forbidden${detail}. The token is valid but lacks permission for this account or resource.`;
     case 404:
-      return `Not found${detail}. Note that campaign IDs are account-scoped display IDs, not primary keys.`;
+      // Only campaign member routes take display IDs; elsewhere the hint misleads (FND-17).
+      return /\/campaigns\/\d+(\/|$)/.test(new URL(error.url).pathname)
+        ? `Not found${detail}. Note that campaign IDs are account-scoped display IDs, not primary keys.`
+        : `Not found${detail}. Check the IDs passed to this tool.`;
     case 422:
       return `Rejected${detail}.`;
     default:

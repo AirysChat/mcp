@@ -137,10 +137,11 @@ export const whatsappTools = [
       'Evaluate an audience, template, and send window against suppression rules, WABA health, template approval, and ' +
       'recent complaint signals — without sending anything. Safe to call repeatedly. ' +
       'IMPORTANT: a blocked check still returns HTTP 200, so read `allowed` and `blocking_issues` rather than trusting ' +
-      'the absence of an error. Always run this before wa_campaign_launch and show the operator what it says.',
+      'the absence of an error. Always run this before wa_campaign_launch and show the operator what it says. ' +
+      '`inbox_id` is always required — AirysChat resolves the inbox first, even when `campaign_id` is given.',
     inputSchema: z.object({
-      campaign_id: z.number().int().optional().describe('Preflight a saved campaign by display ID'),
-      inbox_id: z.number().int().optional(),
+      inbox_id: z.number().int().describe('WhatsApp inbox that will send. Required even for a saved campaign'),
+      campaign_id: z.number().int().optional().describe('Also evaluate a saved campaign (display ID) on that inbox'),
       message: z.string().optional().describe('Template name to be sent'),
       whatsapp_template_category: TEMPLATE_CATEGORY.optional(),
       audience: audienceSelector.optional(),

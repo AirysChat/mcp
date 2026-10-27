@@ -144,6 +144,18 @@ check('raw non-GET is refused without confirm', () => {
   assert.match(text(rawWrite), /not reversible/);
 });
 
+const noInbox = await session.call('tools/call', { name: 'wa_campaign_preflight', arguments: { campaign_id: 7 } }).catch((error) => ({ isError: true, content: [{ text: error.message }] }));
+check('preflight without inbox_id is refused before calling the API', () => {
+  assert.equal(noInbox.isError, true);
+  assert.ok(!requests.some((r) => r.path.endsWith('/campaigns/preflight')), 'must not have called the API');
+});
+
+const missingInbox = await session.call('tools/call', { name: 'wa_inbox_health', arguments: { inbox_id: 404 } });
+check('404 outside campaign routes does not blame campaign display IDs', () => {
+  assert.equal(missingInbox.isError, true);
+  assert.doesNotMatch(text(missingInbox), /display IDs/);
+});
+
 const arrayQuery = await session.call('tools/call', { name: 'wa_campaigns_list', arguments: { inbox_ids: [3, 9] } });
 check('array query params are sent as repeated key[]', () => {
   void arrayQuery;
