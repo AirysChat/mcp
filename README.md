@@ -8,8 +8,9 @@ AirysChat for AI agents. This monorepo ships:
 - **Plugins** for agent clients (Claude Code now; Codex, Gemini CLI and Antigravity in 1.0).
 - **Skills** that encode safe AirysChat workflows (triage, campaign pre-flight, pipeline review…).
 
-> **Status — v0.1.0, private, pre-release.** 28 tools, verified against a mock API. The project
-> restarted on 2026-10-26; see the [release train](specs/README.md).
+> **Status — v0.2.0 in progress (private, GitHub Packages).** 29 curated tools + embedded 807-endpoint
+> catalog (`airyschat_api_search` + `airyschat_api`), verified on `staging.airys.app` account 6. See
+> the [install guide](packages/server/README.md#install) and [release train](specs/README.md).
 
 ## Why this exists
 

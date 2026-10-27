@@ -19,6 +19,9 @@
     "url": "git+https://github.com/AirysChat/mcp.git",
     "directory": "packages/server"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "homepage": "https://github.com/AirysChat/mcp#readme",
   "bugs": "https://github.com/AirysChat/mcp/issues",
   "scripts": {
