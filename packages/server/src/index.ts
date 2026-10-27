@@ -3,14 +3,14 @@
  * AirysChat MCP server (stdio).
  *
  * stdio is the transport that works everywhere the target clients live — Claude Code,
- * Codex, and Gemini CLI all spawn a local process. A hosted streamable-HTTP deployment
- * for end customers is a separate concern and belongs in the Rails app, where it can
- * reuse Pundit scoping instead of re-implementing it here.
+ * Codex, Gemini CLI and Antigravity all spawn a local process. The hosted Streamable HTTP
+ * entry point (lane 005, ADRs 0004/0006) will reuse the same tool registry.
  *
  * Nothing may be written to stdout except protocol traffic: stdout IS the transport.
  * Diagnostics go to stderr.
  */
 
+import { createRequire } from 'node:module';
 import { McpServer } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { AirysChatClient } from './client.js';
@@ -20,7 +20,8 @@ import { rawTools } from './tools/raw.js';
 import { whatsappTools } from './tools/whatsapp.js';
 import { registerTools, type AnyToolDefinition } from './toolsets.js';
 
-const VERSION = '0.1.0';
+// Single source of truth: the published package version (bumped by Changesets).
+const VERSION: string = createRequire(import.meta.url)('../package.json').version;
 
 async function main(): Promise<void> {
   const config = loadConfig();
