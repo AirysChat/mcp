@@ -3,7 +3,7 @@
 | ID | P | Size | Task | Done when | Status |
 |---|---|---|---|---|---|
 | FND-01 | P0 | M | Monorepo: move server to `packages/server`, pnpm workspace, root scripts | `pnpm typecheck` + `pnpm smoke` green from root | Done (2026-10-26, see verification) |
-| FND-02 | P0 | S | GitHub repo `AirysChat/mcp` private; labels, milestones v0.2.0…v1.0.0, CODEOWNERS, templates, ruleset on `main` | Repo exists, PR template renders, ruleset blocks direct push (or plan limitation documented) | In progress |
+| FND-02 | P0 | S | GitHub repo `AirysChat/mcp` private; labels, milestones v0.2.0…v1.0.0, CODEOWNERS, templates, ruleset on `main` | Repo exists, PR template renders, ruleset blocks direct push (or plan limitation documented) | Done (2026-10-26: private repo, `scripts/github/bootstrap.sh` → 48 labels + 9 milestones, ruleset `main` active (PR + `check` + squash + linear), secret scanning + push protection, Dependabot alerts) |
 | FND-03 | P0 | S | CI workflow: install, typecheck, smoke, unit tests, `inventory:check`, `pnpm audit --prod` | Required check green on the foundation PR | In progress |
 | FND-04 | P0 | S | Changesets + `release.yml` (Version Packages PR; publish step gated on FND-11) | Release PR opens automatically after a changeset lands on `main` | In progress |
 | FND-05 | P1 | S | Import `~/airyschat-claude-plugin` with history into `plugins/claude/`; root `.claude-plugin/marketplace.json` | `claude plugin marketplace add AirysChat/mcp` lists `airyschat`; history visible with `git log --follow` | Done (2026-10-26, subtree of `704fc8d`; `claude plugin validate --strict` passes for plugin and marketplace) |

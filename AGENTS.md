@@ -20,6 +20,7 @@ Platform/API repo: `AirysBR/airys-platform` (local `~/airys-platform`). Specs fo
 | `docs/adr/` | Architecture decisions. Read before changing transport, auth, coverage or safety. |
 | `docs/research/` | Dated market research. Volatile; re-verify before quoting. |
 | `scripts/inventory/` | Inventory generator, domain→toolset plan, curated tool map. |
+| `scripts/github/` | Idempotent GitHub setup: labels, milestones, ruleset, issue seeding. |
 | `.agents/rules/` | Scoped rules (Antigravity loads them; others: read when the trigger applies). |
 | `.agents/skills/` | Repository workflows. Read the matching `SKILL.md` fully before acting. |
 | `.agents/agents/` | Subagent definitions (also exposed to Claude Code via `.claude/agents`). |
