@@ -1,6 +1,6 @@
 # 010 — Distribution & GA
 
-- Release: **1.0.0** · Target 2027-04-30 · Prefix `GA`
+- Release: **1.0.0** · Target 2027-05-31 (moved 2026-10-27) · Prefix `GA`
 
 ## Why
 
@@ -19,7 +19,7 @@ the plugin marketplaces of the clients our customers use.
 - **Docs site** (or README set): quickstarts per client, toolset reference generated from code,
   safety model, "AirysChat MCP + Meta WhatsApp Business Tools MCP" complementarity guide, Muse Code
   and Antigravity setup.
-- **OAuth live** (005b) for Claude.ai / ChatGPT / Muse connectors.
+- **OAuth live** (lane 005, ADR 0006) for Claude.ai / ChatGPT / Muse connectors.
 - API stability policy: stable tool names/params frozen; deprecations follow ADR 0003.
 
 ## Acceptance

@@ -1,6 +1,6 @@
 # 008 — Admin & help center
 
-- Release: **0.8.0** · Target 2027-03-15 · Prefix `ADM` · Toolsets `admin`, `help_center`
+- Release: **0.8.0** · Target 2027-04-12 (moved 2026-10-27) · Prefix `ADM` · Toolsets `admin`, `help_center`
 
 ## Why
 

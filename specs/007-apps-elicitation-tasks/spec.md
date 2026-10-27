@@ -1,7 +1,7 @@
 # 007 — MCP Apps, elicitation & tasks
 
-- Release: **0.7.0** · Target 2027-02-22 · Prefix `APP`
-- Depends on: 001 (FND-12 spike), 003, 006
+- Release: **0.7.0** · Target 2027-03-22 (moved 2026-10-27) · Prefix `APP`
+- Depends on: 001 (FND-12 spike), 003, 006; 005 for remote clients (ChatGPT)
 
 ## Why
 

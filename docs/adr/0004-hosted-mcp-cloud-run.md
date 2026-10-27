@@ -1,6 +1,6 @@
 # ADR 0004 — Hosted MCP on Cloud Run
 
-- Status: Accepted (2026-10-26); auth phase 2 is `NEEDS_PRODUCT_DECISION`
+- Status: Accepted (2026-10-26); auth amended by [ADR 0006](0006-hosted-auth-scoped-mcp-tokens.md) (2026-10-27)
 - Supersedes: the v0.1 README note that hosted MCP "belongs in the Rails app"
 
 ## Context
@@ -33,6 +33,11 @@ applies. A separate service keeps the Rails app free of MCP SDK churn and reuses
 - **No server-side state** beyond OAuth artefacts; per-request config comes from the token.
 
 ### Auth, in phases
+
+> **Superseded by [ADR 0006](0006-hosted-auth-scoped-mcp-tokens.md) (2026-10-27).** The owner chose
+> option (c): AirysChat issues scoped, revocable, audience-bound MCP tokens; hosted accepts only
+> those, and there is no interim phase forwarding full user tokens. The table below is kept for
+> history.
 
 | Phase | Mechanism | Clients |
 |---|---|---|

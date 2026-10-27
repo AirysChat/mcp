@@ -15,12 +15,16 @@ Dates are targets; the lane scope is the contract (ADR 0003).
 | **0.2.0** | Foundation & catalog | [001](001-foundation/spec.md), [002](002-api-catalog/spec.md) | 2026-11-09 | discovery of all 775 | CI green, v0.1 tools live-verified on staging, `airyschat_api_search` works |
 | **0.3.0** | CRM & contacts | [003](003-crm-and-contacts/spec.md) | 2026-11-30 | 216 | CRM read+write tools `beta`, deal won/lost gated, verified on staging acct 6 |
 | **0.4.0** | AI agents & Meta Business Agent | [004](004-ai-agents-and-meta-agent/spec.md) | 2026-12-14 | 216 | Read tools `stable`, writes `beta`, responder-ownership guard verified |
-| **0.5.0** | Hosted MCP (Cloud Run) | [005](005-hosted-mcp/spec.md) | 2027-01-11 | — | `mcp.airys.chat` serving phase-1 auth, security review passed |
-| **0.6.0** | WhatsApp complete & reports | [006](006-whatsapp-and-reports/spec.md) | 2027-02-01 | 100 | Templates CRUD + reports v2 curated |
-| **0.7.0** | MCP Apps, elicitation, tasks | [007](007-apps-elicitation-tasks/spec.md) | 2027-02-22 | — | CRM board + preflight report render in Claude and ChatGPT |
-| **0.8.0** | Admin & help center | [008](008-admin-and-help-center/spec.md) | 2027-03-15 | 213 | Admin toolset `beta`, destructive ops gated |
+| **0.5.0** | WhatsApp complete & reports | [006](006-whatsapp-and-reports/spec.md) | 2027-01-11 | 100 | Templates CRUD + reports v2 curated |
+| **0.6.0** | Hosted MCP (Cloud Run) + scoped MCP tokens | [005](005-hosted-mcp/spec.md) | 2027-03-01 | — | `mcp.airys.chat` with OAuth + scoped tokens (ADR 0006), AirysChat lane landed, security review passed |
+| **0.7.0** | MCP Apps, elicitation, tasks | [007](007-apps-elicitation-tasks/spec.md) | 2027-03-22 | — | CRM board + preflight report render in Claude and ChatGPT |
+| **0.8.0** | Admin & help center | [008](008-admin-and-help-center/spec.md) | 2027-04-12 | 213 | Admin toolset `beta`, destructive ops gated |
 | **0.9.0** | Airys API (platform) toolset | [009](009-airys-platform-toolset/spec.md) | after airys-platform M2 | — | Number health and alerts from `api.airys.chat` |
-| **1.0.0** | GA & distribution | [010](010-distribution-ga/spec.md) | 2027-04-30 | — | Public repo/npm, MCP Registry, 4 client plugins, OAuth (005b) live |
+| **1.0.0** | GA & distribution | [010](010-distribution-ga/spec.md) | 2027-05-31 | — | Public repo/npm, MCP Registry, 4 client plugins, connector directories |
+
+> Renumbered on 2026-10-27: hosted MCP (lane 005) moved from 0.5 to 0.6 because the owner chose
+> scoped MCP tokens issued by AirysChat (ADR 0006), which needs an AirysChat lane first. WhatsApp &
+> reports (lane 006) moved up to 0.5. Later targets shifted by ~4 weeks.
 
 ```mermaid
 gantt
@@ -32,14 +36,15 @@ gantt
   section Coverage
   003 CRM & contacts       :b1, after a1, 21d
   004 AI agents & MBA      :b2, after b1, 14d
-  006 WhatsApp & reports   :b3, after c1, 21d
+  006 WhatsApp & reports   :b3, after b2, 28d
   008 Admin & help center  :b4, after d1, 21d
   section Platform
-  005 Hosted MCP           :c1, after b2, 28d
-  007 Apps/elicitation     :d1, after b3, 21d
-  009 Airys API toolset    :c2, after b4, 21d
+  AirysChat MCP tokens     :x1, after b2, 42d
+  005 Hosted MCP           :c1, after b3, 49d
+  007 Apps/elicitation     :d1, after c1, 21d
+  009 Airys API toolset    :c2, after b4, 14d
   section GA
-  010 Distribution & GA    :e1, after c2, 21d
+  010 Distribution & GA    :e1, after c2, 35d
 ```
 
 ## Lanes
@@ -57,11 +62,16 @@ gantt
 | [009-airys-platform-toolset](009-airys-platform-toolset/tasks.md) | PLT | Planned |
 | [010-distribution-ga](010-distribution-ga/tasks.md) | GA | Planned |
 
-## Decisions pending from the owner
+## Owner decisions
 
-| Topic | Lane | Recommendation |
+| Date | Topic | Decision | Record |
+|---|---|---|---|
+| 2026-10-27 | Hosted MCP auth | AirysChat issues scoped, revocable, audience-bound MCP tokens and acts as OAuth AS; hosted accepts only those (option c) | [ADR 0006](../docs/adr/0006-hosted-auth-scoped-mcp-tokens.md) |
+| 2026-10-27 | Captain vs AI Agents | AI Agents + Meta Business Agent get curated tools; Captain stays catalog-only (`airyschat_api`) | lane 004, AIA-09 |
+| 2026-10-27 | MCP Registry namespace | `chat.airys/mcp`, DNS TXT verification on `airys.chat` | lane 010, GA-06 |
+
+## Decisions pending
+
+| Topic | Lane | State |
 |---|---|---|
-| OAuth design for hosted MCP (Doorkeeper in AirysChat vs `mcp` as AS + consent page vs MCP-scoped tokens) | 005 | `mcp` as AS with CIMD + AirysChat consent page now; scoped tokens later |
-| Public npm before 1.0? | 001/010 | No — GitHub Packages until 1.0 |
-| Captain (Chatwoot assistant) vs AirysChat AI Agents: which gets curated tools | 004 | AI Agents + MBA curated; Captain catalog-only unless still sold |
-| Registry namespace `chat.airys/mcp` (DNS) vs `io.github.airyschat/mcp` | 010 | `chat.airys/mcp` |
+| npm scope `@airyschat` and public npm timing | 010 (GA-05) | The `airyschat` npm org **exists** (registry answers for it, no public packages). The owner checks whether it belongs to him/Airys; if not, choose another name or file an npm dispute. GitHub Packages (`npm.pkg.github.com/@airyschat`) is unaffected. |
