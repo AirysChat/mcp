@@ -62,6 +62,10 @@ a formality to retry past.
 | `contact_delete` / `crm_deal_delete` / `crm_deal_note_delete` / `crm_activity_delete` | Permanently deletes the record. |
 | `crm_deal_close` | Closes a deal as `won` or `lost`; closing as `won` can dispatch a Meta Conversions API (`Purchase`) event unless `send_conversion_event: false`. |
 | `crm_deals_bulk_update` | Requires `confirm: true` when modifying `> 5` deals or when `operation` is `mark_lost` or `delete`. |
+| `ai_mode_transition` | Switches the canonical automated responder (`human_only`, `meta_native`, `airyschat_native`, `external_runtime`) for an inbox and archives the previous active mode. Runs `/ai_manager/mode_transition_preview` first and requires `confirm: true` on `activate`. |
+| `ai_agent_inbox_upsert` | Links/updates/detaches an AI Agent on an inbox. Setting `auto_reply: true` enforces the one-responder rule in preflight and requires `confirm: true`. |
+| `ai_agent_publish` / `ai_agent_version_restore` / `ai_agent_delete` | Publishes or discards an AI Agent workflow draft, restores a historical version, or permanently deletes the agent. All require `confirm: true`. |
+| `mba_onboarding` / `mba_settings_update` / `mba_business_info_update` / `mba_resource_upsert` / `mba_resource_delete` / `mba_release` / `mba_thread_control_release` / `mba_handoff_update` / `mba_budget_update` | Mutates Meta Business Agent state at Meta Graph API or changes live conversation/handoff routing. All require `confirm: true` and carry automatic `idempotency_key` + `observed_hash` optimistic concurrency checks where required. |
 | `airyschat_api` with any non-GET method | Arbitrary effects this server cannot predict. |
 
 Approval on one conversation or campaign does **not** carry to another. Ask again.
@@ -96,6 +100,9 @@ These cause real mistakes. All are confirmed against AirysChat's controllers.
 9. **`wa_campaign_metrics` is unbounded.** It returns the full per-contact delivery log.
    For a large broadcast, prefer `wa_campaign_get` unless the user wants per-recipient
    detail.
+10. **One automated responder per WhatsApp inbox/phone.** An inbox's canonical `Saas::AiChannelMode` is one of `human_only`, `meta_native`, `airyschat_native`, or `external_runtime`. Setting `auto_reply: true` in `ai_agent_inbox_upsert` is blocked unless the inbox's canonical mode is already `airyschat_native` owned by that `agent_id`. Use `ai_mode_transition` (`action: "preview"` then `action: "activate"`) to switch canonical ownership first.
+11. **`mba_settings_update` cannot enable rollout.** Passing `rollout.enabled: true` to `PUT /ai_manager/inboxes/:inbox_id/meta_business_agent/settings` is rejected with `422 settings_rollout_Requires_release_control`. Use `mba_release` (`confirm_check` → `canary` → `promote`) to enable or promote Meta Business Agent rollout.
+12. **Meta Business Agent thread takeover is automatic on human reply.** There is no "takeover" API endpoint — sending a human reply (`conversation_reply` without `private: true`) automatically transfers thread control from Meta Business Agent to the human operator. Use `mba_thread_control_release` only to hand the conversation back to Meta AI.
 
 ## Choosing tools
 

@@ -73,6 +73,16 @@ test('non-2xx responses throw ApiError with status, detail and plan-gate classif
     return true;
   });
 
+  stubFetch(403, '{"error":"Recurso não disponível no seu plano atual"}');
+  await assert.rejects(new AirysChatClient(config).request('/meta_agent/inboxes'), (error: unknown) => {
+    assert.ok(error instanceof ApiError);
+    assert.equal(error.isPlanGate, true);
+    return true;
+  });
+
+  stubFetch(403, '{"error":"You are not authorized"}');
+  await assert.rejects(new AirysChatClient(config).request('/ai_agents', { prefix: 'saas' }), (error: unknown) => error instanceof ApiError && !error.isPlanGate);
+
   stubFetch(403, '{"error":"forbidden"}');
   await assert.rejects(new AirysChatClient(config).request('/inboxes'), (error: unknown) => error instanceof ApiError && !error.isPlanGate);
 });
