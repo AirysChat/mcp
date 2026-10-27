@@ -21,7 +21,7 @@ operators running campaigns, the hosted service, and plugins in four clients.
 - New tools ship `beta`. Promotion to `stable` is a lane task that needs live evidence on staging
   (`.agents/skills/live-verify`) and a changeset.
 - `experimental` is for tools wrapping endpoints that are themselves unstable upstream
-  (e.g. `x-airys-stub`, MBA evals).
+  (e.g. MBA evals, endpoints whose controllers are still stubs).
 - `deprecated` tools stay registered for one minor release, with a description prefix
   `DEPRECATED — use X`, then are removed.
 - The hosted service (lane 005) maps the same switches to per-connection configuration.

@@ -26,9 +26,9 @@ export const rawTools = [
       '  raw  — {path} verbatim, for non-account-scoped endpoints such as /api/v1/profile\n\n' +
       'Pass `path` WITHOUT the prefix for core and saas — "/campaigns/12", not "/api/v1/accounts/5/campaigns/12". ' +
       'Any method other than GET requires `confirm: true`.\n\n' +
-      'Endpoint reference: swagger/tag_groups/airyschat_swagger.json in the AirysChat repo for AirysChat endpoints, and ' +
-      'application_swagger.json for inherited Chatwoot ones. Operations marked `x-airys-stub: true` are placeholders whose ' +
-      'request and response shapes are not yet documented — treat those as unverified.',
+      'Endpoint reference: inherited Chatwoot endpoints (core) are documented in swagger/tag_groups/application_swagger.json ' +
+      'in the AirysChat repo. AirysChat-only endpoints (saas) have no published schema: their behaviour is defined by ' +
+      'their controllers, so inspect a GET response before writing and treat request shapes as unverified.',
     write: true,
     inputSchema: z.object({
       path: z.string().min(1).describe('Path without the account prefix, e.g. "/whatsapp_flows"'),

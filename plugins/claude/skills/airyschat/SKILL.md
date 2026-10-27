@@ -107,9 +107,10 @@ user explicitly asks for a raw call.
 Pass `path` **without** the prefix: `/whatsapp_flows`, not
 `/api/v1/accounts/5/whatsapp_flows`.
 
-The endpoint reference is `swagger/tag_groups/airyschat_swagger.json` in the AirysChat
-repo. Operations marked `x-airys-stub: true` are placeholders whose request and response
-shapes are not documented yet — treat those as unverified and tell the user so.
+Inherited Chatwoot endpoints (`core`) are documented in
+`swagger/tag_groups/application_swagger.json` in the AirysChat repo. AirysChat-only
+endpoints (`saas`) have no published schema yet: inspect a GET response before writing,
+treat request shapes as unverified, and tell the user so.
 
 ## Workflows
 
