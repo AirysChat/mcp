@@ -11,6 +11,7 @@
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { LATEST_PROTOCOL_VERSION } from '@modelcontextprotocol/server';
 
@@ -81,12 +82,13 @@ function connect(extraEnv = {}) {
 }
 
 async function handshake(session) {
-  await session.call('initialize', {
+  const result = await session.call('initialize', {
     protocolVersion: LATEST_PROTOCOL_VERSION,
     capabilities: {},
     clientInfo: { name: 'smoke', version: '0' },
   });
   session.notify('notifications/initialized', {});
+  return result;
 }
 
 const text = (result) => result.content.map((block) => block.text).join('\n');
@@ -99,7 +101,9 @@ const check = (label, fn) => {
 
 // ---------------------------------------------------------------- default session
 const session = connect();
-await handshake(session);
+const initialized = await handshake(session);
+const packageVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
+check(`serverInfo.version matches package.json (${packageVersion})`, () => assert.equal(initialized.serverInfo.version, packageVersion));
 
 const { tools } = await session.call('tools/list', {});
 const byName = new Map(tools.map((tool) => [tool.name, tool]));
