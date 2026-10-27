@@ -33,7 +33,7 @@ jobs:
       # Publishing stays disabled until FND-11 sets the repository variable
       # PUBLISH_ENABLED=true (GitHub Packages before 1.0, public npm at 1.0 — ADR 0003).
       - name: Changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           title: 'chore(release): version packages'
           commit: 'chore(release): version packages'
