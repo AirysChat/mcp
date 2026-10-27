@@ -100,6 +100,14 @@ const mock = createServer((req, res) => {
   if (url.pathname === '/saas/api/v1/accounts/5/closure_reasons') return send(200, [{ id: 9, name: 'Preço', reason_type: 'lost' }]);
   if (url.pathname === '/saas/api/v1/accounts/5/crm_deals/loss_reasons') return send(200, { reasons: [{ id: 9, name: 'Preço', count: 4 }] });
   if (url.pathname === '/saas/api/v1/accounts/5/crm_saved_views') return send(200, { payload: [{ id: 1, name: 'Meus negócios' }] });
+  if (url.pathname === '/saas/api/v1/accounts/5/crm_pipeline_settings') {
+    if (req.method === 'PATCH') return send(401, { error: 'You are not authorized to do this action' });
+    return send(200, { auto_create_deals: true, default_currency: 'BRL' });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/5/whatsapp_conversion_settings') {
+    if (req.method === 'PATCH') return send(200, { enabled: true, dataset_id: '123456', test_mode: true });
+    return send(200, { enabled: false, dataset_id: '123456', test_mode: true });
+  }
 
   return send(404, { error: 'not found' });
 });
@@ -534,7 +542,60 @@ check('conversation_deal_get and conversation_deal_update operate on conversatio
   assert.ok(!convDealUpdate.isError, text(convDealUpdate));
   assert.match(text(convDealUpdate), /Plano Pro/);
 });
+check('Phase B experimental CRM tools are hidden when AIRYSCHAT_FEATURES=beta', () => {
+  assert.ok(!crmByName.has('crm_pipeline_upsert'));
+  assert.ok(!crmByName.has('crm_conversion_settings_update'));
+});
 crmSession.child.kill();
+
+// ---------------------------------------------------------------- CRM experimental Phase B session
+const crmExperimental = connect({ AIRYSCHAT_TOOLSETS: 'crm', AIRYSCHAT_FEATURES: 'experimental' });
+await handshake(crmExperimental);
+const expToolsList = (await crmExperimental.call('tools/list', {})).tools;
+const expByName = new Map(expToolsList.map((t) => [t.name, t]));
+check('AIRYSCHAT_FEATURES=experimental exposes Phase B CRM config tools', () => {
+  assert.ok(expByName.has('crm_pipeline_upsert'));
+  assert.ok(expByName.has('crm_stage_upsert'));
+  assert.ok(expByName.has('crm_close_reason_upsert'));
+  assert.ok(expByName.has('crm_view_upsert'));
+  assert.ok(expByName.has('crm_settings_get'));
+  assert.ok(expByName.has('crm_settings_update'));
+  assert.ok(expByName.has('crm_business_hours_get'));
+  assert.ok(expByName.has('crm_business_hours_update'));
+  assert.ok(expByName.has('crm_follow_up_rules_list'));
+  assert.ok(expByName.has('crm_follow_up_rule_upsert'));
+  assert.ok(expByName.has('crm_automations_list'));
+  assert.ok(expByName.has('crm_automation_upsert'));
+  assert.ok(expByName.has('crm_conversion_settings_get'));
+  assert.ok(expByName.has('crm_conversion_settings_update'));
+});
+
+const settingsGet = await crmExperimental.call('tools/call', { name: 'crm_settings_get', arguments: {} });
+const settingsUpdateForbidden = await crmExperimental.call('tools/call', {
+  name: 'crm_settings_update',
+  arguments: { card_creation_mode: 'manual' },
+});
+check('non-admin Pundit 401 is reported as administrator permission failure, not invalid API key', () => {
+  assert.ok(!settingsGet.isError, text(settingsGet));
+  assert.equal(settingsUpdateForbidden.isError, true);
+  assert.match(text(settingsUpdateForbidden), /administrator permission/i);
+  assert.doesNotMatch(text(settingsUpdateForbidden), /AIRYSCHAT_API_KEY is valid/);
+});
+
+const convSettingsUnconfirmed = await crmExperimental.call('tools/call', {
+  name: 'crm_conversion_settings_update',
+  arguments: { inbox_id: 3, pipeline_id: 10, test_event_code: 'TEST123' },
+});
+const convSettingsConfirmed = await crmExperimental.call('tools/call', {
+  name: 'crm_conversion_settings_update',
+  arguments: { inbox_id: 3, pipeline_id: 10, test_event_code: 'TEST123', confirm: true },
+});
+check('crm_conversion_settings_update requires confirm before updating Meta CAPI settings', () => {
+  assert.equal(convSettingsUnconfirmed.isError, true);
+  assert.match(text(convSettingsUnconfirmed), /not reversible/);
+  assert.ok(!convSettingsConfirmed.isError, text(convSettingsConfirmed));
+});
+crmExperimental.child.kill();
 
 mock.close();
 console.log(`\n${checks} checks passed`);

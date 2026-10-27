@@ -64,7 +64,7 @@
 | `PATCH`/`PUT` | `saas` | `/crm_stage_automations/:id` | `crm_stage_automations#update` | `account:update?` (admin) | `id*`, `crm_stage_automation*: { ... }` | write | no | `crm_automation_upsert` |
 | `GET` | `saas` | `/whatsapp_conversion_settings` | `whatsapp_conversion_settings#show` | `account:show?` + `whatsapp_conversions_api` flag | `inbox_id*`, `pipeline_id*` | read | no | `crm_conversion_settings_get` |
 | `PATCH`/`PUT` | `saas` | `/whatsapp_conversion_settings` | `whatsapp_conversion_settings#update` | `account:update?` (admin) + `whatsapp_conversions_api` flag | `inbox_id*`, `pipeline_id*`, `test_event_code`, `mappings: [{ saas_pipeline_stage_id, event_name, enabled }]` | **irreversible** | no | `crm_conversion_settings_update` |
-| `GET` | `saas` | `/whatsapp_conversion_events` | `whatsapp_conversion_events#index` | `account:show?` + `whatsapp_conversions_api` flag | `status`, `deal_id`, `page` | read | no | `crm_conversion_events_list` |
+| `POST` | `saas` | `/whatsapp_conversion_events/:id/retry` | `whatsapp_conversion_events#retry` | `account:update?` (admin) + `whatsapp_conversions_api` flag | `id*` | **irreversible** (re-sends CAPI event to Meta; events themselves are returned inside `crm_deal_get` and `crm_deal_timeline`) | no | raw (`airyschat_api`) |
 
 ## 2. Core additions (`core` prefix, Lane 003)
 
