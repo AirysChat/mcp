@@ -232,7 +232,8 @@ export const coreTools = [
     title: 'Create a contact',
     description:
       'Create a contact (`POST /contacts`). Phone numbers should be in E.164 format (`+5511999999999`). ' +
-      'Company name in CRM v2 is stored in `additional_attributes.company_name`.',
+      'Company name in CRM v2 is stored in `additional_attributes.company_name`. ' +
+      'Returns `{ payload: { contact: { id, ... }, contact_inbox } }` (note the nested `payload.contact`, unlike `contact_get` which returns `{ payload: { id, ... } }`).',
     write: true,
     inputSchema: z.object({
       name: z.string().min(1).optional(),
@@ -454,7 +455,7 @@ export const coreTools = [
 
   defineTool({
     name: 'canned_responses_list',
-    stability: 'beta',
+    stability: 'stable',
     title: 'List canned responses',
     description:
       'List saved reply templates (`GET /canned_responses`) on the account, optionally filtered by `search` (matches `short_code` or `content`).',
@@ -467,7 +468,7 @@ export const coreTools = [
 
   defineTool({
     name: 'search',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Global search across conversations, contacts, messages, and articles',
     description:
       'Search across the account (`GET /search` or `/search/{conversations,contacts,messages,articles}`). ' +
@@ -499,7 +500,8 @@ export const coreTools = [
     stability: 'beta',
     title: 'List notifications or unread count for the authenticated user',
     description:
-      'List notifications (`GET /notifications`, 15 per page, unread & unsnoozed by default) or fetch only the unread count (`GET /notifications/unread_count`).',
+      'List notifications (`GET /notifications`, 15 per page, unread & unsnoozed by default) or fetch only the unread count (`GET /notifications/unread_count`). ' +
+      'Note: if a page contains an orphaned `crm_activity_reminder` whose activity was deleted, upstream `notifications/index.json.jbuilder` may return HTTP 500; `unread_count_only: true` is unaffected.',
     inputSchema: z.object({
       page: z.number().int().min(1).optional(),
       sort_order: z.enum(['asc', 'desc']).optional().describe('Defaults to desc on the server'),
@@ -523,7 +525,7 @@ export const coreTools = [
 
   defineTool({
     name: 'custom_filters_list',
-    stability: 'beta',
+    stability: 'stable',
     title: 'List or get saved custom filters',
     description:
       'List saved custom filters (`GET /custom_filters`) for the authenticated user, or fetch one filter by `filter_id` (`GET /custom_filters/:id`).',

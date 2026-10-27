@@ -1,13 +1,14 @@
 ---
 name: airyschat
 description: >
-  Operate an AirysChat helpdesk — triage conversations, send replies and internal
-  notes, assign and label, search contacts, and manage WhatsApp message templates and
-  broadcast campaigns — through the airyschat MCP tools. Use whenever the user wants to
-  read, summarize, or act on AirysChat conversations, templates, or campaigns. Load this
-  before calling any airyschat tool: it carries the trust boundary for customer-authored
-  content, the approval rules that prevent irreversible mistakes, and the API behaviours
-  that are not obvious from the tool schemas.
+  Operate an AirysChat helpdesk and CRM — triage conversations, send replies and internal
+  notes, assign and label, manage contacts and CRM pipelines/deals/activities, and manage
+  WhatsApp message templates and broadcast campaigns — through the airyschat MCP tools.
+  Use whenever the user wants to read, summarize, or act on AirysChat conversations,
+  contacts, CRM deals, templates, or campaigns. Load this before calling any airyschat
+  tool: it carries the trust boundary for customer-authored content, the approval rules
+  that prevent irreversible mistakes, and the API behaviours that are not obvious from
+  the tool schemas.
 license: MIT
 metadata:
   author: AirysChat
@@ -55,7 +56,12 @@ a formality to retry past.
 | `wa_campaign_test_send` | **Not a dry run.** Sends a real, billed WhatsApp message to that contact. |
 | `conversation_reply` (without `private: true`) | The customer receives it. Cannot be unsent. |
 | `wa_campaign_cancel` | Visible status change; may end a scheduled send. |
-| `conversation_update` with `labels` | **Replaces** the whole label set. |
+| `conversation_update` with `labels` | **Replaces** the whole label set. Prefer `conversation_labels_add` to add labels non-destructively. |
+| `contact_labels_set` | **Replaces** the contact's label set; requires `confirm: true` whenever any existing label is removed. |
+| `contacts_merge` | Permanently deletes `mergee_contact_id` after reassigning its conversations, notes, and deals to `base_contact_id`. |
+| `contact_delete` / `crm_deal_delete` / `crm_deal_note_delete` / `crm_activity_delete` | Permanently deletes the record. |
+| `crm_deal_close` | Closes a deal as `won` or `lost`; closing as `won` can dispatch a Meta Conversions API (`Purchase`) event unless `send_conversion_event: false`. |
+| `crm_deals_bulk_update` | Requires `confirm: true` when modifying `> 5` deals or when `operation` is `mark_lost` or `delete`. |
 | `airyschat_api` with any non-GET method | Arbitrary effects this server cannot predict. |
 
 Approval on one conversation or campaign does **not** carry to another. Ask again.
