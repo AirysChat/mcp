@@ -1,0 +1,34 @@
+name: Inventory Drift
+
+# Verifies that docs/api/{inventory.csv,coverage.md,params.json}, scripts/inventory/curated.json,
+# and scripts/inventory/irreversible.json build a consistent catalog on a weekly schedule and on
+# manual dispatch.
+#
+# Full route-dump extraction requires booting Rails in the private AirysChat/AirysChat repository
+# (tracked as BLOCKED_EXTERNAL on AirysChat CI publishing a routes artifact; run `pnpm inventory:sync --pr`
+# locally with the sync-api-inventory skill until that cross-repo artifact is wired).
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-inventory:
+    name: Verify inventory & catalog consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm inventory:check
+      - run: node scripts/inventory/extract-swagger-params.mjs --check
+      - run: node scripts/inventory/build-catalog.mjs --stats

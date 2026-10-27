@@ -8,7 +8,23 @@ description: Refresh docs/api/inventory.csv and coverage.md from the current Air
 The inventory is the backlog for "every AirysChat action" (ADR 0002). It is regenerated from a
 `bin/rails routes` dump; the dump itself is never committed.
 
-## Steps
+## Fast path (`pnpm inventory:sync`)
+
+Run the automated sync script (creates a throwaway detached worktree of `~/AirysChat` at
+`origin/develop`, extracts routes + Swagger params, rebuilds the catalog, and optionally opens a PR):
+
+```bash
+pnpm inventory:sync          # update docs/api/* locally
+pnpm inventory:sync --pr     # commit on chore/002-inventory-<sha> and open a PR via gh CLI
+```
+
+If you already have a routes dump file and swagger JSON, pass them directly:
+
+```bash
+pnpm inventory:sync --routes /tmp/airys_routes.txt --swagger /tmp/app_swagger.json --source "$SHA"
+```
+
+## Manual steps (reference)
 
 1. **Get a clean read of develop without touching the working checkout.** Use a throwaway worktree:
 
