@@ -33,7 +33,8 @@ test('account id must be a positive integer and base URL must be http(s)', () =>
 
 test('toolsets are parsed and unknown names rejected', () => {
   assert.deepEqual([...loadConfig({ ...base, AIRYSCHAT_TOOLSETS: ' whatsapp ' }).toolsets], ['whatsapp']);
-  assert.throws(() => loadConfig({ ...base, AIRYSCHAT_TOOLSETS: 'core,crm' }), /Unknown toolset\(s\): crm/);
+  assert.deepEqual([...loadConfig({ ...base, AIRYSCHAT_TOOLSETS: 'core,crm' }).toolsets], ['core', 'crm']);
+  assert.throws(() => loadConfig({ ...base, AIRYSCHAT_TOOLSETS: 'core,bogus' }), /Unknown toolset\(s\): bogus/);
 });
 
 test('AIRYSCHAT_FEATURES accepts stable, beta, experimental (case-insensitive)', () => {

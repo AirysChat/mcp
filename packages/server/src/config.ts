@@ -7,7 +7,7 @@
  * client's server log where a human will actually see it.
  */
 
-export const TOOLSET_NAMES = ['core', 'whatsapp'] as const;
+export const TOOLSET_NAMES = ['core', 'whatsapp', 'crm'] as const;
 export type ToolsetName = (typeof TOOLSET_NAMES)[number];
 
 const DEFAULT_TOOLSETS: ToolsetName[] = ['core', 'whatsapp'];

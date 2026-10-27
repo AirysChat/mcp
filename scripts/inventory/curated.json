@@ -34,6 +34,18 @@
     ["core", "POST", "/campaigns/{}/launch", "wa_campaign_launch", "0.1.0"],
     ["core", "POST", "/campaigns/{}/cancel", "wa_campaign_cancel", "0.1.0"],
     ["core", "POST", "/campaigns/{}/test_send", "wa_campaign_test_send", "0.1.0"],
-    ["core", "GET", "/inboxes/{}/whatsapp_campaign_health", "wa_inbox_health", "0.1.0"]
+    ["core", "GET", "/inboxes/{}/whatsapp_campaign_health", "wa_inbox_health", "0.1.0"],
+    ["saas", "GET", "/pipelines", "crm_pipelines_list", "0.3.0"],
+    ["saas", "GET", "/pipelines/{}", "crm_pipeline_get", "0.3.0"],
+    ["saas", "GET", "/pipelines/{}/pipeline_stages", "crm_pipeline_get", "0.3.0"],
+    ["saas", "GET", "/crm_deals", "crm_deals_search", "0.3.0"],
+    ["saas", "GET", "/crm_deals/search", "crm_deals_search", "0.3.0"],
+    ["saas", "GET", "/crm_deals/{}", "crm_deal_get", "0.3.0"],
+    ["saas", "GET", "/crm_deals/{}/timeline", "crm_deal_timeline", "0.3.0"],
+    ["saas", "GET", "/crm_dashboard", "crm_insights", "0.3.0"],
+    ["saas", "GET", "/crm_results", "crm_insights", "0.3.0"],
+    ["saas", "GET", "/closure_reasons", "crm_close_reasons_list", "0.3.0"],
+    ["saas", "GET", "/crm_deals/loss_reasons", "crm_loss_reasons_list", "0.3.0"],
+    ["saas", "GET", "/crm_saved_views", "crm_views_list", "0.3.0"]
   ]
 }
