@@ -25,7 +25,8 @@
     "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "pnpm build",
-    "smoke": "pnpm build && node scripts/smoke.mjs"
+    "smoke": "pnpm build && node scripts/smoke.mjs",
+    "live-verify": "pnpm build && node scripts/live-verify.mjs"
   },
   "keywords": [
     "mcp",

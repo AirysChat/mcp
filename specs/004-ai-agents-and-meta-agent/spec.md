@@ -30,8 +30,7 @@ agents: performance, versions, knowledge base gaps, handoffs, budget — and mak
 
 ### Captain (legacy Chatwoot assistant)
 
-Catalog-only (reachable via `airyschat_api`) unless the owner decides otherwise —
-`NEEDS_PRODUCT_DECISION`.
+Catalog-only (reachable via `airyschat_api` / `airyschat_api_search`). Owner decision 2026-10-27.
 
 ## Relationship with Meta's MCP
 

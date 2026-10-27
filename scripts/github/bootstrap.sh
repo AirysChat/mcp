@@ -42,19 +42,23 @@ milestones=(
   "v0.2.0|2026-11-09|Foundation & API catalog (lanes 001, 002)"
   "v0.3.0|2026-11-30|CRM & contacts (lane 003)"
   "v0.4.0|2026-12-14|AI agents & Meta Business Agent (lane 004)"
-  "v0.5.0|2027-01-11|Hosted MCP on Cloud Run (lane 005)"
-  "v0.6.0|2027-02-01|WhatsApp complete & reports (lane 006)"
-  "v0.7.0|2027-02-22|MCP Apps, elicitation, tasks (lane 007)"
-  "v0.8.0|2027-03-15|Admin & help center (lane 008)"
+  "v0.5.0|2027-01-11|WhatsApp complete & reports (lane 006)"
+  "v0.6.0|2027-03-01|Hosted MCP on Cloud Run + scoped MCP tokens (lane 005, ADR 0006)"
+  "v0.7.0|2027-03-22|MCP Apps, elicitation, tasks (lane 007)"
+  "v0.8.0|2027-04-12|Admin & help center (lane 008)"
   "v0.9.0||Airys platform API toolset (lane 009)"
-  "v1.0.0|2027-04-30|GA & distribution (lane 010)"
+  "v1.0.0|2027-05-31|GA & distribution (lane 010)"
 )
 existing=$(gh api "repos/$REPO/milestones?state=all&per_page=100" --jq '.[].title')
 for m in "${milestones[@]}"; do
   IFS='|' read -r title due desc <<<"$m"
-  grep -qx "$title" <<<"$existing" && continue
   args=(-f title="$title" -f description="$desc")
   [[ -n "$due" ]] && args+=(-f due_on="${due}T23:59:59Z")
-  gh api "repos/$REPO/milestones" "${args[@]}" >/dev/null
+  if grep -qx "$title" <<<"$existing"; then
+    number=$(gh api "repos/$REPO/milestones?state=all&per_page=100" --jq ".[] | select(.title==\"$title\") | .number")
+    gh api -X PATCH "repos/$REPO/milestones/$number" "${args[@]}" >/dev/null   # keep description/due in sync
+  else
+    gh api "repos/$REPO/milestones" "${args[@]}" >/dev/null
+  fi
 done
 echo "bootstrap done for $REPO"

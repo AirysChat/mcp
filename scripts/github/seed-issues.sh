@@ -52,8 +52,8 @@ Per-task issues are created when the lane starts (\`.agents/skills/spec-lane\`).
 }
 epic v0.3.0 003 "CRM & contacts"
 epic v0.4.0 004 "AI agents & Meta Business Agent"
-epic v0.5.0 005 "Hosted MCP on Cloud Run"
-epic v0.6.0 006 "WhatsApp complete & reports"
+epic v0.5.0 006 "WhatsApp complete & reports"
+epic v0.6.0 005 "Hosted MCP on Cloud Run + scoped MCP tokens"
 epic v0.7.0 007 "MCP Apps, elicitation, tasks"
 epic v0.8.0 008 "Admin & help center"
 epic v0.9.0 009 "Airys platform API toolset"
@@ -61,7 +61,7 @@ epic v1.0.0 010 "GA & distribution"
 
 # --- owner decisions ---
 decision() { issue "Decision: $1" "$2" "needs-decision,lane:$3" "$4"; }
-decision "OAuth design for hosted MCP" v0.5.0 005 "Options in ADR 0004 (a) Doorkeeper in AirysChat (b) \`mcp\` as AS + AirysChat consent page (c) MCP-scoped tokens. Recommendation: (b) now, (c) later."
+decision "OAuth design for hosted MCP" v0.6.0 005 "Options in ADR 0004 (a) Doorkeeper in AirysChat (b) \`mcp\` as AS + AirysChat consent page (c) MCP-scoped tokens. Recommendation: (b) now, (c) later."
 decision "npm scope @airyschat and public npm timing" v1.0.0 010 "Confirm ownership of the \`@airyschat\` npm scope. Recommendation: GitHub Packages until 1.0."
 decision "Captain vs AirysChat AI Agents coverage" v0.4.0 004 "Recommendation: curate AI Agents + MBA; Captain catalog-only unless still sold."
 decision "MCP Registry namespace" v1.0.0 010 "Recommendation: \`chat.airys/mcp\` (DNS verification) over \`io.github.airyschat/mcp\`."

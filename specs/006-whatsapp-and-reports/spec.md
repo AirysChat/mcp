@@ -1,6 +1,6 @@
 # 006 — WhatsApp complete & reports
 
-- Release: **0.6.0** · Target 2027-02-01 · Prefix `WAR` · Toolsets `whatsapp`, `reports` (new)
+- Release: **0.5.0** (renumbered 2026-10-27, was 0.6.0) · Target 2027-01-11 · Prefix `WAR` · Toolsets `whatsapp`, `reports` (new)
 
 ## Why
 
