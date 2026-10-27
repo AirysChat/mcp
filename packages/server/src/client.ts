@@ -54,7 +54,8 @@ export class ApiError extends Error {
    * the caller to check their API key here sends them down the wrong path entirely.
    */
   get isPlanGate(): boolean {
-    return this.status === 403 && this.url.includes('/saas/api/') && this.detail !== undefined;
+    if (this.status !== 403 || !this.url.includes('/saas/api/') || this.detail === undefined) return false;
+    return !/not authorized|permission|administrator/i.test(this.detail);
   }
 }
 

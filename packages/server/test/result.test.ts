@@ -43,6 +43,11 @@ test('saas 403 with a body is a plan gate, not an auth problem', () => {
 test('core 403 and 401 point at permissions and the key respectively', () => {
   assert.match(textOf(fromError(new ApiError(403, 'https://h/api/v1/accounts/1/x', 'GET', null))), /lacks permission/);
   assert.match(textOf(fromError(new ApiError(401, 'https://h/api/v1/accounts/1/x', 'GET', null))), /AIRYSCHAT_API_KEY/);
+  const pundit = textOf(
+    fromError(new ApiError(401, 'https://h/saas/api/v1/accounts/1/pipelines', 'POST', { error: 'You are not authorized to do this action' })),
+  );
+  assert.match(pundit, /lacks administrator permission/);
+  assert.doesNotMatch(pundit, /AIRYSCHAT_API_KEY/);
 });
 
 test('404 mentions campaign display IDs only on campaign member routes', () => {

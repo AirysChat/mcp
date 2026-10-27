@@ -798,5 +798,414 @@ export const crmTools = [
     inputSchema: z.object({}),
     handler: async (_args, { client }) => json(await client.request('/crm_saved_views', { prefix: 'saas' })),
   }),
+
+  // ---------------------------------------------------------------- Phase B: CRM configuration (experimental)
+  defineTool({
+    name: 'crm_pipeline_upsert',
+    stability: 'experimental',
+    title: 'Create or update a CRM pipeline',
+    description:
+      'Create a new CRM sales pipeline (`POST /pipelines`) or update an existing one when `pipeline_id` is passed ' +
+      '(`PATCH /pipelines/:id`). Admin-only (`account:update?`).',
+    write: true,
+    inputSchema: z.object({
+      pipeline_id: z.number().int().optional().describe('Omit to create a new pipeline; pass to update an existing pipeline'),
+      name: z.string().min(1).optional().describe('Pipeline name (required when creating)'),
+      description: z.string().nullable().optional(),
+    }),
+    handler: async ({ pipeline_id, name, description }, { client }) => {
+      if (!pipeline_id && !name) {
+        return failure('Creating a pipeline requires `name`.');
+      }
+      if (pipeline_id) {
+        return json(
+          await client.request(`/pipelines/${pipeline_id}`, {
+            prefix: 'saas',
+            method: 'PATCH',
+            body: { pipeline: { name, description } },
+          }),
+        );
+      }
+      return json(
+        await client.request('/pipelines', {
+          prefix: 'saas',
+          method: 'POST',
+          body: { pipeline: { name, description } },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_stage_upsert',
+    stability: 'experimental',
+    title: 'Create, update, or reorder CRM pipeline stages',
+    description:
+      'Manage stages in a CRM pipeline (`/pipelines/:pipeline_id/pipeline_stages`). Admin-only (`account:update?`). ' +
+      'Pass `reorder_stage_ids` (containing all stage IDs of the pipeline in their new order) to reorder stages; ' +
+      'pass `stage_id` to update one stage; or omit both to create a new stage (`name` required).',
+    write: true,
+    inputSchema: z.object({
+      pipeline_id: z.number().int().describe('Sales pipeline ID'),
+      stage_id: z.number().int().optional().describe('Stage ID to update'),
+      reorder_stage_ids: z
+        .array(z.number().int())
+        .min(1)
+        .optional()
+        .describe('When set, reorders all stages of the pipeline to this exact ID sequence'),
+      name: z.string().min(1).optional().describe('Stage name (required when creating)'),
+      color: z.string().optional().describe('Hex color code'),
+      position: z.number().int().min(0).optional(),
+      stage_type: z.enum(['open', 'won', 'lost']).optional().describe('Defaults to "open"'),
+      probability: z.number().int().min(0).max(100).nullable().optional(),
+      stale_after_days: z.number().int().min(1).nullable().optional(),
+      conversion_event_name: z.string().nullable().optional().describe('Meta Conversions API event name mapped to this stage'),
+      required_fields: z.array(z.string()).optional().describe('Deal fields required before entering this stage'),
+    }),
+    handler: async ({ pipeline_id, stage_id, reorder_stage_ids, ...stageFields }, { client }) => {
+      if (reorder_stage_ids) {
+        return json(
+          await client.request(`/pipelines/${pipeline_id}/pipeline_stages/reorder`, {
+            prefix: 'saas',
+            method: 'PATCH',
+            body: { ids: reorder_stage_ids },
+          }),
+        );
+      }
+      if (!stage_id && !stageFields.name) {
+        return failure('Creating a pipeline stage requires `name` (or pass `reorder_stage_ids` to reorder).');
+      }
+      if (stage_id) {
+        return json(
+          await client.request(`/pipelines/${pipeline_id}/pipeline_stages/${stage_id}`, {
+            prefix: 'saas',
+            method: 'PATCH',
+            body: { pipeline_stage: stageFields },
+          }),
+        );
+      }
+      return json(
+        await client.request(`/pipelines/${pipeline_id}/pipeline_stages`, {
+          prefix: 'saas',
+          method: 'POST',
+          body: { pipeline_stage: stageFields },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_close_reason_upsert',
+    stability: 'experimental',
+    title: 'Create or update a CRM closure reason',
+    description:
+      'Create (`POST /closure_reasons`) or update (`PATCH /closure_reasons/:id`) a won/lost closure reason. Admin-only.',
+    write: true,
+    inputSchema: z.object({
+      reason_id: z.number().int().optional().describe('Omit to create; pass to update'),
+      name: z.string().min(1).optional().describe('Reason label (required when creating)'),
+      reason_type: z.enum(['lost', 'won']).optional().describe('Required when creating'),
+    }),
+    handler: async ({ reason_id, name, reason_type }, { client }) => {
+      if (!reason_id && (!name || !reason_type)) {
+        return failure('Creating a closure reason requires both `name` and `reason_type` ("lost" or "won").');
+      }
+      if (reason_id) {
+        return json(
+          await client.request(`/closure_reasons/${reason_id}`, {
+            prefix: 'saas',
+            method: 'PATCH',
+            body: { closure_reason: { name, reason_type } },
+          }),
+        );
+      }
+      return json(
+        await client.request('/closure_reasons', {
+          prefix: 'saas',
+          method: 'POST',
+          body: { closure_reason: { name, reason_type } },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_view_upsert',
+    stability: 'experimental',
+    title: 'Create or update a CRM saved view',
+    description:
+      'Save a CRM board/list filter view (`POST /crm_saved_views`) or update an existing view (`PATCH /crm_saved_views/:id`). ' +
+      'Only the view author or an admin may update an existing view.',
+    write: true,
+    inputSchema: z.object({
+      view_id: z.number().int().optional().describe('Omit to create; pass to update'),
+      name: z.string().min(1).optional().describe('View name (required when creating)'),
+      sort: z.string().optional(),
+      visibility: z.enum(['personal', 'account']).optional(),
+      filters: z.record(z.string(), z.unknown()).optional(),
+      columns: z.array(z.string()).optional(),
+    }),
+    handler: async ({ view_id, ...fields }, { client }) => {
+      if (!view_id && !fields.name) {
+        return failure('Creating a saved view requires `name`.');
+      }
+      if (view_id) {
+        return json(
+          await client.request(`/crm_saved_views/${view_id}`, {
+            prefix: 'saas',
+            method: 'PATCH',
+            body: { crm_saved_view: fields },
+          }),
+        );
+      }
+      return json(
+        await client.request('/crm_saved_views', {
+          prefix: 'saas',
+          method: 'POST',
+          body: { crm_saved_view: fields },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_settings_get',
+    stability: 'experimental',
+    title: 'Get CRM pipeline settings',
+    description:
+      'Read account-wide CRM pipeline settings (`/crm_pipeline_settings`): `card_creation_mode`, `default_pipeline_id`, ' +
+      '`default_stage_id`, `eligible_inbox_ids`, and `lifecycle_settings`.',
+    inputSchema: z.object({}),
+    handler: async (_args, { client }) => json(await client.request('/crm_pipeline_settings', { prefix: 'saas' })),
+  }),
+
+  defineTool({
+    name: 'crm_settings_update',
+    stability: 'experimental',
+    title: 'Update CRM pipeline settings',
+    description:
+      'Update account-wide CRM pipeline settings (`PATCH /crm_pipeline_settings`). Admin-only (`account:update?`).',
+    write: true,
+    inputSchema: z.object({
+      card_creation_mode: z.string().optional(),
+      default_pipeline_id: z.number().int().nullable().optional(),
+      default_stage_id: z.number().int().nullable().optional(),
+      eligible_inbox_ids: z.array(z.number().int()).optional(),
+      lifecycle_settings: z.record(z.string(), z.unknown()).optional(),
+    }),
+    handler: async (args, { client }) =>
+      json(
+        await client.request('/crm_pipeline_settings', {
+          prefix: 'saas',
+          method: 'PATCH',
+          body: { crm_pipeline_setting: args },
+        }),
+      ),
+  }),
+
+  defineTool({
+    name: 'crm_business_hours_get',
+    stability: 'experimental',
+    title: 'Get CRM business hours schedule',
+    description:
+      'Read the account CRM business-hours schedule (`/crm_business_hours`). Requires the `crm_management_dashboard` feature flag.',
+    inputSchema: z.object({}),
+    handler: async (_args, { client }) => json(await client.request('/crm_business_hours', { prefix: 'saas' })),
+  }),
+
+  defineTool({
+    name: 'crm_business_hours_update',
+    stability: 'experimental',
+    title: 'Update CRM business hours schedule',
+    description:
+      'Enable or disable the CRM business-hours schedule (`PATCH /crm_business_hours`). Admin-only and requires the ' +
+      '`crm_management_dashboard` feature flag. When `enabled: true`, both `timezone` and `working_hours` are required.',
+    write: true,
+    inputSchema: z.object({
+      enabled: z.boolean().describe('True to apply schedule to unmanaged inboxes; false to release'),
+      timezone: z.string().optional().describe('IANA timezone (required when enabled is true)'),
+      working_hours: z.array(z.record(z.string(), z.unknown())).optional().describe('Weekly schedule array (required when enabled is true)'),
+    }),
+    handler: async ({ enabled, timezone, working_hours }, { client }) => {
+      if (enabled && (!timezone || !working_hours || working_hours.length === 0)) {
+        return failure('Enabling CRM business hours requires both `timezone` and a non-empty `working_hours` array.');
+      }
+      return json(
+        await client.request('/crm_business_hours', {
+          prefix: 'saas',
+          method: 'PATCH',
+          body: { enabled, timezone, working_hours },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_follow_up_rules_list',
+    stability: 'experimental',
+    title: 'List CRM automatic follow-up rules',
+    description: 'List automatic WhatsApp/message follow-up rules configured on CRM stages (`/crm_follow_up_rules`).',
+    inputSchema: z.object({
+      pipeline_id: z.number().int().optional().describe('Filter by sales pipeline ID'),
+    }),
+    handler: async ({ pipeline_id }, { client }) =>
+      untrustedJson(await client.request('/crm_follow_up_rules', { prefix: 'saas', query: { pipeline_id } })),
+  }),
+
+  defineTool({
+    name: 'crm_follow_up_rule_upsert',
+    stability: 'experimental',
+    title: 'Create or update a CRM automatic follow-up rule',
+    description:
+      'Create (`POST /crm_follow_up_rules`) or update (`PATCH /crm_follow_up_rules/:id`) a stage follow-up rule that messages ' +
+      'customers after `delay_minutes`. Admin-only (`account:update?`).',
+    write: true,
+    inputSchema: z.object({
+      rule_id: z.number().int().optional().describe('Omit to create; pass to update'),
+      name: z.string().min(1).optional().describe('Rule name (required when creating)'),
+      enabled: z.boolean().optional(),
+      delay_minutes: z.number().int().min(1).optional().describe('Delay in minutes before sending (required when creating)'),
+      message_mode: z.string().optional().describe('e.g. text or template (required when creating)'),
+      message_body: z.string().nullable().optional(),
+      message_template_id: z.number().int().nullable().optional(),
+      template_params: z.record(z.string(), z.unknown()).optional(),
+      saas_pipeline_id: z.number().int().optional().describe('Required when creating'),
+      saas_pipeline_stage_id: z.number().int().optional().describe('Required when creating'),
+    }),
+    handler: async ({ rule_id, ...fields }, { client }) => {
+      if (
+        !rule_id &&
+        (!fields.name || !fields.delay_minutes || !fields.message_mode || !fields.saas_pipeline_id || !fields.saas_pipeline_stage_id)
+      ) {
+        return failure(
+          'Creating a follow-up rule requires `name`, `delay_minutes`, `message_mode`, `saas_pipeline_id`, and `saas_pipeline_stage_id`.',
+        );
+      }
+      if (rule_id) {
+        return untrustedJson(
+          await client.request(`/crm_follow_up_rules/${rule_id}`, {
+            prefix: 'saas',
+            method: 'PATCH',
+            body: { crm_follow_up_rule: fields },
+          }),
+        );
+      }
+      return untrustedJson(
+        await client.request('/crm_follow_up_rules', {
+          prefix: 'saas',
+          method: 'POST',
+          body: { crm_follow_up_rule: fields },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_automations_list',
+    stability: 'experimental',
+    title: 'List CRM stage automations',
+    description: 'List CRM stage automations (`/crm_stage_automations`), optionally filtered by `pipeline_id`.',
+    inputSchema: z.object({
+      pipeline_id: z.number().int().optional().describe('Filter by sales pipeline ID'),
+    }),
+    handler: async ({ pipeline_id }, { client }) =>
+      json(await client.request('/crm_stage_automations', { prefix: 'saas', query: { pipeline_id } })),
+  }),
+
+  defineTool({
+    name: 'crm_automation_upsert',
+    stability: 'experimental',
+    title: 'Create or update a CRM stage automation',
+    description:
+      'Create (`POST /crm_stage_automations`) or update (`PATCH /crm_stage_automations/:id`) a stage automation. Admin-only (`account:update?`).',
+    write: true,
+    inputSchema: z.object({
+      automation_id: z.number().int().optional().describe('Omit to create; pass to update'),
+      saas_pipeline_stage_id: z.number().int().optional().describe('Required when creating'),
+      trigger: z.string().optional().describe('Trigger event (required when creating)'),
+      action_type: z.string().optional().describe('Action type (required when creating)'),
+      delay_minutes: z.number().int().min(0).optional(),
+      enabled: z.boolean().optional(),
+      config: z.record(z.string(), z.unknown()).optional(),
+    }),
+    handler: async ({ automation_id, ...fields }, { client }) => {
+      if (!automation_id && (!fields.saas_pipeline_stage_id || !fields.trigger || !fields.action_type)) {
+        return failure('Creating a stage automation requires `saas_pipeline_stage_id`, `trigger`, and `action_type`.');
+      }
+      if (automation_id) {
+        return json(
+          await client.request(`/crm_stage_automations/${automation_id}`, {
+            prefix: 'saas',
+            method: 'PATCH',
+            body: { crm_stage_automation: fields },
+          }),
+        );
+      }
+      return json(
+        await client.request('/crm_stage_automations', {
+          prefix: 'saas',
+          method: 'POST',
+          body: { crm_stage_automation: fields },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_conversion_settings_get',
+    stability: 'experimental',
+    title: 'Get WhatsApp Conversions API (CAPI) settings for a pipeline',
+    description:
+      'Read the Meta Conversions API dataset, supported events, stage mappings, and recent events for an `(inbox_id, pipeline_id)` ' +
+      'pair (`/whatsapp_conversion_settings`). Requires the `whatsapp_conversions_api` feature flag.',
+    inputSchema: z.object({
+      inbox_id: z.number().int().describe('WhatsApp inbox ID'),
+      pipeline_id: z.number().int().describe('Sales pipeline ID'),
+    }),
+    handler: async ({ inbox_id, pipeline_id }, { client }) =>
+      json(await client.request('/whatsapp_conversion_settings', { prefix: 'saas', query: { inbox_id, pipeline_id } })),
+  }),
+
+  defineTool({
+    name: 'crm_conversion_settings_update',
+    stability: 'experimental',
+    title: 'Update WhatsApp Conversions API (CAPI) stage mappings',
+    description:
+      'Update Meta Conversions API `test_event_code` and stage event mappings (`PATCH /whatsapp_conversion_settings`). ' +
+      'Admin-only and IRREVERSIBLE: changes which conversion events are dispatched to Meta for this inbox and pipeline. ' +
+      'Requires `confirm: true`.',
+    write: true,
+    irreversible: true,
+    inputSchema: z.object({
+      inbox_id: z.number().int().describe('WhatsApp inbox ID'),
+      pipeline_id: z.number().int().describe('Sales pipeline ID'),
+      test_event_code: z.string().nullable().optional().describe('Meta test event code (or null for live production events)'),
+      mappings: z
+        .array(
+          z.object({
+            saas_pipeline_stage_id: z.number().int(),
+            event_name: z.string(),
+            enabled: z.boolean(),
+          }),
+        )
+        .optional(),
+      confirm: z.boolean().optional().describe('Required to confirm updating Meta CAPI stage mappings'),
+    }),
+    handler: async ({ inbox_id, pipeline_id, test_event_code, mappings, confirm }, { client }) => {
+      const refusal = requireConfirmation(
+        confirm,
+        `Meta Conversions API settings for inbox #${inbox_id} and pipeline #${pipeline_id} will be updated ` +
+          `(${mappings?.length ?? 0} stage mapping(s), test_event_code: ${test_event_code ?? '(unchanged/none)'}).`,
+      );
+      if (refusal) return refusal;
+      return json(
+        await client.request('/whatsapp_conversion_settings', {
+          prefix: 'saas',
+          method: 'PATCH',
+          body: { inbox_id, pipeline_id, test_event_code, mappings },
+        }),
+      );
+    },
+  }),
 ];
 

@@ -75,6 +75,11 @@ function describeApiError(error: ApiError): string {
   }
   switch (error.status) {
     case 401:
+      // AirysChat's RequestExceptionHandler rescues Pundit::NotAuthorizedError with HTTP 401
+      // and `{ error: "You are not authorized to do this action" }` even when the token is valid.
+      if (error.detail && /not authorized to do this action/i.test(error.detail)) {
+        return `Forbidden${detail}. The token is valid but lacks administrator permission for this account or resource.`;
+      }
       return `Unauthorized${detail}. Check AIRYSCHAT_API_KEY.`;
     case 403:
       return `Forbidden${detail}. The token is valid but lacks permission for this account or resource.`;
