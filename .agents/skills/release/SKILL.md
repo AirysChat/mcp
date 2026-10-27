@@ -34,7 +34,7 @@ Merging the Version Packages PR runs `changeset publish`:
 Tags follow `@airyschat/mcp@X.Y.Z`. Create the GitHub Release from the tag with the CHANGELOG
 section if the action did not.
 
-## 4. Hosted service (from 0.5.0)
+## 4. Hosted service (from 0.6.0)
 
 Deploy the image for the tag to `mcp.staging.airys.chat`, run `compat-tester`, then prod
 **only with explicit owner approval** in the conversation.

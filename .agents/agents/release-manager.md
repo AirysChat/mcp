@@ -12,7 +12,7 @@ Follow `.agents/skills/release/SKILL.md` exactly.
 2. Review the Version Packages PR: versions, CHANGELOG wording for users (PT-BR summary in the PR
    comment is welcome), plugin manifests bumped in lockstep.
 3. After the owner merges: verify the tag, GitHub Release, package on the registry
-   (`npm view @airyschat/mcp@X.Y.Z --registry <registry>`), and from 0.5 the staging deploy.
+   (`npm view @airyschat/mcp@X.Y.Z --registry <registry>`), and from 0.6 the staging deploy.
 4. Production deploy of the hosted service only after explicit owner approval.
 5. Record evidence in the lane `verification.md`; close the milestone; open the next one if missing.
 

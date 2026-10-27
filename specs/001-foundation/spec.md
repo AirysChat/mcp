@@ -30,7 +30,7 @@ without losing safety or control.
 
 ## Out of scope
 
-New curated tools (lanes 003+), hosted transport (005), OAuth (005b), public npm (010).
+New curated tools (lanes 003+), hosted transport and OAuth (005), public npm (010).
 
 ## Acceptance
 

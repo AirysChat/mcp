@@ -24,12 +24,12 @@ action reachable by any agent, safely** — from a local install or a hosted URL
 | 0.2.0 | Foundation + API catalog (`airyschat_api_search`) | 2026-11-09 |
 | 0.3.0 | CRM & contacts | 2026-11-30 |
 | 0.4.0 | AI agents & Meta Business Agent | 2026-12-14 |
-| 0.5.0 | Hosted MCP on Cloud Run | 2027-01-11 |
-| 0.6.0 | WhatsApp complete & reports | 2027-02-01 |
-| 0.7.0 | MCP Apps, elicitation, tasks | 2027-02-22 |
-| 0.8.0 | Admin & help center | 2027-03-15 |
+| 0.5.0 | WhatsApp complete & reports | 2027-01-11 |
+| 0.6.0 | Hosted MCP on Cloud Run + scoped MCP tokens | 2027-03-01 |
+| 0.7.0 | MCP Apps, elicitation, tasks | 2027-03-22 |
+| 0.8.0 | Admin & help center | 2027-04-12 |
 | 0.9.0 | Airys platform API toolset | after platform M2 |
-| 1.0.0 | GA: public npm, MCP Registry, 4 client plugins, OAuth | 2027-04-30 |
+| 1.0.0 | GA: public npm, MCP Registry, 4 client plugins, connector directories | 2027-05-31 |
 
 Coverage is computed from the AirysChat routes: [docs/api/coverage.md](docs/api/coverage.md).
 
