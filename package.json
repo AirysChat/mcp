@@ -11,11 +11,12 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "smoke": "pnpm -r smoke",
-    "check": "pnpm typecheck && pnpm smoke && pnpm inventory:check",
+    "check": "pnpm typecheck && pnpm test && pnpm smoke && pnpm inventory:check",
     "inventory": "node scripts/inventory/build-inventory.mjs",
     "inventory:check": "node scripts/inventory/build-inventory.mjs --check",
     "changeset": "changeset",
-    "release:prepare": "bash scripts/release/prepare.sh"
+    "release:prepare": "bash scripts/release/prepare.sh",
+    "test": "pnpm -r test"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.3"

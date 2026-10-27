@@ -1,0 +1,50 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { ConfigError, loadConfig } from '../src/config.js';
+
+const base = { AIRYSCHAT_BASE_URL: 'https://staging.example/', AIRYSCHAT_API_KEY: 'k', AIRYSCHAT_ACCOUNT_ID: '6' };
+
+test('loads required values and strips trailing slashes', () => {
+  const config = loadConfig(base);
+  assert.equal(config.baseUrl, 'https://staging.example');
+  assert.equal(config.accountId, 6);
+  assert.deepEqual([...config.toolsets], ['core', 'whatsapp']);
+  assert.equal(config.features, 'stable');
+  assert.equal(config.readOnly, false);
+  assert.equal(config.timeoutMs, 30_000);
+});
+
+test('missing required variables fail at startup', () => {
+  for (const name of Object.keys(base)) {
+    const env = { ...base, [name]: '' };
+    assert.throws(() => loadConfig(env), (error: unknown) => error instanceof ConfigError && error.message.includes(name));
+  }
+});
+
+test('an unexpanded ${VAR} placeholder is reported as an unset variable', () => {
+  assert.throws(() => loadConfig({ ...base, AIRYSCHAT_API_KEY: '${AIRYSCHAT_API_KEY}' }), /passed unexpanded/);
+});
+
+test('account id must be a positive integer and base URL must be http(s)', () => {
+  assert.throws(() => loadConfig({ ...base, AIRYSCHAT_ACCOUNT_ID: '0' }), /positive integer/);
+  assert.throws(() => loadConfig({ ...base, AIRYSCHAT_ACCOUNT_ID: 'abc' }), /positive integer/);
+  assert.throws(() => loadConfig({ ...base, AIRYSCHAT_BASE_URL: 'ftp://x' }), /http/);
+});
+
+test('toolsets are parsed and unknown names rejected', () => {
+  assert.deepEqual([...loadConfig({ ...base, AIRYSCHAT_TOOLSETS: ' whatsapp ' }).toolsets], ['whatsapp']);
+  assert.throws(() => loadConfig({ ...base, AIRYSCHAT_TOOLSETS: 'core,crm' }), /Unknown toolset\(s\): crm/);
+});
+
+test('AIRYSCHAT_FEATURES accepts stable, beta, experimental (case-insensitive)', () => {
+  assert.equal(loadConfig({ ...base, AIRYSCHAT_FEATURES: 'Beta' }).features, 'beta');
+  assert.equal(loadConfig({ ...base, AIRYSCHAT_FEATURES: 'experimental' }).features, 'experimental');
+  assert.equal(loadConfig({ ...base, AIRYSCHAT_FEATURES: ' ' }).features, 'stable');
+  assert.throws(() => loadConfig({ ...base, AIRYSCHAT_FEATURES: 'deprecated' }), /AIRYSCHAT_FEATURES/);
+});
+
+test('read-only accepts 1 or true only', () => {
+  assert.equal(loadConfig({ ...base, AIRYSCHAT_READ_ONLY: '1' }).readOnly, true);
+  assert.equal(loadConfig({ ...base, AIRYSCHAT_READ_ONLY: 'TRUE' }).readOnly, true);
+  assert.equal(loadConfig({ ...base, AIRYSCHAT_READ_ONLY: 'yes' }).readOnly, false);
+});

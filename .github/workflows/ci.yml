@@ -27,6 +27,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Typecheck
         run: pnpm typecheck
+      - name: Unit tests (coverage gate 80%)
+        run: pnpm test
       - name: Smoke (mock API over stdio)
         run: pnpm smoke
       - name: Inventory and coverage are current
