@@ -17,6 +17,7 @@ import { AirysChatClient } from './client.js';
 import { ConfigError, loadConfig } from './config.js';
 import { catalogTools } from './tools/catalog.js';
 import { coreTools } from './tools/core.js';
+import { crmTools } from './tools/crm.js';
 import { rawTools } from './tools/raw.js';
 import { whatsappTools } from './tools/whatsapp.js';
 import { registerTools, type AnyToolDefinition } from './toolsets.js';
@@ -43,6 +44,7 @@ async function main(): Promise<void> {
   const selected: AnyToolDefinition[] = [...catalogTools, ...rawTools];
   if (config.toolsets.has('core')) selected.push(...coreTools);
   if (config.toolsets.has('whatsapp')) selected.push(...whatsappTools);
+  if (config.toolsets.has('crm')) selected.push(...crmTools);
 
   const registered = registerTools(server, selected, context);
 
@@ -64,7 +66,7 @@ main().catch((error: unknown) => {
         '  AIRYSCHAT_API_KEY     agent or admin access token (sent as the api_access_token header)\n' +
         '  AIRYSCHAT_ACCOUNT_ID  numeric account ID\n\n' +
         'Optional:\n' +
-        '  AIRYSCHAT_TOOLSETS    comma-separated: core, whatsapp (default: both)\n' +
+        '  AIRYSCHAT_TOOLSETS    comma-separated: core, whatsapp, crm (default: core, whatsapp)\n' +
         '  AIRYSCHAT_FEATURES    stable (default), beta or experimental — highest tool maturity to expose\n' +
         '  AIRYSCHAT_READ_ONLY   1 to disable every write tool\n' +
         '  AIRYSCHAT_TIMEOUT_MS  request timeout, default 30000\n',
