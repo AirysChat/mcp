@@ -1,0 +1,12 @@
+# 002 — API catalog · tasks
+
+| ID | P | Size | Task | Done when | Status |
+|---|---|---|---|---|---|
+| CAT-01 | P0 | M | Inventory generator, domain plan, curated map, `inventory.csv` + `coverage.md` | `pnpm inventory:check` green; 807 rows from `AirysChat@c9ea590d8c` | Done (2026-10-26) |
+| CAT-02 | P1 | M | Drift automation: AirysChat CI artifact (routes dump) or scheduled workflow here; bot PR on change; `sync-api-inventory` skill | A route added on `develop` produces an inventory PR within 24h | Planned (may be `BLOCKED_EXTERNAL` on AirysChat CI) |
+| CAT-03 | P0 | M | Extract params/required/enums from `application_swagger.json` into catalog entries | ≥ 90% of application-API rows have params | Planned |
+| CAT-04 | P1 | L | SaaS endpoint params (CRM, AI agents, MBA, reports v2) via `api-cartographer` domain briefs in `docs/api/domains/*.md` | Every 0.3.0/0.4.0 domain has a brief | Planned |
+| CAT-05 | P0 | S | Build `catalog.json` at package build time (method, path, domain, summary, params, write, irreversible, stability) | Package tarball contains it; size < 300 KB | Planned |
+| CAT-06 | P0 | M | Tool `airyschat_api_search` (read-only; query, domain, method filters; top-N) | Smoke covers 3 queries | Planned |
+| CAT-07 | P0 | M | `airyschat_api` validates against catalog, applies write/irreversible gates, refuses excluded rows | Smoke: unknown path refused, irreversible requires confirm | Planned |
+| CAT-08 | P1 | S | Classify irreversible endpoints in `domains.json` (sends, Meta writes, deletes, deal won) | Review by `safety-reviewer` recorded in verification | Planned |
