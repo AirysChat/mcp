@@ -24,8 +24,8 @@ export AIRYSCHAT_API_KEY=...        # agent or admin token
 export AIRYSCHAT_ACCOUNT_ID=5
 ```
 
-Optional: `AIRYSCHAT_TOOLSETS` (default `core,whatsapp`), `AIRYSCHAT_FEATURES` (default `stable`;
-set `beta` to enable write tools such as campaign launch and replies), `AIRYSCHAT_READ_ONLY=1`.
+Optional: `AIRYSCHAT_TOOLSETS` (default `core,whatsapp`; add `crm` to enable the CRM toolset), `AIRYSCHAT_FEATURES` (default `stable`;
+set `beta` to enable write tools such as campaign launch, replies, and CRM deal/contact writes, or `experimental` for CRM admin configuration tools), `AIRYSCHAT_READ_ONLY=1`.
 
 If a variable is unset, Claude Code passes the placeholder through literally and the
 server refuses to start with a message naming the variable — check the `/plugin` Errors
@@ -38,7 +38,8 @@ tab.
 | `/airyschat:airyschat` | The operating manual. Model-invoked automatically when you work with AirysChat; carries the trust boundary, the one-way-door table, and the non-obvious API behaviours. |
 | `/airyschat:triage` | Read-only summary of the open conversation queue, with proposed actions. Changes nothing. |
 | `/airyschat:campaign-check` | Pre-launch report for a WhatsApp campaign: template approval, reach, preflight risk, inbox health. Sends nothing. |
-| `airyschat` MCP server | 28 tools across conversations, contacts, WhatsApp templates and campaigns, plus a raw-endpoint escape hatch. |
+| `/airyschat:crm-pipeline-review` | Read-only review of a CRM pipeline: funnel bottlenecks, stale deals without a next activity, overdue follow-ups, and proposed actions. Changes nothing. |
+| `airyschat` MCP server | 80 curated tools across conversations, contacts, search, notifications, WhatsApp templates/campaigns, and CRM pipelines/deals/activities, plus a catalog-backed `airyschat_api_search` and `airyschat_api` escape hatch covering all 775 addressable endpoints. |
 
 ## Why a plugin rather than a bare MCP entry
 

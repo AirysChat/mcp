@@ -76,7 +76,7 @@ const mock = createServer((req, res) => {
   if (url.pathname === '/saas/api/v1/accounts/5/pipelines') return send(200, [{ id: 10, name: 'Vendas B2B' }]);
   if (url.pathname === '/saas/api/v1/accounts/5/pipelines/10') return send(200, { id: 10, name: 'Vendas B2B' });
   if (url.pathname === '/saas/api/v1/accounts/5/pipelines/10/pipeline_stages') {
-    return send(200, [{ id: 101, name: 'Qualificação', position: 0, stage_type: 'open' }]);
+    return send(200, [{ id: 101, name: 'Qualificação', position: 0, stage_type: 'active' }]);
   }
   if (url.pathname === '/saas/api/v1/accounts/5/crm_deals') {
     if (req.method === 'POST') return send(201, { id: 502, title: 'Novo Negócio', amount_cents: 200000 });
@@ -95,8 +95,8 @@ const mock = createServer((req, res) => {
         id: 10,
         name: 'Vendas B2B',
         stages: [
-          { id: 101, name: 'Qualificação', stage_type: 'open' },
-          { id: 102, name: 'Proposta', stage_type: 'open' },
+          { id: 101, name: 'Qualificação', stage_type: 'active' },
+          { id: 102, name: 'Proposta', stage_type: 'active' },
           { id: 103, name: 'Ganho', stage_type: 'won' },
         ],
       },

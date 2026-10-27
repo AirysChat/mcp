@@ -26,7 +26,7 @@ function validateIsoOffset(field: string, value: string | undefined) {
 export const crmTools = [
   defineTool({
     name: 'crm_pipelines_list',
-    stability: 'beta',
+    stability: 'stable',
     title: 'List CRM sales pipelines',
     description:
       'List all sales pipelines configured on the account. Returns a bare array of pipelines (`id`, `name`, `description`). ' +
@@ -38,7 +38,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_pipeline_get',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Get a CRM pipeline and its stages',
     description:
       'Fetch one sales pipeline by ID along with its ordered stages (`id`, `name`, `color`, `position`, `stage_type`, ' +
@@ -66,7 +66,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_deals_search',
-    stability: 'beta',
+    stability: 'stable',
     title: 'List or search CRM deals',
     description:
       'List or search CRM deals. By default uses `view: "list"` for flat pagination across deals (`payload` + `meta` with ' +
@@ -77,8 +77,9 @@ export const crmTools = [
       pipeline_id: z.number().int().optional().describe('Filter by sales pipeline ID'),
       stage_id: z.number().int().optional().describe('Filter by a single pipeline stage ID'),
       stage_ids: z.array(z.number().int()).optional().describe('Filter by multiple stage IDs'),
-      owner_id: z.number().int().optional().describe('Filter by deal owner user ID'),
-      status: z.enum(['open', 'won', 'lost']).optional().describe('Filter by deal status'),
+      owner_id: z.union([z.number().int(), z.literal('me'), z.literal('none')]).optional().describe('Filter by deal owner user ID, "me", or "none"'),
+      status: z.enum(['active', 'open', 'won', 'lost']).optional().describe('Filter by deal status ("active"/"open", "won", or "lost")'),
+      stale: z.boolean().optional().describe('When true, returns only open deals idle longer than their stage stale_after_days'),
       inbox_id: z.number().int().optional().describe('Filter by conversation inbox ID'),
       labels: z.array(z.string()).optional().describe('Filter by conversation labels'),
       q: z.string().optional().describe('Search deal title, product name, or contact name/phone/email'),
@@ -86,7 +87,7 @@ export const crmTools = [
       without_activity: z
         .boolean()
         .optional()
-        .describe('When true, calls /crm_deals/search to return open deals with no pending activity'),
+        .describe('When true, calls /crm_deals/search (no_activity=true) to return open deals with no pending activity'),
       quick_search: z
         .boolean()
         .optional()
@@ -94,18 +95,25 @@ export const crmTools = [
       per_page: z.number().int().min(1).max(100).optional().describe('Max 100, default 50'),
       offset: z.number().int().min(0).optional(),
       page: z.number().int().min(1).optional(),
-      sort: z.string().optional(),
+      sort: z
+        .string()
+        .optional()
+        .describe(
+          'Sort key (prefix with "-" for descending): amount, created_at, title, expected_close_on, probability, last_interaction_at, days_in_stage, stage, next_activity',
+        ),
     }),
     handler: async (args, { client }) => {
-      const { without_activity, quick_search, view, ...rest } = args;
+      const { without_activity, quick_search, view, status, stale, ...rest } = args;
+      const normalizedStatus = status === 'open' ? 'active' : status;
       if (without_activity || quick_search) {
         return untrustedJson(
           await client.request('/crm_deals/search', {
             prefix: 'saas',
             query: {
               q: rest.q,
+              pipeline_id: rest.pipeline_id,
               owner_id: rest.owner_id,
-              without_activity: without_activity ? 'true' : undefined,
+              no_activity: without_activity ? 'true' : undefined,
             },
           }),
         );
@@ -113,7 +121,12 @@ export const crmTools = [
       return untrustedJson(
         await client.request('/crm_deals', {
           prefix: 'saas',
-          query: { view: view ?? 'list', ...rest },
+          query: {
+            view: view ?? 'list',
+            ...rest,
+            status: normalizedStatus,
+            stale: stale ? 'true' : undefined,
+          },
         }),
       );
     },
@@ -121,7 +134,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_deal_get',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Get a CRM deal',
     description:
       'Fetch one CRM deal by ID, including its stage, pipeline, owner, contact summary, linked conversation, and next activity.',
@@ -134,7 +147,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_deal_timeline',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Get a CRM deal timeline',
     description:
       'Fetch the chronological event timeline for a CRM deal (stage transitions, notes, activities, messages, CAPI events). ' +
@@ -443,7 +456,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_deal_notes_list',
-    stability: 'beta',
+    stability: 'stable',
     title: 'List notes on a CRM deal',
     description: 'List notes on a CRM deal, newest first (`/crm_deals/:crm_deal_id/notes`).',
     inputSchema: z.object({
@@ -517,7 +530,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_activities_list',
-    stability: 'beta',
+    stability: 'stable',
     title: 'List or get CRM activities',
     description:
       'List the seller activity queue or fetch one activity by `activity_id` (`/crm_activities`). List responses include ' +
@@ -679,7 +692,7 @@ export const crmTools = [
 
   defineTool({
     name: 'conversation_deal_get',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Get the CRM deal linked to a conversation',
     description:
       'Fetch the CRM deal card and pipeline stages for a conversation (`/conversations/:id/crm_deal`). ' +
@@ -721,7 +734,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_insights',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Get CRM dashboard and origin results insights',
     description:
       'Fetch CRM analytics. With `report: "dashboard"` (default), calls `/crm_dashboard` (requires the ' +
@@ -761,7 +774,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_close_reasons_list',
-    stability: 'beta',
+    stability: 'stable',
     title: 'List CRM closure reasons',
     description:
       'List configured won/lost closure reasons on the account (`/closure_reasons`). Auto-seeds default reasons if the account ' +
@@ -780,7 +793,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_loss_reasons_list',
-    stability: 'beta',
+    stability: 'stable',
     title: 'List CRM loss reasons with 90-day usage breakdown',
     description:
       'Fetch loss reasons on the account along with 90-day usage counts and percentage share (`/crm_deals/loss_reasons`). ' +
@@ -791,7 +804,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_views_list',
-    stability: 'beta',
+    stability: 'stable',
     title: 'List CRM saved views',
     description:
       'List saved CRM board/list views visible to the authenticated user (personal views and views shared with the account).',
@@ -856,7 +869,7 @@ export const crmTools = [
       name: z.string().min(1).optional().describe('Stage name (required when creating)'),
       color: z.string().optional().describe('Hex color code'),
       position: z.number().int().min(0).optional(),
-      stage_type: z.enum(['open', 'won', 'lost']).optional().describe('Defaults to "open"'),
+      stage_type: z.enum(['active', 'won', 'lost']).optional().describe('Defaults to "active"'),
       probability: z.number().int().min(0).max(100).nullable().optional(),
       stale_after_days: z.number().int().min(1).nullable().optional(),
       conversion_event_name: z.string().nullable().optional().describe('Meta Conversions API event name mapped to this stage'),
