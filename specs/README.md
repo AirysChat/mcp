@@ -68,10 +68,9 @@ gantt
 |---|---|---|---|
 | 2026-10-27 | Hosted MCP auth | AirysChat issues scoped, revocable, audience-bound MCP tokens and acts as OAuth AS; hosted accepts only those (option c) | [ADR 0006](../docs/adr/0006-hosted-auth-scoped-mcp-tokens.md) |
 | 2026-10-27 | Captain vs AI Agents | AI Agents + Meta Business Agent get curated tools; Captain stays catalog-only (`airyschat_api`) | lane 004, AIA-09 |
+| 2026-10-27 | npm scope | `@airyschat` (npm org `airyschat`) belongs to Airys; GitHub Packages until 1.0, public npm at 1.0 | lane 010, GA-05 |
 | 2026-10-27 | MCP Registry namespace | `chat.airys/mcp`, DNS TXT verification on `airys.chat` | lane 010, GA-06 |
 
 ## Decisions pending
 
-| Topic | Lane | State |
-|---|---|---|
-| npm scope `@airyschat` and public npm timing | 010 (GA-05) | The `airyschat` npm org **exists** (registry answers for it, no public packages). The owner checks whether it belongs to him/Airys; if not, choose another name or file an npm dispute. GitHub Packages (`npm.pkg.github.com/@airyschat`) is unaffected. |
+None as of 2026-10-27.
