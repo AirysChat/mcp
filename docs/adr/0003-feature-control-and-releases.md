@@ -35,7 +35,8 @@ exercised (`me`, `inboxes_list`, `agents_list`, `labels_list`, `teams_list`).
 - SemVer via **Changesets**. Before 1.0 a breaking change is a `minor` with a callout.
 - Each minor release is a theme with one or more lanes (`specs/README.md`). A release ships when its
   lanes' tasks are closed or explicitly deferred; dates are targets, scope is the contract.
-- Release flow: PRs with changesets → "Version Packages" PR opened by the Changesets action →
+- Release flow (amended 2026-10-27, FND-04): PRs with changesets → release PR opened with
+  `pnpm release:prepare` via gh CLI (the enterprise policy forbids Actions from opening PRs) →
   merge → tag `@airyschat/mcp@x.y.z` + GitHub Release.
 - **Distribution until 1.0 (repo private):** GitHub Packages (`npm.pkg.github.com`) for internal
   testers, plus the hosted endpoint from 0.6. **At 1.0:** public npm, MCP Registry, public repo,

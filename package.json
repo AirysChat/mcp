@@ -15,8 +15,7 @@
     "inventory": "node scripts/inventory/build-inventory.mjs",
     "inventory:check": "node scripts/inventory/build-inventory.mjs --check",
     "changeset": "changeset",
-    "version-packages": "changeset version",
-    "release": "pnpm build && changeset publish"
+    "release:prepare": "bash scripts/release/prepare.sh"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.0"
