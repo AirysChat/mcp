@@ -42,10 +42,11 @@ read `AGENTS.md` directly.
 
 ```bash
 pnpm install
-pnpm typecheck          # tsc --noEmit across packages
+pnpm typecheck          # tsc --noEmit across packages (src + tests)
+pnpm test               # unit tests (node:test + tsx), coverage gate 80% on core modules
 pnpm smoke              # builds, drives the server over stdio against a mock API
 pnpm inventory:check    # inventory/coverage docs match code and the curated map
-pnpm check              # all of the above — run before every PR
+pnpm check              # typecheck + test + smoke + inventory:check — run before every PR
 pnpm changeset          # record a user-visible change
 ```
 
