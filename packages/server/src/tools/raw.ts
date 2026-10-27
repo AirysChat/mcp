@@ -11,7 +11,7 @@
 
 import { z } from 'zod';
 import { defineTool } from '../toolsets.js';
-import { requireConfirmation, untrustedJson } from '../result.js';
+import { readOnlyRefusal, requireConfirmation, untrustedJson } from '../result.js';
 
 export const rawTools = [
   defineTool({
@@ -25,11 +25,13 @@ export const rawTools = [
       '  saas — /saas/api/v1/accounts/{account_id}{path}  AirysChat-only features (AI agents, CRM, Meta Business Agent, billing)\n' +
       '  raw  — {path} verbatim, for non-account-scoped endpoints such as /api/v1/profile\n\n' +
       'Pass `path` WITHOUT the prefix for core and saas — "/campaigns/12", not "/api/v1/accounts/5/campaigns/12". ' +
-      'Any method other than GET requires `confirm: true`.\n\n' +
+      'Any method other than GET requires `confirm: true`; with AIRYSCHAT_READ_ONLY set, only GET is allowed.\n\n' +
       'Endpoint reference: inherited Chatwoot endpoints (core) are documented in swagger/tag_groups/application_swagger.json ' +
       'in the AirysChat repo. AirysChat-only endpoints (saas) have no published schema: their behaviour is defined by ' +
       'their controllers, so inspect a GET response before writing and treat request shapes as unverified.',
     write: true,
+    // Stays available in read-only builds for GET; the handler refuses every other method.
+    readOnlyCapable: true,
     inputSchema: z.object({
       path: z.string().min(1).describe('Path without the account prefix, e.g. "/whatsapp_flows"'),
       method: z.enum(['GET', 'POST', 'PATCH', 'PUT', 'DELETE']).optional().describe('Defaults to GET'),
@@ -42,6 +44,7 @@ export const rawTools = [
       const method = args.method ?? 'GET';
       const prefix = args.prefix ?? 'core';
 
+      if (method !== 'GET' && config.readOnly) return readOnlyRefusal(`airyschat_api ${method}`);
       if (method !== 'GET') {
         const refusal = requireConfirmation(
           args.confirm,

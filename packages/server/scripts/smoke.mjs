@@ -173,8 +173,22 @@ check('read-only mode drops every write tool', () => {
   const names = readOnlyTools.tools.map((tool) => tool.name);
   assert.ok(!names.includes('wa_campaign_launch'));
   assert.ok(!names.includes('conversation_reply'));
-  assert.ok(!names.includes('airyschat_api'));
   assert.ok(names.includes('conversations_list'));
+});
+check('read-only keeps the escape hatch, annotated read-only', () => {
+  const hatch = readOnlyTools.tools.find((tool) => tool.name === 'airyschat_api');
+  assert.ok(hatch, 'airyschat_api must stay registered for GET');
+  assert.equal(hatch.annotations.readOnlyHint, true);
+  assert.equal(hatch.annotations.destructiveHint, false);
+});
+const readOnlyGet = await readOnly.call('tools/call', { name: 'airyschat_api', arguments: { path: '/campaigns/7' } });
+const before = requests.length;
+const readOnlyPost = await readOnly.call('tools/call', { name: 'airyschat_api', arguments: { path: '/campaigns/7/launch', method: 'POST', confirm: true } });
+check('read-only escape hatch serves GET and refuses writes even with confirm', () => {
+  assert.ok(!readOnlyGet.isError, text(readOnlyGet));
+  assert.equal(readOnlyPost.isError, true);
+  assert.match(text(readOnlyPost), /AIRYSCHAT_READ_ONLY/);
+  assert.equal(requests.length, before, 'must not have called the API');
 });
 readOnly.child.kill();
 
