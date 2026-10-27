@@ -43,6 +43,8 @@ test('irreversible classification covers sends, Meta writes, deal won and delete
   assert.match(reason('POST', 'core', '/conversations/1/transcript') ?? '', /email/);
   assert.match(reason('POST', 'core', '/macros/9/execute') ?? '', /macro/);
   assert.match(reason('POST', 'raw', '/api/v1/profile/mfa/backup_codes') ?? '', /backup codes/);
+  assert.match(reason('POST', 'core', '/conversations') ?? '', /outbound message/);
+  assert.match(reason('PATCH', 'saas', '/crm_deals/3/move') ?? '', /Conversions API/);
   assert.match(reason('DELETE', 'core', '/labels/4') ?? '', /Deletes/);
   assert.equal(reason('POST', 'core', '/campaigns/preflight'), undefined, 'preflight is a check, not an effect');
   assert.equal(reason('POST', 'core', '/meta_agent/inboxes/2/playground'), undefined, 'playground is a test, not a live Meta change');

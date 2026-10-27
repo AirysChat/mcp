@@ -3,10 +3,12 @@
   "rules": [
     { "method": "DELETE", "path": ".*", "reason": "Deletes data; it cannot be restored from the API." },
 
+    { "method": "POST", "path": "^/conversations$", "reason": "May send an initial outbound message the customer receives when `message` is provided." },
     { "method": "POST", "path": "^/conversations/:conversation_id/messages$", "reason": "Sends a message the customer receives (unless private: true); it cannot be unsent." },
-    { "method": "POST", "path": "^/conversations/:conversation_id/messages/:id/(retry|react|order_status)$", "reason": "Sends or re-sends something the customer sees on WhatsApp." },
+    { "method": "POST", "path": "^/conversations/:conversation_id/messages/:id/(retry|react|order_status)$|^/conversations/:conversation_id/orders$|^/integrations/dyte/create_a_meeting$", "reason": "Sends or re-sends a message, payment order, or meeting link the customer sees." },
     { "method": "(POST|PUT|PATCH)", "path": "^/conversations/:conversation_id/scheduled_whatsapp_messages(/:id)?$", "reason": "Schedules a WhatsApp message the customer will receive." },
     { "method": "POST", "path": "^/campaigns/:id/(launch|test_send)$", "reason": "Sends WhatsApp messages to customers; Meta bills for them and they cannot be recalled." },
+    { "method": "(POST|PUT|PATCH)", "path": "^/campaigns(/:id)?$|^/campaigns/create_ab_test$", "reason": "Creates or updates a campaign; when save_mode is send_now/schedule it schedules or sends messages Meta bills for." },
     { "method": "POST", "path": "^/campaigns/batch_draft_campaigns$|^/campaigns/qualified_audience_apply$", "reason": "Creates campaigns or changes a campaign audience in bulk." },
     { "method": "POST", "path": "^/portals/:id/send_instructions$|^/conversations/:id/transcript$|^/api/v1/profile/resend_confirmation$", "reason": "Sends an email to the recipient." },
     { "method": "POST", "path": "^/whatsapp_calls/(initiate|:id/(accept|reject|terminate))$", "reason": "Places or answers a WhatsApp call the customer sees." },
@@ -22,6 +24,7 @@
 
     { "method": "POST", "path": "^/crm_deals/:id/won$", "reason": "Closes the deal as won; may send a Meta Conversions API Purchase event." },
     { "method": "POST", "path": "^/crm_deals/:id/lost$", "reason": "Closes the deal as lost." },
+    { "method": "(PATCH|PUT)", "path": "^/crm_deals/:id(/move)?$", "reason": "Moving a deal to a won or lost stage triggers closing side effects and Meta Conversions API events." },
     { "method": "POST", "path": "^/whatsapp_conversion_events/:id/retry$", "reason": "Re-sends a conversion event to Meta." },
     { "method": "(PUT|PATCH)", "path": "^/whatsapp_conversion_settings$", "reason": "Changes which conversion events are sent to Meta." },
 
@@ -29,14 +32,15 @@
     { "method": "POST", "path": "^/inboxes/:inbox_id/csat_template$", "reason": "Creates a CSAT WhatsApp template at Meta (submitted for review)." },
     { "method": "(POST|PUT|PATCH)", "path": "^/whatsapp_flows(/:id)?(/publish|/deprecate)?$", "reason": "Changes a WhatsApp Flow at Meta; publishing and deprecation are one-way." },
     { "method": "(POST|PUT|PATCH)", "path": "^/meta_agent/(?!inboxes/:inbox_id/(playground|agent/eligibility)$)", "reason": "Changes the Meta Business Agent configuration at Meta; customers may be answered differently." },
-    { "method": "(POST|PUT|PATCH)", "path": "^/ai_manager/inboxes/:inbox_id/meta_business_agent/(?!preflight$|eligibility/check$|evals/runs$|tests$)", "reason": "Changes the Meta Business Agent at Meta or hands conversations over; customers may be answered differently." },
+    { "method": "(POST|PUT|PATCH)", "path": "^/ai_manager/inboxes/:inbox_id/meta_business_agent/(?!preflight$|eligibility/check$|evals/runs$|tests$|release_confirmation$)", "reason": "Changes the Meta Business Agent at Meta or hands conversations over; customers may be answered differently." },
     { "method": "POST", "path": "^/conversations/:conversation_id/meta_business_agent_control$", "reason": "Changes who answers the customer (Meta Business Agent vs. humans)." },
-    { "method": "POST", "path": "^/ai_agents/mode_transition$|^/ai_agents/:id/publish_workflow$|^/ai_agents/:id/versions/:version_number/restore$", "reason": "Changes which AI agent answers customers live." },
+    { "method": "(POST|PUT|PATCH)", "path": "^/ai_agents/mode_transition$|^/ai_agents/:id/publish_workflow$|^/ai_agents/:id/versions/:version_number/restore$|^/ai_agents/:ai_agent_id/ai_agent_inboxes(/:id)?$|^/inboxes/:id/set_agent_bot$|^/captain/assistants/:assistant_id/inboxes$", "reason": "Changes which bot or AI agent answers customers live." },
     { "method": "POST", "path": "^/integrations/meta_ads/campaigns/:campaign_id/status$", "reason": "Pauses or resumes a paid Meta Ads campaign." },
     { "method": "POST", "path": "^/inboxes/:inbox_id/phone_verification/(request_code|verify_code|update_display_name)$|^/inboxes/:inbox_id/username$", "reason": "Triggers a verification code or changes the phone number identity at Meta." },
-    { "method": "POST", "path": "^/salvy/(create_virtual_number|register_number)$", "reason": "Provisions or registers a virtual phone number." },
+    { "method": "(POST|PUT|PATCH)", "path": "^/inboxes/:inbox_id/catalogs", "reason": "Changes Meta Commerce catalog or product links visible to customers." },
+    { "method": "POST", "path": "^/salvy/(create_virtual_number|register_number)$", "reason": "Provisions a paid virtual phone number or registers it with Meta." },
 
-    { "method": "POST", "path": "/reset_(access_token|secret)$|^/inboxes/:id/reset_secret$|^/api/v1/profile/mfa/backup_codes$", "reason": "Rotates a credential or backup codes; previous ones stop working." },
-    { "method": "POST", "path": "^/inboxes/:id/(enable|disable)_whatsapp_calling$|^/inboxes/:id/set_inbound_calls$", "reason": "Changes WhatsApp calling for the number at Meta." }
+    { "method": "(POST|PUT|PATCH)", "path": "/(reset_(access_token|secret)|whatsapp_webhook_verify_token|rcs_webhook_token)$|^/api/v1/profile(/mfa(/backup_codes)?)?$|^/saml_settings$|^/webhooks(/:id)?$", "reason": "Rotates credentials or backup codes, changes SSO, or configures outbound event webhooks." },
+    { "method": "(POST|PATCH)", "path": "^/inboxes/:id/(enable|disable)_whatsapp_calling$|^/inboxes/:id/set_inbound_calls$|^/inboxes/:inbox_id/calling/update_settings$", "reason": "Changes WhatsApp calling settings for the number at Meta." }
   ]
 }
