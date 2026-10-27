@@ -2,3 +2,10 @@ node_modules/
 dist/
 *.log
 .DS_Store
+.env
+.env.*
+!.env.example
+# Raw route dumps and live-verification captures may carry tenant data; only the
+# sanitized inventory under docs/ is committed.
+scripts/inventory/.cache/
+evidence-raw/

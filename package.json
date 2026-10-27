@@ -1,40 +1,24 @@
 {
-  "name": "@airyschat/mcp",
-  "version": "0.1.0",
-  "description": "MCP server for AirysChat — WhatsApp campaigns, templates, and conversations for Claude Code, Codex, and Gemini CLI",
-  "type": "module",
-  "bin": {
-    "airyschat-mcp": "dist/index.js"
-  },
-  "files": [
-    "dist",
-    "README.md"
-  ],
+  "name": "airyschat-mcp-monorepo",
+  "private": true,
+  "description": "AirysChat for AI agents: MCP server, agent plugins and skills",
+  "license": "MIT",
+  "packageManager": "pnpm@10.30.3",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build",
-    "smoke": "npm run build && node scripts/smoke.mjs"
-  },
-  "keywords": [
-    "mcp",
-    "model-context-protocol",
-    "airyschat",
-    "chatwoot",
-    "whatsapp"
-  ],
-  "license": "MIT",
-  "dependencies": {
-    "@modelcontextprotocol/server": "^2.0.0",
-    "zod": "^4.0.0"
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "smoke": "pnpm -r smoke",
+    "check": "pnpm typecheck && pnpm smoke && pnpm inventory:check",
+    "inventory": "node scripts/inventory/build-inventory.mjs",
+    "inventory:check": "node scripts/inventory/build-inventory.mjs --check",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "@changesets/cli": "^2.29.0"
   }
 }
