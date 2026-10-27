@@ -8,7 +8,20 @@
 
 import { z } from 'zod';
 import { defineTool } from '../toolsets.js';
-import { json, untrustedJson } from '../result.js';
+import { failure, json, requireConfirmation, untrustedJson } from '../result.js';
+
+const ISO_TIME_WITH_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/;
+const BULK_CONFIRM_THRESHOLD = 5;
+
+function validateIsoOffset(field: string, value: string | undefined) {
+  if (!value) return null;
+  if (!ISO_TIME_WITH_OFFSET.test(value)) {
+    return failure(
+      `${field} ("${value}") must be an ISO-8601 timestamp with an explicit UTC offset (e.g. "2026-11-01T14:00:00-03:00" or "2026-11-01T17:00:00Z").`,
+    );
+  }
+  return null;
+}
 
 export const crmTools = [
   defineTool({
@@ -142,6 +155,571 @@ export const crmTools = [
   }),
 
   defineTool({
+    name: 'crm_deal_create',
+    stability: 'beta',
+    title: 'Create a CRM deal',
+    description:
+      'Create a new CRM deal in a pipeline stage. `amount_cents` is in integer minor units (e.g. 150000 = R$ 1.500,00). ' +
+      'To link a conversation, prefer `conversation_display_id` (the number shown in the UI and returned by `conversations_list`).',
+    write: true,
+    inputSchema: z.object({
+      title: z.string().min(1).describe('Deal title'),
+      contact_id: z.number().int().describe('Contact ID'),
+      saas_pipeline_id: z.number().int().describe('Sales pipeline ID'),
+      saas_pipeline_stage_id: z.number().int().describe('Initial pipeline stage ID'),
+      conversation_display_id: z.number().int().optional().describe('Account-scoped conversation display ID'),
+      conversation_id: z.number().int().optional().describe('Conversation primary key or display ID'),
+      owner_id: z.number().int().nullable().optional().describe('Assigned seller user ID'),
+      amount_cents: z.number().int().min(0).optional().describe('Deal value in integer cents'),
+      currency: z.string().optional().describe('ISO currency code, default BRL'),
+      product_name: z.string().optional().describe('Product or service name'),
+      probability: z.number().int().min(0).max(100).optional().describe('Win probability percentage (0-100)'),
+      expected_close_on: z.string().optional().describe('Expected close date (YYYY-MM-DD)'),
+      position: z.number().int().min(0).optional(),
+    }),
+    handler: async (args, { client }) =>
+      untrustedJson(
+        await client.request('/crm_deals', {
+          prefix: 'saas',
+          method: 'POST',
+          body: { crm_deal: args },
+        }),
+      ),
+  }),
+
+  defineTool({
+    name: 'crm_deal_update',
+    stability: 'beta',
+    title: 'Update a CRM deal',
+    description:
+      'Update fields on an existing CRM deal (`title`, `amount_cents`, `product_name`, `owner_id`, `expected_close_on`, `probability`). ' +
+      'To move a deal between stages use `crm_deal_move`; to close as won/lost use `crm_deal_close`.',
+    write: true,
+    inputSchema: z.object({
+      deal_id: z.number().int().describe('CRM deal ID'),
+      title: z.string().min(1).optional(),
+      contact_id: z.number().int().optional(),
+      conversation_display_id: z.number().int().optional(),
+      conversation_id: z.number().int().nullable().optional(),
+      owner_id: z.number().int().nullable().optional().describe('null unassigns'),
+      amount_cents: z.number().int().min(0).nullable().optional().describe('Deal value in integer cents'),
+      currency: z.string().optional(),
+      product_name: z.string().nullable().optional(),
+      probability: z.number().int().min(0).max(100).nullable().optional(),
+      expected_close_on: z.string().nullable().optional().describe('YYYY-MM-DD'),
+      position: z.number().int().min(0).optional(),
+    }),
+    handler: async ({ deal_id, ...fields }, { client }) => {
+      if (Object.keys(fields).length === 0) {
+        return json({ changed: false, reason: 'No deal fields to update were provided.' });
+      }
+      return untrustedJson(
+        await client.request(`/crm_deals/${deal_id}`, {
+          prefix: 'saas',
+          method: 'PATCH',
+          body: { crm_deal: fields },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_deal_move',
+    stability: 'beta',
+    title: 'Move a CRM deal to another open stage',
+    description:
+      'Move a CRM deal to an open pipeline stage `saas_pipeline_stage_id` (`/crm_deals/:id/move`). Enforces any `required_fields` ' +
+      'configured on the target stage (returns 422 with `missing_fields` if unmet) and triggers stage entry automations. ' +
+      'Refuses moving to a `won` or `lost` closing stage — use `crm_deal_close` instead so closing requirements and Meta CAPI ' +
+      'confirmation are enforced.',
+    write: true,
+    inputSchema: z.object({
+      deal_id: z.number().int().describe('CRM deal ID'),
+      saas_pipeline_stage_id: z.number().int().describe('Destination open pipeline stage ID'),
+      after_deal_id: z.number().int().optional().describe('Place card after this deal ID in the stage column'),
+      position: z.number().int().min(0).optional(),
+      amount_cents: z.number().int().min(0).optional().describe('Supply if required by the destination stage'),
+    }),
+    handler: async ({ deal_id, ...body }, { client }) => {
+      const deal = (await client.request(`/crm_deals/${deal_id}`, { prefix: 'saas' })) as Record<string, unknown> | null;
+      const stages = ((deal?.pipeline as Record<string, unknown> | undefined)?.stages ?? []) as Array<Record<string, unknown>>;
+      const targetStage = stages.find((s) => s?.id === body.saas_pipeline_stage_id);
+      if (targetStage && (targetStage.stage_type === 'won' || targetStage.stage_type === 'lost')) {
+        return failure(
+          `Stage #${body.saas_pipeline_stage_id} ("${String(targetStage.name ?? '')}") has stage_type "${String(targetStage.stage_type)}". ` +
+            'Use `crm_deal_close` to mark a deal won or lost so closing requirements and Meta Conversions API confirmation are enforced.',
+        );
+      }
+      return untrustedJson(
+        await client.request(`/crm_deals/${deal_id}/move`, {
+          prefix: 'saas',
+          method: 'PATCH',
+          body,
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_deal_close',
+    stability: 'beta',
+    title: 'Close a CRM deal as won or lost',
+    description:
+      'Close a CRM deal as `won` (`/crm_deals/:id/won`) or `lost` (`/crm_deals/:id/lost`). IRREVERSIBLE: marking a deal `won` ' +
+      'records revenue and MAY SEND A META CONVERSIONS API (CAPI) `Purchase` EVENT to Meta when conversion tracking is configured ' +
+      'or `send_conversion_event: true`. Marking `lost` requires `lost_reason_id` from `crm_loss_reasons_list` or ' +
+      '`crm_close_reasons_list`. Always requires `confirm: true`; call without `confirm` first to inspect the server-derived preview.',
+    write: true,
+    irreversible: true,
+    inputSchema: z.object({
+      deal_id: z.number().int().describe('CRM deal ID'),
+      outcome: z.enum(['won', 'lost']).describe('Close outcome: "won" or "lost"'),
+      stage_id: z.number().int().optional().describe('Optional target won/lost stage ID'),
+      amount_cents: z.number().int().min(0).optional().describe('Final deal value in integer cents (won)'),
+      product_name: z.string().optional().describe('Final product name (won)'),
+      won_on: z.string().optional().describe('Won date YYYY-MM-DD (won)'),
+      send_conversion_event: z
+        .boolean()
+        .optional()
+        .describe('When true on won, dispatches a Meta Conversions API Purchase event (or false to suppress)'),
+      lost_reason_id: z
+        .number()
+        .int()
+        .optional()
+        .describe('Required when outcome is "lost" — ID from crm_loss_reasons_list / crm_close_reasons_list'),
+      lost_comment: z.string().optional().describe('Optional explanation when outcome is "lost"'),
+      reopen_on: z.string().optional().describe('Optional date (YYYY-MM-DD) to automatically reopen a lost deal'),
+      reopen_owner_id: z.number().int().optional().describe('Owner user ID when reopening'),
+      resolve_conversation: z.boolean().optional().describe('When true, also resolves the linked conversation'),
+      confirm: z.boolean().optional().describe('Set true only after the user confirms the exact preview'),
+    }),
+    handler: async (args, { client }) => {
+      const {
+        deal_id,
+        outcome,
+        stage_id,
+        amount_cents,
+        product_name,
+        won_on,
+        send_conversion_event,
+        lost_reason_id,
+        lost_comment,
+        reopen_on,
+        reopen_owner_id,
+        resolve_conversation,
+        confirm,
+      } = args;
+
+      if (outcome === 'lost' && !lost_reason_id) {
+        return failure(
+          'Closing a deal as "lost" requires `lost_reason_id`. Call `crm_loss_reasons_list` or `crm_close_reasons_list` first to pick a valid reason ID.',
+        );
+      }
+
+      if (!confirm) {
+        const deal = (await client.request(`/crm_deals/${deal_id}`, { prefix: 'saas' })) as Record<string, unknown> | null;
+        const title = String(deal?.title ?? `#${deal_id}`);
+        const contact = (deal?.contact as Record<string, unknown> | undefined)?.name ?? 'unknown contact';
+        const effectiveAmount = amount_cents ?? (deal?.amount_cents as number | undefined) ?? 0;
+        const currency = String(deal?.currency ?? 'BRL');
+        const effect =
+          outcome === 'won'
+            ? `Deal #${deal_id} ("${title}", contact: ${contact}, amount_cents: ${effectiveAmount} ${currency}) will be closed as WON` +
+              `${resolve_conversation ? ', its linked conversation will be resolved,' : ''} and ` +
+              `${send_conversion_event === false ? 'Meta CAPI dispatch is suppressed (send_conversion_event=false)' : 'a Meta Conversions API (CAPI) Purchase event MAY BE SENT TO META if configured on the stage/inbox'}.`
+            : `Deal #${deal_id} ("${title}", contact: ${contact}) will be closed as LOST (lost_reason_id: ${lost_reason_id}` +
+              `${lost_comment ? `, comment: "${lost_comment}"` : ''})` +
+              `${resolve_conversation ? ' and its linked conversation will be resolved' : ''}.`;
+        const refusal = requireConfirmation(confirm, effect);
+        if (refusal) return refusal;
+      }
+
+      if (outcome === 'won') {
+        return untrustedJson(
+          await client.request(`/crm_deals/${deal_id}/won`, {
+            prefix: 'saas',
+            method: 'POST',
+            body: { stage_id, amount_cents, product_name, won_on, resolve_conversation, send_conversion_event },
+          }),
+        );
+      }
+      return untrustedJson(
+        await client.request(`/crm_deals/${deal_id}/lost`, {
+          prefix: 'saas',
+          method: 'POST',
+          body: { stage_id, lost_reason_id, lost_comment, resolve_conversation, reopen_on, reopen_owner_id },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_deal_delete',
+    stability: 'beta',
+    title: 'Delete a CRM deal',
+    description:
+      'Permanently delete a CRM deal (`/crm_deals/:id`). Admin-only (`account:update?`). IRREVERSIBLE: deletes the deal, its ' +
+      'notes, and its scheduled activities. Requires `confirm: true`.',
+    write: true,
+    irreversible: true,
+    inputSchema: z.object({
+      deal_id: z.number().int().describe('CRM deal ID to delete'),
+      confirm: z.boolean().optional().describe('Required to confirm permanent deletion'),
+    }),
+    handler: async ({ deal_id, confirm }, { client }) => {
+      if (!confirm) {
+        const deal = (await client.request(`/crm_deals/${deal_id}`, { prefix: 'saas' })) as Record<string, unknown> | null;
+        const title = String(deal?.title ?? `#${deal_id}`);
+        const contact = (deal?.contact as Record<string, unknown> | undefined)?.name ?? 'unknown contact';
+        const refusal = requireConfirmation(
+          confirm,
+          `Deal #${deal_id} ("${title}", contact: ${contact}) and all of its notes and activities will be permanently deleted.`,
+        );
+        if (refusal) return refusal;
+      }
+      await client.request(`/crm_deals/${deal_id}`, { prefix: 'saas', method: 'DELETE' });
+      return json({ deleted: true, deal_id });
+    },
+  }),
+
+  defineTool({
+    name: 'crm_deals_bulk_update',
+    stability: 'beta',
+    title: 'Bulk update CRM deals',
+    description:
+      'Run a bulk operation across up to 50 CRM deals (`/crm_deals/bulk`): `move_stage`, `assign_owner`, `add_labels`, ' +
+      '`mark_lost`, or `delete` (admin-only). Requires `confirm: true` whenever modifying more than 5 deals at once, or for ' +
+      '`mark_lost` / `delete` at any count.',
+    write: true,
+    irreversible: true,
+    inputSchema: z.object({
+      operation: z.enum(['move_stage', 'assign_owner', 'add_labels', 'mark_lost', 'delete']),
+      ids: z.array(z.number().int()).min(1).max(50).describe('Deal IDs (1..50)'),
+      stage_id: z.number().int().optional().describe('Required for move_stage'),
+      owner_id: z.number().int().nullable().optional().describe('Required for assign_owner (null to unassign)'),
+      labels: z.array(z.string()).optional().describe('Required for add_labels'),
+      lost_reason_id: z.number().int().optional().describe('Required for mark_lost'),
+      lost_comment: z.string().optional(),
+      confirm: z
+        .boolean()
+        .optional()
+        .describe(`Required when ids.length > ${BULK_CONFIRM_THRESHOLD} or operation is mark_lost / delete`),
+    }),
+    handler: async (args, { client }) => {
+      const { operation, ids, stage_id, owner_id, labels, lost_reason_id, lost_comment, confirm } = args;
+
+      if (operation === 'move_stage' && !stage_id) {
+        return failure('Bulk `move_stage` requires `stage_id`.');
+      }
+      if (operation === 'assign_owner' && owner_id === undefined) {
+        return failure('Bulk `assign_owner` requires `owner_id` (pass a user ID or null to unassign).');
+      }
+      if (operation === 'add_labels' && (!labels || labels.length === 0)) {
+        return failure('Bulk `add_labels` requires a non-empty `labels` array.');
+      }
+      if (operation === 'mark_lost' && !lost_reason_id) {
+        return failure('Bulk `mark_lost` requires `lost_reason_id`.');
+      }
+
+      const needsConfirm =
+        ids.length > BULK_CONFIRM_THRESHOLD || operation === 'delete' || operation === 'mark_lost';
+      if (needsConfirm) {
+        const refusal = requireConfirmation(
+          confirm,
+          `Bulk operation "${operation}" will modify ${ids.length} deal(s) [${ids.join(', ')}].`,
+        );
+        if (refusal) return refusal;
+      }
+
+      return json(
+        await client.request('/crm_deals/bulk', {
+          prefix: 'saas',
+          method: 'POST',
+          body: { operation, ids, stage_id, owner_id, labels, lost_reason_id, lost_comment },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_deal_notes_list',
+    stability: 'beta',
+    title: 'List notes on a CRM deal',
+    description: 'List notes on a CRM deal, newest first (`/crm_deals/:crm_deal_id/notes`).',
+    inputSchema: z.object({
+      deal_id: z.number().int().describe('CRM deal ID'),
+    }),
+    handler: async ({ deal_id }, { client }) =>
+      untrustedJson(await client.request(`/crm_deals/${deal_id}/notes`, { prefix: 'saas' })),
+  }),
+
+  defineTool({
+    name: 'crm_deal_note_create',
+    stability: 'beta',
+    title: 'Add a note to a CRM deal',
+    description: 'Create a note on a CRM deal (`/crm_deals/:crm_deal_id/notes`).',
+    write: true,
+    inputSchema: z.object({
+      deal_id: z.number().int().describe('CRM deal ID'),
+      content: z.string().min(1).describe('Note text'),
+    }),
+    handler: async ({ deal_id, content }, { client }) =>
+      untrustedJson(
+        await client.request(`/crm_deals/${deal_id}/notes`, {
+          prefix: 'saas',
+          method: 'POST',
+          body: { content },
+        }),
+      ),
+  }),
+
+  defineTool({
+    name: 'crm_deal_note_update',
+    stability: 'beta',
+    title: 'Update a note on a CRM deal',
+    description: 'Update an existing deal note (`/crm_deals/:crm_deal_id/notes/:id`). Only the note author or an admin may edit.',
+    write: true,
+    inputSchema: z.object({
+      deal_id: z.number().int().describe('CRM deal ID'),
+      note_id: z.number().int().describe('Note ID'),
+      content: z.string().min(1).describe('Updated note text'),
+    }),
+    handler: async ({ deal_id, note_id, content }, { client }) =>
+      untrustedJson(
+        await client.request(`/crm_deals/${deal_id}/notes/${note_id}`, {
+          prefix: 'saas',
+          method: 'PATCH',
+          body: { content },
+        }),
+      ),
+  }),
+
+  defineTool({
+    name: 'crm_deal_note_delete',
+    stability: 'beta',
+    title: 'Delete a note on a CRM deal',
+    description:
+      'Permanently delete a deal note (`/crm_deals/:crm_deal_id/notes/:id`). Only the author or an admin may delete. Requires `confirm: true`.',
+    write: true,
+    irreversible: true,
+    inputSchema: z.object({
+      deal_id: z.number().int().describe('CRM deal ID'),
+      note_id: z.number().int().describe('Note ID'),
+      confirm: z.boolean().optional().describe('Required to confirm deletion'),
+    }),
+    handler: async ({ deal_id, note_id, confirm }, { client }) => {
+      const refusal = requireConfirmation(confirm, `Note #${note_id} on deal #${deal_id} will be permanently deleted.`);
+      if (refusal) return refusal;
+      await client.request(`/crm_deals/${deal_id}/notes/${note_id}`, { prefix: 'saas', method: 'DELETE' });
+      return json({ deleted: true, deal_id, note_id });
+    },
+  }),
+
+  defineTool({
+    name: 'crm_activities_list',
+    stability: 'beta',
+    title: 'List or get CRM activities',
+    description:
+      'List the seller activity queue or fetch one activity by `activity_id` (`/crm_activities`). List responses include ' +
+      '`meta.counts` (`overdue`, `today`, `upcoming`, `next_7_days`, `deals_without_activity`). When filtering by `from`/`to`, ' +
+      'timestamps must include an explicit UTC offset (e.g. `2026-11-01T00:00:00-03:00`).',
+    inputSchema: z.object({
+      activity_id: z.number().int().optional().describe('When set, fetches a single activity (/crm_activities/:id)'),
+      deal_id: z.number().int().optional().describe('Filter by CRM deal ID'),
+      owner_id: z.union([z.number().int(), z.literal('me')]).optional().describe('User ID or "me"'),
+      scope: z.enum(['overdue', 'today', 'upcoming', 'pending', 'completed']).optional().describe('Defaults to "pending"'),
+      source: z.enum(['manual', 'automation', 'follow_up']).optional(),
+      from: z.string().optional().describe('ISO-8601 start timestamp with explicit UTC offset'),
+      to: z.string().optional().describe('ISO-8601 end timestamp with explicit UTC offset'),
+      per_page: z.number().int().min(1).max(100).optional(),
+      offset: z.number().int().min(0).optional(),
+    }),
+    handler: async ({ activity_id, from, to, ...query }, { client }) => {
+      if (activity_id !== undefined) {
+        return untrustedJson(await client.request(`/crm_activities/${activity_id}`, { prefix: 'saas' }));
+      }
+      const fromErr = validateIsoOffset('from', from);
+      if (fromErr) return fromErr;
+      const toErr = validateIsoOffset('to', to);
+      if (toErr) return toErr;
+      return untrustedJson(
+        await client.request('/crm_activities', {
+          prefix: 'saas',
+          query: { ...query, from, to },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_activity_create',
+    stability: 'beta',
+    title: 'Schedule a CRM activity',
+    description:
+      'Create a scheduled activity on a CRM deal (`/crm_activities`). `due_at` must be an ISO-8601 timestamp with an explicit ' +
+      'UTC offset (e.g. `2026-11-01T14:00:00-03:00` or `2026-11-01T17:00:00Z`). Defaults `owner_id` to the deal owner when omitted.',
+    write: true,
+    inputSchema: z.object({
+      crm_deal_id: z.number().int().describe('CRM deal ID'),
+      title: z.string().min(1).describe('Activity title'),
+      activity_type: z.string().min(1).describe('Activity type (e.g. call, whatsapp, email, meeting, task, follow_up)'),
+      due_at: z.string().optional().describe('ISO-8601 due timestamp with explicit UTC offset'),
+      notes: z.string().optional().describe('Optional activity notes'),
+      owner_id: z.number().int().nullable().optional().describe('Assigned user ID (defaults to deal owner)'),
+      reminder_minutes: z.number().int().min(0).nullable().optional(),
+    }),
+    handler: async (args, { client }) => {
+      const dueErr = validateIsoOffset('due_at', args.due_at);
+      if (dueErr) return dueErr;
+      return untrustedJson(
+        await client.request('/crm_activities', {
+          prefix: 'saas',
+          method: 'POST',
+          body: { crm_activity: args },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_activity_update',
+    stability: 'beta',
+    title: 'Update a CRM activity',
+    description:
+      'Update fields on a CRM activity (`/crm_activities/:id`). `due_at`, when provided, must carry an explicit UTC offset.',
+    write: true,
+    inputSchema: z.object({
+      activity_id: z.number().int().describe('Activity ID'),
+      title: z.string().min(1).optional(),
+      activity_type: z.string().min(1).optional(),
+      due_at: z.string().optional().describe('ISO-8601 due timestamp with explicit UTC offset'),
+      notes: z.string().nullable().optional(),
+      owner_id: z.number().int().nullable().optional(),
+      reminder_minutes: z.number().int().min(0).nullable().optional(),
+    }),
+    handler: async ({ activity_id, ...fields }, { client }) => {
+      if (Object.keys(fields).length === 0) {
+        return json({ changed: false, reason: 'No activity fields to update were provided.' });
+      }
+      const dueErr = validateIsoOffset('due_at', fields.due_at);
+      if (dueErr) return dueErr;
+      return untrustedJson(
+        await client.request(`/crm_activities/${activity_id}`, {
+          prefix: 'saas',
+          method: 'PATCH',
+          body: { crm_activity: fields },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_activity_complete',
+    stability: 'beta',
+    title: 'Mark a CRM activity completed',
+    description: 'Mark a CRM activity as completed (`/crm_activities/:id/complete`).',
+    write: true,
+    idempotent: true,
+    inputSchema: z.object({
+      activity_id: z.number().int().describe('Activity ID'),
+    }),
+    handler: async ({ activity_id }, { client }) =>
+      untrustedJson(
+        await client.request(`/crm_activities/${activity_id}/complete`, {
+          prefix: 'saas',
+          method: 'POST',
+        }),
+      ),
+  }),
+
+  defineTool({
+    name: 'crm_activity_postpone',
+    stability: 'beta',
+    title: 'Postpone a CRM activity',
+    description:
+      'Postpone a pending CRM activity (`/crm_activities/:id/postpone`) by `days` (default 1, max 365, preserving time of day) ' +
+      'or to an explicit future `due_at` (ISO-8601 with UTC offset). Completed activities cannot be postponed.',
+    write: true,
+    inputSchema: z.object({
+      activity_id: z.number().int().describe('Activity ID'),
+      days: z.number().int().min(1).max(365).optional().describe('Days to postpone (default 1 when due_at is omitted)'),
+      due_at: z.string().optional().describe('Explicit future ISO-8601 timestamp with UTC offset'),
+    }),
+    handler: async ({ activity_id, days, due_at }, { client }) => {
+      const dueErr = validateIsoOffset('due_at', due_at);
+      if (dueErr) return dueErr;
+      return untrustedJson(
+        await client.request(`/crm_activities/${activity_id}/postpone`, {
+          prefix: 'saas',
+          method: 'POST',
+          body: { days, due_at },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
+    name: 'crm_activity_delete',
+    stability: 'beta',
+    title: 'Delete a CRM activity',
+    description: 'Permanently delete a CRM activity (`/crm_activities/:id`). Requires `confirm: true`.',
+    write: true,
+    irreversible: true,
+    inputSchema: z.object({
+      activity_id: z.number().int().describe('Activity ID'),
+      confirm: z.boolean().optional().describe('Required to confirm deletion'),
+    }),
+    handler: async ({ activity_id, confirm }, { client }) => {
+      const refusal = requireConfirmation(confirm, `CRM activity #${activity_id} will be permanently deleted.`);
+      if (refusal) return refusal;
+      await client.request(`/crm_activities/${activity_id}`, { prefix: 'saas', method: 'DELETE' });
+      return json({ deleted: true, activity_id });
+    },
+  }),
+
+  defineTool({
+    name: 'conversation_deal_get',
+    stability: 'beta',
+    title: 'Get the CRM deal linked to a conversation',
+    description:
+      'Fetch the CRM deal card and pipeline stages for a conversation (`/conversations/:id/crm_deal`). ' +
+      '`conversation_id` is the account-scoped conversation `display_id` (the same ID used by `conversation_get`).',
+    inputSchema: z.object({
+      conversation_id: z.number().int().describe('Account-scoped conversation display ID'),
+    }),
+    handler: async ({ conversation_id }, { client }) =>
+      untrustedJson(await client.request(`/conversations/${conversation_id}/crm_deal`, { prefix: 'saas' })),
+  }),
+
+  defineTool({
+    name: 'conversation_deal_update',
+    stability: 'beta',
+    title: 'Update or create the CRM deal for a conversation',
+    description:
+      'Update `product_name` and/or `amount_cents` on the CRM deal behind a conversation (`/conversations/:id/crm_deal`). ' +
+      'If the conversation does not have a CRM deal yet, AirysChat creates one automatically in the default pipeline stage. ' +
+      '`conversation_id` is the account-scoped conversation `display_id`.',
+    write: true,
+    inputSchema: z.object({
+      conversation_id: z.number().int().describe('Account-scoped conversation display ID'),
+      product_name: z.string().optional().describe('Product or service name'),
+      amount_cents: z.number().int().min(0).nullable().optional().describe('Deal amount in integer cents'),
+    }),
+    handler: async ({ conversation_id, product_name, amount_cents }, { client }) => {
+      if (product_name === undefined && amount_cents === undefined) {
+        return failure('Provide at least one of `product_name` or `amount_cents`.');
+      }
+      return untrustedJson(
+        await client.request(`/conversations/${conversation_id}/crm_deal`, {
+          prefix: 'saas',
+          method: 'PATCH',
+          body: { product_name, amount_cents },
+        }),
+      );
+    },
+  }),
+
+  defineTool({
     name: 'crm_insights',
     stability: 'beta',
     title: 'Get CRM dashboard and origin results insights',
@@ -221,3 +799,4 @@ export const crmTools = [
     handler: async (_args, { client }) => json(await client.request('/crm_saved_views', { prefix: 'saas' })),
   }),
 ];
+

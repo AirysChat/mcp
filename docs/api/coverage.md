@@ -4,7 +4,7 @@
 
 Source: `AirysChat@c9ea590d8c` (bin/rails routes (AirysChat)). Full list: [inventory.csv](inventory.csv).
 
-**42 of 775 addressable endpoints have a curated tool (5%).** Every addressable endpoint is reachable today through `airyschat_api`; 32 are excluded.
+**65 of 775 addressable endpoints have a curated tool (8%).** Every addressable endpoint is reachable today through `airyschat_api`; 32 are excluded.
 
 ## By toolset
 
@@ -13,7 +13,7 @@ Source: `AirysChat@c9ea590d8c` (bin/rails routes (AirysChat)). Full list: [inven
 | `admin` | 185 | 0 | 185 | 0 | 0% |
 | `ai_agents` | 121 | 0 | 121 | 0 | 0% |
 | `core` | 142 | 16 | 126 | 0 | 11% |
-| `crm` | 90 | 12 | 78 | 0 | 13% |
+| `crm` | 90 | 35 | 55 | 0 | 39% |
 | `excluded` | 32 | 0 | 0 | 32 | — |
 | `help_center` | 28 | 0 | 28 | 0 | 0% |
 | `meta_agent` | 95 | 0 | 95 | 0 | 0% |
@@ -25,7 +25,7 @@ Source: `AirysChat@c9ea590d8c` (bin/rails routes (AirysChat)). Full list: [inven
 | Release | Endpoints | Curated | Remaining |
 |---|---:|---:|---:|
 | 0.1.0 | 30 | 30 | 0 |
-| 0.3.0 | 216 | 12 | 204 |
+| 0.3.0 | 216 | 35 | 181 |
 | 0.4.0 | 216 | 0 | 216 |
 | 0.5.0 | 100 | 0 | 100 |
 | 0.8.0 | 213 | 0 | 213 |
