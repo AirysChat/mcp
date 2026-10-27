@@ -9,3 +9,5 @@ dist/
 # sanitized inventory under docs/ is committed.
 scripts/inventory/.cache/
 evidence-raw/
+# Generated at build time from docs/api (CAT-05)
+packages/server/catalog.json
