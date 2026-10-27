@@ -26,7 +26,15 @@ async function main(): Promise<void> {
   const config = loadConfig();
   const context = { config, client: new AirysChatClient(config) };
 
-  const server = new McpServer({ name: 'airyschat', version: VERSION });
+  const server = new McpServer(
+    { name: 'airyschat', version: VERSION },
+    {
+      // MCP 2026-07-28 cacheable results: the tool list is fixed for the life of the process
+      // (toolsets, features and read-only are read once at startup), so clients may cache it.
+      // `private` because it depends on this user's configuration.
+      cacheHints: { 'tools/list': { ttlMs: 60 * 60 * 1000, cacheScope: 'private' } },
+    },
+  );
 
   // The escape hatch is always on: it is the only route to the ~325 endpoints that do
   // not have a dedicated tool yet.
