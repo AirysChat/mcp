@@ -44,7 +44,8 @@ const baseUrl = `http://127.0.0.1:${mock.address().port}`;
 /** Minimal MCP stdio client: newline-delimited JSON-RPC. */
 function connect(extraEnv = {}) {
   const child = spawn(process.execPath, ['dist/index.js'], {
-    env: { ...process.env, AIRYSCHAT_BASE_URL: baseUrl, AIRYSCHAT_API_KEY: 'test-key', AIRYSCHAT_ACCOUNT_ID: '5', ...extraEnv },
+    // The main session opts into beta so write tools (all beta until verified live) are exercised.
+    env: { ...process.env, AIRYSCHAT_BASE_URL: baseUrl, AIRYSCHAT_API_KEY: 'test-key', AIRYSCHAT_ACCOUNT_ID: '5', AIRYSCHAT_FEATURES: 'beta', ...extraEnv },
     stdio: ['pipe', 'pipe', 'pipe'],
   });
 
@@ -110,6 +111,10 @@ check('irreversible tools are annotated destructiveHint', () => {
   assert.equal(byName.get('wa_campaign_launch').annotations.readOnlyHint, false);
 });
 check('escape hatch is always registered', () => assert.ok(byName.has('airyschat_api')));
+check('beta tools say so in their description; stable ones do not', () => {
+  assert.match(byName.get('wa_campaign_launch').description, /^\[beta\] /);
+  assert.doesNotMatch(byName.get('conversations_list').description, /^\[/);
+});
 
 const conversations = await session.call('tools/call', { name: 'conversations_list', arguments: { status: 'open' } });
 check('customer content is fenced as untrusted', () => {
@@ -191,6 +196,18 @@ check('read-only escape hatch serves GET and refuses writes even with confirm', 
   assert.equal(requests.length, before, 'must not have called the API');
 });
 readOnly.child.kill();
+
+// ---------------------------------------------------------------- default features (stable only)
+const stableOnly = connect({ AIRYSCHAT_FEATURES: '' });
+await handshake(stableOnly);
+const stableTools = (await stableOnly.call('tools/list', {})).tools.map((tool) => tool.name);
+check('default exposes only stable tools; beta needs AIRYSCHAT_FEATURES', () => {
+  assert.ok(stableTools.includes('conversations_list'));
+  assert.ok(stableTools.includes('airyschat_api'));
+  assert.ok(!stableTools.includes('wa_campaign_launch'), 'beta write tools must be hidden by default');
+  assert.ok(stableTools.length < tools.length, `stable ${stableTools.length} vs beta ${tools.length}`);
+});
+stableOnly.child.kill();
 
 mock.close();
 console.log(`\n${checks} checks passed`);

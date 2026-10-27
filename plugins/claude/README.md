@@ -24,7 +24,8 @@ export AIRYSCHAT_API_KEY=...        # agent or admin token
 export AIRYSCHAT_ACCOUNT_ID=5
 ```
 
-Optional: `AIRYSCHAT_TOOLSETS` (default `core,whatsapp`), `AIRYSCHAT_READ_ONLY=1`.
+Optional: `AIRYSCHAT_TOOLSETS` (default `core,whatsapp`), `AIRYSCHAT_FEATURES` (default `stable`;
+set `beta` to enable write tools such as campaign launch and replies), `AIRYSCHAT_READ_ONLY=1`.
 
 If a variable is unset, Claude Code passes the placeholder through literally and the
 server refuses to start with a message naming the variable — check the `/plugin` Errors

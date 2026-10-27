@@ -16,6 +16,7 @@ const CONVERSATION_STATUS = z.enum(['open', 'resolved', 'pending', 'snoozed']);
 export const coreTools = [
   defineTool({
     name: 'conversations_list',
+    stability: 'stable',
     title: 'List conversations',
     description:
       'List conversations in the account. Returns one page — check `data.meta` before assuming the result is complete. ' +
@@ -34,6 +35,7 @@ export const coreTools = [
 
   defineTool({
     name: 'conversation_get',
+    stability: 'stable',
     title: 'Get a conversation',
     inputSchema: z.object({ conversation_id: z.number().int() }),
     description: 'Fetch one conversation with its metadata, assignee, labels, and most recent messages.',
@@ -43,6 +45,7 @@ export const coreTools = [
 
   defineTool({
     name: 'conversation_messages',
+    stability: 'stable',
     title: 'List messages in a conversation',
     description:
       'List messages, oldest first. `message_type` is 0 incoming (customer), 1 outgoing (agent), 2 activity, 3 template. ' +
@@ -57,6 +60,7 @@ export const coreTools = [
 
   defineTool({
     name: 'conversation_reply',
+    stability: 'beta',
     title: 'Reply to a conversation',
     description:
       'Post a message to a conversation. With `private: true` it is an internal note; otherwise THE CUSTOMER RECEIVES IT ' +
@@ -86,6 +90,7 @@ export const coreTools = [
 
   defineTool({
     name: 'conversation_update',
+    stability: 'beta',
     title: 'Update conversation status, priority, assignment, or labels',
     description:
       'Apply one or more changes to a conversation. Every field here is visible to the team and may trigger notifications ' +
@@ -127,6 +132,7 @@ export const coreTools = [
 
   defineTool({
     name: 'contacts_search',
+    stability: 'stable',
     title: 'Search contacts',
     description: 'Search contacts by name, email, phone number, or identifier.',
     inputSchema: z.object({
@@ -139,6 +145,7 @@ export const coreTools = [
 
   defineTool({
     name: 'contact_get',
+    stability: 'stable',
     title: 'Get a contact',
     description: 'Fetch one contact. The contact object is wrapped in a `payload` key.',
     inputSchema: z.object({ contact_id: z.number().int() }),
@@ -147,6 +154,7 @@ export const coreTools = [
 
   defineTool({
     name: 'contact_conversations',
+    stability: 'stable',
     title: 'List a contact’s conversations',
     description: 'List every conversation belonging to one contact, across inboxes.',
     inputSchema: z.object({ contact_id: z.number().int() }),
@@ -156,6 +164,7 @@ export const coreTools = [
 
   defineTool({
     name: 'inboxes_list',
+    stability: 'stable',
     title: 'List inboxes',
     description:
       'List inboxes with their channel type and configuration. Use this to find the `inbox_id` for WhatsApp tools — ' +
@@ -167,6 +176,7 @@ export const coreTools = [
 
   defineTool({
     name: 'agents_list',
+    stability: 'stable',
     title: 'List agents',
     description: 'List account agents. Returns a bare array, not a paginated envelope. Use this to resolve an assignee ID before assigning.',
     inputSchema: z.object({}),
@@ -175,6 +185,7 @@ export const coreTools = [
 
   defineTool({
     name: 'labels_list',
+    stability: 'stable',
     title: 'List labels',
     description: 'List labels defined on the account. Label IDs are what campaign audiences select on.',
     inputSchema: z.object({}),
@@ -183,6 +194,7 @@ export const coreTools = [
 
   defineTool({
     name: 'teams_list',
+    stability: 'stable',
     title: 'List teams',
     inputSchema: z.object({}),
     description: 'List teams defined on the account.',
@@ -191,6 +203,7 @@ export const coreTools = [
 
   defineTool({
     name: 'me',
+    stability: 'stable',
     title: 'Show the authenticated user',
     description: 'Identify which user the configured API key belongs to. Useful for confirming the server is wired to the right account.',
     inputSchema: z.object({}),

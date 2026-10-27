@@ -55,7 +55,8 @@ env = { AIRYSCHAT_BASE_URL = "https://app.airyschat.com", AIRYSCHAT_API_KEY = ".
 | `AIRYSCHAT_API_KEY` | yes | — | Agent or admin token, sent as the `api_access_token` header |
 | `AIRYSCHAT_ACCOUNT_ID` | yes | — | Numeric account ID |
 | `AIRYSCHAT_TOOLSETS` | no | `core,whatsapp` | Comma-separated |
-| `AIRYSCHAT_READ_ONLY` | no | off | `1` unregisters every write tool |
+| `AIRYSCHAT_FEATURES` | no | `stable` | Highest tool maturity exposed: `stable`, `beta` or `experimental`. Write tools are `beta` until verified live |
+| `AIRYSCHAT_READ_ONLY` | no | off | `1` unregisters every write tool (`airyschat_api` stays, GET only) |
 | `AIRYSCHAT_TIMEOUT_MS` | no | `30000` | Per-request timeout |
 
 Config is validated at startup, so a missing variable fails in the client's server log

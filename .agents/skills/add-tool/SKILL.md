@@ -29,7 +29,8 @@ Read `.agents/rules/tool-safety.md` and `.agents/rules/api-source-of-truth.md` f
    - `inputSchema` (zod) — tight types, `.describe()` on every non-obvious field, enums from source.
    - `write: true` for any state change; `irreversible: true` for sends, Meta writes, deletes,
      merges, deal `won`; `idempotent: true` only when truly so.
-   - `stability: 'beta'` for new tools (once FND-07 lands).
+   - `stability: 'beta'` for new tools (required field). `experimental` when the upstream endpoint is
+     itself unstable. Promotion to `stable` is a separate change backed by `live-verify` evidence.
 4. **Handler**:
    - Customer-authored content in the response → `untrustedJson(...)`; otherwise `json(...)`.
    - Irreversible → `requireConfirmation(confirm, '<exact effect, with ids and text>')` before the
