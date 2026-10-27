@@ -374,6 +374,162 @@ const mock = createServer((req, res) => {
     return send(200, { reply: 'Claro! Informe o número do pedido.', latency_ms: 410 });
   }
 
+  // WhatsApp expansion (WAR-02..WAR-06) under account 5.
+  if (url.pathname === '/api/v1/accounts/5/message_templates') {
+    if (req.method === 'POST') {
+      return send(201, {
+        id: 88,
+        name: 'pedido_confirmado',
+        language: 'pt_BR',
+        category: 'utility',
+        status: 'pending',
+        platform_template_id: 'meta_tpl_88',
+        content: { body: 'Olá {{1}}, seu pedido {{2}} foi confirmado.' },
+        metadata: { quality_rating: 'GREEN' },
+      });
+    }
+    return send(200, []);
+  }
+  if (url.pathname === '/api/v1/accounts/5/message_templates/88') {
+    if (req.method === 'DELETE') return send(200, { deleted: true });
+    if (req.method === 'PATCH') {
+      return send(200, {
+        id: 88,
+        name: 'pedido_confirmado',
+        language: 'pt_BR',
+        category: 'utility',
+        status: 'pending',
+        platform_template_id: 'meta_tpl_88',
+        content: { body: 'Olá {{1}}, seu pedido {{2}} saiu para entrega.' },
+      });
+    }
+    return send(200, {
+      id: 88,
+      name: 'pedido_confirmado',
+      language: 'pt_BR',
+      category: 'utility',
+      status: 'rejected',
+      platform_template_id: 'meta_tpl_88',
+      content: { body: '{{1}} aproveite 50% de desconto no link https://bit.ly/oferta {{3}}' },
+      metadata: { rejection_reason: 'PROMOTIONAL_CONTENT_IN_UTILITY', quality_rating: 'YELLOW' },
+    });
+  }
+  if (url.pathname === '/api/v1/accounts/5/message_templates/88/appeal') {
+    return send(200, { id: 88, status: 'in_appeal' });
+  }
+  if (url.pathname === '/api/v1/accounts/5/message_templates/88/duplicate') {
+    return send(201, { id: 89, name: 'pedido_confirmado_copy', status: 'draft' });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/5/conversations/42/scheduled_whatsapp_messages') {
+    if (req.method === 'POST') {
+      return send(201, { id: 701, conversation_id: 42, status: 'pending', content: 'Lembrete de reunião', scheduled_at: '2026-11-05T14:00:00Z' });
+    }
+    return send(200, [{ id: 701, conversation_id: 42, status: 'pending', content: 'Lembrete de reunião', scheduled_at: '2026-11-05T14:00:00Z' }]);
+  }
+  if (url.pathname === '/saas/api/v1/accounts/5/conversations/42/scheduled_whatsapp_messages/701') {
+    if (req.method === 'DELETE') return send(204, null);
+    if (req.method === 'PATCH') return send(200, { id: 701, status: 'pending', scheduled_at: '2026-11-06T14:00:00Z' });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/5/contacts/301/calls') {
+    return send(200, [{ id: 910, direction: 'inbound', status: 'completed', duration_seconds: 95 }]);
+  }
+  if (url.pathname === '/api/v1/accounts/5/whatsapp_calls/910') {
+    return send(200, { id: 910, direction: 'inbound', status: 'completed', duration_seconds: 95 });
+  }
+  if (url.pathname === '/api/v1/accounts/5/calls') {
+    return send(200, { payload: [{ id: 910, direction: 'inbound', status: 'completed' }], meta: { count: 1 } });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/5/calls/910/transcription') {
+    return send(200, { call_id: 910, transcript: 'Olá, gostaria de confirmar meu pedido.' });
+  }
+  if (url.pathname === '/api/v1/accounts/5/campaigns/7/summary') {
+    return send(200, { id: 7, sent: 120, delivered: 115, read: 80, replied: 19, failed: 5 });
+  }
+  if (url.pathname === '/api/v1/accounts/5/campaigns/7/mm_metrics') {
+    return send(200, { id: 7, mm_lite_eligible: true, conversions: 6 });
+  }
+  if (url.pathname === '/api/v1/accounts/5/campaigns/7/suppressions') {
+    return send(200, { suppressions: [{ contact_id: 302, contact_name: 'João Duplicado', reason: 'opted_out' }] });
+  }
+  if (url.pathname === '/api/v1/accounts/5/campaigns/whatsapp_inbox_summaries') {
+    return send(200, { inboxes: [{ inbox_id: 3, quality_rating: 'GREEN', messaging_limit_tier: 'TIER_10K' }] });
+  }
+  if (url.pathname === '/api/v1/accounts/5/campaigns/optimal_send_time') {
+    return send(200, { best_hour: 10, best_day_of_week: 2 });
+  }
+  if (url.pathname === '/api/v1/accounts/5/campaigns/intelligence') {
+    return send(200, { inbox_id: 3, delivery_rate: 0.96, reply_rate: 0.16 });
+  }
+  if (url.pathname === '/api/v1/accounts/5/campaigns/send_plan') {
+    return send(200, { waves: [{ wave: 1, count: 500 }] });
+  }
+  if (url.pathname === '/api/v1/accounts/5/whatsapp_contact_preferences') {
+    return send(200, { payload: [{ contact_id: 301, status: 'opted_in', source: 'inbound_message' }] });
+  }
+  if (url.pathname === '/api/v1/accounts/5/whatsapp_contact_preferences/301') {
+    if (req.method === 'PATCH') return send(200, { contact_id: 301, status: 'opted_out', reason: 'Solicitou descadastro' });
+    return send(200, { contact_id: 301, status: 'opted_in', events: [] });
+  }
+  if (url.pathname === '/api/v1/accounts/5/whatsapp_flows') {
+    if (req.method === 'POST') return send(201, { id: 55, name: 'Agendamento', status: 'draft' });
+    return send(200, [{ id: 55, name: 'Agendamento', status: 'draft' }]);
+  }
+  if (url.pathname === '/api/v1/accounts/5/whatsapp_flows/55') {
+    return send(200, { id: 55, name: 'Agendamento', status: 'draft' });
+  }
+  if (url.pathname === '/api/v1/accounts/5/whatsapp_flows/55/publish') {
+    return send(200, { id: 55, name: 'Agendamento', status: 'published' });
+  }
+
+  // Reports v2 (WAR-07) under account 5.
+  if (url.pathname === '/api/v2/accounts/5/reports/bot_summary') {
+    return send(200, { bot_resolutions_count: 14, bot_handoffs_count: 3, previous: { bot_resolutions_count: 10 } });
+  }
+  if (url.pathname === '/api/v2/accounts/5/reports/bot_metrics') {
+    return send(200, { conversation_count: 17, message_count: 68, resolution_rate: 82.3, handoff_rate: 17.7 });
+  }
+  if (url.pathname === '/api/v2/accounts/5/reports/conversations') {
+    return send(200, { open: 8, unattended: 2, unassigned: 1, pending: 3 });
+  }
+  if (url.pathname === '/api/v2/accounts/5/reports/outgoing_messages_count') {
+    return send(200, [{ id: 1, outgoing_messages_count: 140 }]);
+  }
+  if (url.pathname === '/api/v2/accounts/5/year_in_review') {
+    return send(200, { year: 2026, total_conversations: 1420 });
+  }
+  if (url.pathname === '/api/v2/accounts/5/reports') {
+    return send(200, [{ value: '12', timestamp: 1730000000, count: 12 }]);
+  }
+  if (url.pathname === '/api/v2/accounts/5/summary_reports/agent') {
+    return send(200, [{ id: 1, name: 'Gabriel', conversations_count: 25, resolved_conversations_count: 22 }]);
+  }
+  if (url.pathname === '/api/v2/accounts/5/live_reports/conversation_metrics') {
+    return send(200, { open: 8, unattended: 2, unassigned: 1, pending: 3 });
+  }
+  if (url.pathname === '/api/v2/accounts/5/live_reports/grouped_conversation_metrics') {
+    return send(200, [{ assignee_id: 1, open: 5, unattended: 1 }]);
+  }
+  if (url.pathname === '/api/v2/accounts/5/reports/inbox_label_matrix') {
+    return send(200, { inboxes: [{ id: 3, name: 'WhatsApp' }], labels: [{ id: 1, title: 'vip' }], matrix: [[7]] });
+  }
+  if (url.pathname === '/api/v2/accounts/5/reports/first_response_time_distribution') {
+    return send(200, { 'Channel::Whatsapp': { '0-1h': 18, '1-4h': 4 } });
+  }
+  if (url.pathname === '/api/v2/accounts/5/reports/drilldown') {
+    return send(200, { data: [{ id: 42, contact_name: 'Maria Untrusted' }], meta: { total_count: 1 } });
+  }
+  if (url.pathname === '/api/v1/accounts/5/csat_survey_responses/metrics') {
+    return send(200, { total_count: 10, total_sent_messages_count: 20, ratings_count: { 5: 8, 4: 2 } });
+  }
+  if (url.pathname === '/api/v1/accounts/5/csat_survey_responses') {
+    return send(200, [{ id: 1, rating: 5, feedback_message: 'Excelente atendimento!' }]);
+  }
+  if (url.pathname === '/api/v2/accounts/5/reports/agents') {
+    res.writeHead(200, { 'Content-Type': 'text/csv' });
+    res.end('Agent name,Conversations count\nGabriel,25\n');
+    return;
+  }
+
   return send(404, { error: 'not found' });
 });
 
@@ -1188,6 +1344,206 @@ check('AIRYSCHAT_FEATURES=experimental exposes mba_evals and fences untrusted ev
   assert.ok(!mbaExpTest.isError && mbaExpTest.structuredContent._untrusted);
 });
 mbaExpSession.child.kill();
+
+// ---------------------------------------------------------------- WhatsApp expansion + Reports v2 session (Lane 006)
+const warSession = connect({ AIRYSCHAT_TOOLSETS: 'whatsapp,reports', AIRYSCHAT_FEATURES: 'beta' });
+await handshake(warSession);
+const warToolsList = (await warSession.call('tools/list', {})).tools;
+const warByName = new Map(warToolsList.map((t) => [t.name, t]));
+check('AIRYSCHAT_TOOLSETS=whatsapp,reports registers WAR-02..WAR-07 tools', () => {
+  for (const name of [
+    'wa_template_upsert',
+    'wa_template_delete',
+    'wa_template_rejection_explain',
+    'wa_scheduled_messages_list',
+    'wa_scheduled_message_upsert',
+    'wa_scheduled_message_cancel',
+    'wa_contact_calls_list',
+    'wa_call_transcribe',
+    'wa_campaign_update',
+    'wa_campaign_delete',
+    'wa_campaign_results',
+    'wa_campaign_intelligence',
+    'wa_campaign_send_plan',
+    'wa_contact_preferences',
+    'wa_contact_preference_update',
+    'wa_flows_list',
+    'wa_flow_upsert',
+    'reports_summary',
+    'reports_timeseries',
+    'reports_by_dimension',
+    'reports_live_metrics',
+    'reports_inbox_label_matrix',
+    'reports_distribution',
+    'reports_drilldown',
+    'csat_responses',
+    'reports_csv_export',
+  ]) {
+    assert.ok(warByName.has(name), `missing tool ${name}`);
+  }
+});
+
+const tplCreateUnconfirmed = await warSession.call('tools/call', {
+  name: 'wa_template_upsert',
+  arguments: { action: 'create', name: 'pedido_confirmado', language: 'pt_BR', category: 'utility', inbox_id: 3 },
+});
+const tplCreateConfirmed = await warSession.call('tools/call', {
+  name: 'wa_template_upsert',
+  arguments: { action: 'create', name: 'pedido_confirmado', language: 'pt_BR', category: 'utility', inbox_id: 3, confirm: true },
+});
+const tplExplain = await warSession.call('tools/call', {
+  name: 'wa_template_rejection_explain',
+  arguments: { template_id: 88 },
+});
+const tplDeleteUnconfirmed = await warSession.call('tools/call', {
+  name: 'wa_template_delete',
+  arguments: { template_id: 88 },
+});
+const tplDeleteConfirmed = await warSession.call('tools/call', {
+  name: 'wa_template_delete',
+  arguments: { template_id: 88, confirm: true },
+});
+check('wa_template_upsert, wa_template_rejection_explain, and wa_template_delete enforce confirmation and diagnose Meta rejections', () => {
+  assert.equal(tplCreateUnconfirmed.isError, true);
+  assert.ok(!tplCreateConfirmed.isError && tplCreateConfirmed.structuredContent._untrusted);
+  assert.ok(!tplExplain.isError && tplExplain.structuredContent._untrusted);
+  assert.equal(tplExplain.structuredContent.rejection_code, 'PROMOTIONAL_CONTENT_IN_UTILITY');
+  assert.equal(tplExplain.structuredContent.can_appeal, true);
+  assert.ok(tplExplain.structuredContent.detected_issues.some((i) => i.startsWith('variable_at_boundary')));
+  assert.ok(tplExplain.structuredContent.detected_issues.some((i) => i.startsWith('non_sequential_variables')));
+  assert.ok(tplExplain.structuredContent.detected_issues.some((i) => i.startsWith('promotional_terms_in_utility')));
+  assert.ok(tplExplain.structuredContent.detected_issues.some((i) => i.startsWith('url_shortener_in_body')));
+  assert.equal(tplDeleteUnconfirmed.isError, true);
+  assert.match(text(tplDeleteUnconfirmed), /pedido_confirmado/);
+  assert.match(text(tplDeleteUnconfirmed), /meta_tpl_88/);
+  assert.ok(!tplDeleteConfirmed.isError);
+});
+
+const schedList = await warSession.call('tools/call', {
+  name: 'wa_scheduled_messages_list',
+  arguments: { conversation_id: 42 },
+});
+const schedCreateUnconfirmed = await warSession.call('tools/call', {
+  name: 'wa_scheduled_message_upsert',
+  arguments: { action: 'create', conversation_id: 42, scheduled_at: '2026-11-05T14:00:00Z', content: 'Lembrete' },
+});
+const schedCreateConfirmed = await warSession.call('tools/call', {
+  name: 'wa_scheduled_message_upsert',
+  arguments: { action: 'create', conversation_id: 42, scheduled_at: '2026-11-05T14:00:00Z', content: 'Lembrete', confirm: true },
+});
+const schedCancelConfirmed = await warSession.call('tools/call', {
+  name: 'wa_scheduled_message_cancel',
+  arguments: { conversation_id: 42, scheduled_message_id: 701, confirm: true },
+});
+const contactCalls = await warSession.call('tools/call', {
+  name: 'wa_contact_calls_list',
+  arguments: { contact_id: 301 },
+});
+const callTranscript = await warSession.call('tools/call', {
+  name: 'wa_call_transcribe',
+  arguments: { call_id: 910 },
+});
+check('scheduled WhatsApp messages and contact call history/transcription route to /saas and fence untrusted content', () => {
+  assert.ok(!schedList.isError && schedList.structuredContent._untrusted);
+  assert.equal(schedCreateUnconfirmed.isError, true);
+  assert.ok(!schedCreateConfirmed.isError && schedCreateConfirmed.structuredContent._untrusted);
+  assert.ok(!schedCancelConfirmed.isError);
+  assert.ok(!contactCalls.isError && contactCalls.structuredContent._untrusted);
+  assert.ok(!callTranscript.isError && callTranscript.structuredContent._untrusted);
+  assert.match(text(callTranscript), /confirmar meu pedido/);
+});
+
+const campSummary = await warSession.call('tools/call', {
+  name: 'wa_campaign_results',
+  arguments: { campaign_id: 7, view: 'summary' },
+});
+const campSuppressions = await warSession.call('tools/call', {
+  name: 'wa_campaign_results',
+  arguments: { campaign_id: 7, view: 'suppressions' },
+});
+const campIntel = await warSession.call('tools/call', {
+  name: 'wa_campaign_intelligence',
+  arguments: { view: 'inbox_summaries' },
+});
+const contactPrefs = await warSession.call('tools/call', {
+  name: 'wa_contact_preferences',
+  arguments: { inbox_id: 3 },
+});
+const flowsList = await warSession.call('tools/call', {
+  name: 'wa_flows_list',
+  arguments: {},
+});
+check('campaign results, intelligence, contact preferences, and WhatsApp Flows work', () => {
+  assert.ok(!campSummary.isError && campSummary.structuredContent._untrusted);
+  assert.equal(campSummary.structuredContent.replied, 19);
+  assert.ok(!campSuppressions.isError && campSuppressions.structuredContent._untrusted);
+  assert.ok(!campIntel.isError);
+  assert.ok(!contactPrefs.isError && contactPrefs.structuredContent._untrusted);
+  assert.ok(!flowsList.isError && flowsList.structuredContent._untrusted);
+});
+
+const repSummary = await warSession.call('tools/call', {
+  name: 'reports_summary',
+  arguments: { view: 'summary', since: '1730000000', until: '1732592000' },
+});
+const repBotMetrics = await warSession.call('tools/call', {
+  name: 'reports_summary',
+  arguments: { view: 'bot_metrics', since: '1730000000', until: '1732592000' },
+});
+const repTimeseries = await warSession.call('tools/call', {
+  name: 'reports_timeseries',
+  arguments: { metric: 'conversations_count', since: '1730000000', until: '1732592000', group_by: 'hour' },
+});
+const repAgentDim = await warSession.call('tools/call', {
+  name: 'reports_by_dimension',
+  arguments: { dimension: 'agent', since: '1730000000', until: '1732592000' },
+});
+const repLive = await warSession.call('tools/call', {
+  name: 'reports_live_metrics',
+  arguments: { group_by: 'assignee_id' },
+});
+const repMatrix = await warSession.call('tools/call', {
+  name: 'reports_inbox_label_matrix',
+  arguments: { since: '1730000000', until: '1732592000' },
+});
+const repDist = await warSession.call('tools/call', {
+  name: 'reports_distribution',
+  arguments: { since: '1730000000', until: '1732592000' },
+});
+const repDrilldown = await warSession.call('tools/call', {
+  name: 'reports_drilldown',
+  arguments: { metric: 'conversations_count', bucket_timestamp: 1730000000, since: '1730000000', until: '1732592000' },
+});
+const csatMetrics = await warSession.call('tools/call', {
+  name: 'csat_responses',
+  arguments: { view: 'metrics' },
+});
+const csatList = await warSession.call('tools/call', {
+  name: 'csat_responses',
+  arguments: { view: 'list' },
+});
+const csvExport = await warSession.call('tools/call', {
+  name: 'reports_csv_export',
+  arguments: { report: 'agents', since: '1730000000', until: '1732592000' },
+});
+check('reports v2 tools route to /api/v2/accounts/{id} and CSAT/drilldown/CSV fence untrusted data', () => {
+  assert.ok(!repSummary.isError);
+  assert.equal(repSummary.structuredContent.conversations_count, 42);
+  assert.ok(!repBotMetrics.isError);
+  assert.equal(repBotMetrics.structuredContent.conversation_count, 17);
+  assert.ok(!repTimeseries.isError);
+  assert.ok(!repAgentDim.isError && repAgentDim.structuredContent._untrusted);
+  assert.ok(!repLive.isError);
+  assert.ok(!repMatrix.isError && repMatrix.structuredContent._untrusted);
+  assert.ok(!repDist.isError);
+  assert.ok(!repDrilldown.isError && repDrilldown.structuredContent._untrusted);
+  assert.ok(!csatMetrics.isError && csatMetrics.structuredContent._untrusted);
+  assert.ok(!csatList.isError && csatList.structuredContent._untrusted);
+  assert.match(text(csatList), /Excelente atendimento/);
+  assert.ok(!csvExport.isError && csvExport.structuredContent._untrusted);
+  assert.match(csvExport.structuredContent.csv, /Gabriel,25/);
+});
+warSession.child.kill();
 
 mock.close();
 console.log(`\n${checks} checks passed`);

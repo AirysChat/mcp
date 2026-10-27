@@ -58,7 +58,7 @@ export class ApiError extends Error {
     if (this.status !== 403 || this.detail === undefined) return false;
     if (/not authorized|permission|administrator/i.test(this.detail)) return false;
     if (this.url.includes('/saas/api/') || this.url.includes('/meta_agent')) return true;
-    return /plano atual|limite do plano/i.test(this.detail);
+    return /plano atual|limite do plano|is not enabled/i.test(this.detail);
   }
 }
 
