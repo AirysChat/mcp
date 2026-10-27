@@ -1,0 +1,15 @@
+{
+  "name": "airyschat",
+  "description": "Official AirysChat plugins for Claude Code.",
+  "owner": {
+    "name": "AirysChat",
+    "url": "https://github.com/AirysChat"
+  },
+  "plugins": [
+    {
+      "name": "airyschat",
+      "source": "./plugins/airyschat",
+      "description": "Operate an AirysChat helpdesk from Claude Code — triage conversations, manage WhatsApp templates, and run pre-launch checks on broadcast campaigns."
+    }
+  ]
+}
