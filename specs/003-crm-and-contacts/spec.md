@@ -34,9 +34,11 @@ settings. Admin-only on AirysChat; tools surface the 403 clearly.
 ### Core additions (toolset `core`)
 
 `contact_create`, `contact_update`, `contact_delete` (irreversible), `contact_labels_set`,
-`contacts_merge` (irreversible), `companies_list/get/create/update`, `conversation_labels_add`
+`contacts_merge` (irreversible), `conversation_labels_add`
 (merges, never replaces), `canned_responses_list`, `search` (global), `notifications_list`,
 `custom_filters_list`.
+
+> Note (2026-10-27): `companies_list/get/create/update` (`CRM-13`) was dropped as `OBSOLETE` after source verification in `AirysChat@090c8ae510`: `CompaniesController` is a stub (`#index` returns `{ payload: [] }`, no `Company` model exists; see `AirysChat/specs/024-crm-v2/tasks.md:160`). Company affiliation is stored in `contact.additional_attributes.company_name`.
 
 ## Rules specific to this lane
 

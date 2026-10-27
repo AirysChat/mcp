@@ -14,6 +14,7 @@ issue() { # title milestone labels body
 
 task() { # id P lane milestone area title
   local id=$1 p=$2 lane=$3 ms=$4 area=$5 title=$6
+  grep -qE "^${id}:" <<<"$existing" && { echo "skip: $id: $title"; return; }
   local dir; dir=$(ls -d specs/${lane}-* | head -1)
   issue "$id: $title" "$ms" "type:feat,$p,lane:$lane,area:$area" \
     "Lane task **$id** — see [\`$dir/tasks.md\`](../blob/main/$dir/tasks.md) for scope and *done when*.
@@ -41,6 +42,26 @@ task CAT-05 P0 002 v0.2.0 catalog "Embed catalog.json in the package"
 task CAT-06 P0 002 v0.2.0 catalog "Tool airyschat_api_search"
 task CAT-07 P0 002 v0.2.0 catalog "airyschat_api validation and gates from the catalog"
 task CAT-08 P1 002 v0.2.0 catalog "Classify irreversible endpoints"
+
+# --- v0.3.0: tasks of lane 003 (CRM & contacts) ---
+task CRM-01 P0 003 v0.3.0 crm     "Domain brief docs/api/domains/crm.md (routes, controllers, params, permissions, CAPI side effects)"
+task CRM-02 P0 003 v0.3.0 crm     "Toolset crm scaffolding (src/tools/crm.ts, registration, default off)"
+task CRM-03 P0 003 v0.3.0 crm     "Pipelines read: crm_pipelines_list, crm_pipeline_get"
+task CRM-04 P0 003 v0.3.0 crm     "Deals read: crm_deals_search, crm_deal_get, crm_deal_timeline"
+task CRM-05 P0 003 v0.3.0 crm     "Deal writes: create, update, move"
+task CRM-06 P0 003 v0.3.0 crm     "crm_deal_close won/lost with confirm preview incl. CAPI effect; reason validation"
+task CRM-07 P1 003 v0.3.0 crm     "crm_deal_delete (irreversible) and crm_deals_bulk_update (threshold confirm)"
+task CRM-08 P1 003 v0.3.0 crm     "Notes and activities (list/create/update/complete/postpone)"
+task CRM-09 P1 003 v0.3.0 crm     "crm_insights, close/loss reasons, saved views"
+task CRM-10 P1 003 v0.3.0 crm     "conversation_deal_get / conversation_deal_update"
+task CRM-11 P2 003 v0.3.0 crm     "Phase B config tools (pipelines/stages CRUD, automations, follow-up rules, settings, business hours, conversion settings)"
+task CRM-12 P0 003 v0.3.0 core    "Contacts writes: create, update, delete, labels set, merge"
+task CRM-13 P1 003 v0.3.0 crm     "Companies list/get/create/update"
+task CRM-14 P0 003 v0.3.0 core    "conversation_labels_add (merge semantics; never replace)"
+task CRM-15 P1 003 v0.3.0 core    "canned_responses_list, global search, notifications_list, custom_filters_list"
+task CRM-16 P1 003 v0.3.0 plugins "Skill plugins/claude/.../crm-pipeline-review (stuck deals, next actions)"
+task CRM-17 P0 003 v0.3.0 crm     "Promote read tools to stable; changeset; coverage >= 60% crm"
+
 
 # --- one epic per release ---
 epic() { # milestone lane title
