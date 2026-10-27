@@ -298,6 +298,81 @@ const mock = createServer((req, res) => {
   if (url.pathname === '/saas/api/v1/accounts/6/llm/health') {
     return send(200, { healthy: true, checks: { litellm: { status: 'ok' } } });
   }
+  if (url.pathname === '/api/v1/accounts/6/meta_agent/inboxes') {
+    return send(200, [{ inbox_id: 4, inbox_name: 'WhatsApp MBA', phone_number_id: '20987654321', status: 'active' }]);
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/inboxes/4/meta_business_agent') {
+    return send(200, {
+      inbox_id: 4,
+      phone_number_id: '20987654321',
+      status: 'active',
+      business_info: { business_name: 'Loja Demo' },
+    });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/deployments/4/panels') {
+    return send(200, { release_state: 'published', can_rollback: true });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/inboxes/4/meta_business_agent/settings') {
+    if (req.method === 'PUT') {
+      let raw = '';
+      req.on('data', (c) => (raw += c));
+      req.on('end', () => {
+        const body = JSON.parse(raw || '{}');
+        if (!body.idempotency_key || body.observed_hash !== 'hash-settings-v1') {
+          return send(409, { error: 'concurrency_conflict', expected_hash: 'hash-settings-v1' });
+        }
+        return send(200, { settings: body.settings, observed_hash: 'hash-settings-v2' });
+      });
+      return;
+    }
+    return send(200, { settings: { tone: 'friendly', greeting: 'Olá!' }, observed_hash: 'hash-settings-v1' });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/inboxes/4/meta_business_agent/business_info') {
+    if (req.method === 'PUT') {
+      return send(200, { business_info: { business_name: 'Loja Demo Atualizada' }, observed_hash: 'hash-biz-v2' });
+    }
+    if (req.method === 'DELETE') {
+      return send(200, { reset: true });
+    }
+    return send(200, { business_info: { business_name: 'Loja Demo', description: 'E-commerce' }, observed_hash: 'hash-biz-v1' });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/inboxes/4/meta_business_agent/resources/faqs') {
+    if (req.method === 'POST') return send(201, { id: 'faq-10', question: 'Horário?', answer: '9h às 18h' });
+    return send(200, [{ id: 'faq-1', question: 'Troca?', answer: 'Até 30 dias' }]);
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/inboxes/4/meta_business_agent/resources/faqs/faq-1') {
+    if (req.method === 'DELETE') return send(200, { deleted: true, remote_id: 'faq-1' });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/conversations/42/meta_business_agent_control') {
+    if (req.method === 'POST') return send(200, { conversation_id: 42, status: 'released_to_human' });
+    return send(200, { conversation_id: 42, owner: 'meta_business_agent', can_release: true });
+  }
+  if (url.pathname === '/api/v1/accounts/6/meta_agent/inboxes/4/handoff_assignment') {
+    if (req.method === 'PUT') return send(200, { enabled: true, members: [{ user_id: 1, weight: 5 }] });
+    return send(200, { enabled: true, members: [{ user_id: 1, weight: 1 }] });
+  }
+  if (url.pathname === '/api/v1/accounts/6/meta_agent/inboxes/4/budget') {
+    if (req.method === 'PUT') return send(200, { payload: [{ unit_type: 'CONVERSATION', time_window: 'MONTHLY', max_budget: 500 }] });
+    return send(200, { payload: [{ budget_id: 'b-1', unit_type: 'CONVERSATION', time_window: 'MONTHLY', max_budget: 250 }] });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/inboxes/4/meta_business_agent/preflight') {
+    return send(200, { eligible: true, blockers: [], live_operations_enabled: true });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/inboxes/4/meta_business_agent/release_confirmation') {
+    return send(200, { ready: true, deployment_state: 'canary', observed_settings_hash: 'hash-settings-v1' });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/inboxes/4/meta_business_agent/release/promote') {
+    return send(200, { status: 'promoted', release_action: 'promote' });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/inboxes/4/meta_business_agent/evals/cases') {
+    return send(200, { cases: [{ id: 'case-1', prompt: 'Quero trocar meu pedido' }] });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/inboxes/4/meta_business_agent/evals/summary') {
+    return send(200, { pass_rate: 0.95, total_cases: 20 });
+  }
+  if (url.pathname === '/saas/api/v1/accounts/6/ai_manager/inboxes/4/meta_business_agent/tests') {
+    return send(200, { reply: 'Claro! Informe o número do pedido.', latency_ms: 410 });
+  }
 
   return send(404, { error: 'not found' });
 });
@@ -1004,6 +1079,115 @@ check('KB document create fences untrusted content and delete requires confirm w
   assert.ok(!kbDocDeleteConfirmed.isError, text(kbDocDeleteConfirmed));
 });
 aiSession.child.kill();
+
+// ---------------------------------------------------------------- Meta Business Agent toolset session
+const mbaSession = connect({ AIRYSCHAT_ACCOUNT_ID: '6', AIRYSCHAT_TOOLSETS: 'meta_agent', AIRYSCHAT_FEATURES: 'beta' });
+await handshake(mbaSession);
+const mbaToolsList = (await mbaSession.call('tools/list', {})).tools;
+const mbaByName = new Map(mbaToolsList.map((t) => [t.name, t]));
+check('AIRYSCHAT_TOOLSETS=meta_agent registers read and write MBA tools (and hides experimental mba_evals on beta)', () => {
+  assert.ok(mbaByName.has('mba_inboxes_list'));
+  assert.ok(mbaByName.has('mba_workspace_get'));
+  assert.ok(mbaByName.has('mba_settings_get'));
+  assert.ok(mbaByName.has('mba_business_info_get'));
+  assert.ok(mbaByName.has('mba_resources_list'));
+  assert.ok(mbaByName.has('mba_thread_control_get'));
+  assert.ok(mbaByName.has('mba_handoff_get'));
+  assert.ok(mbaByName.has('mba_budget_get'));
+  assert.ok(mbaByName.has('mba_preflight'));
+  assert.ok(mbaByName.has('mba_settings_update'));
+  assert.ok(mbaByName.has('mba_release'));
+  assert.ok(mbaByName.has('mba_thread_control_release'));
+  assert.ok(mbaByName.has('mba_handoff_update'));
+  assert.ok(mbaByName.has('mba_budget_update'));
+  assert.ok(!mbaByName.has('mba_evals'));
+});
+
+const mbaInboxes = await mbaSession.call('tools/call', { name: 'mba_inboxes_list', arguments: {} });
+const mbaWorkspace = await mbaSession.call('tools/call', {
+  name: 'mba_workspace_get',
+  arguments: { inbox_id: 4, panel: 'deployment', phone_number_id: '20987654321' },
+});
+const mbaSettings = await mbaSession.call('tools/call', { name: 'mba_settings_get', arguments: { inbox_id: 4 } });
+const mbaBizInfo = await mbaSession.call('tools/call', { name: 'mba_business_info_get', arguments: { inbox_id: 4 } });
+const mbaFaqs = await mbaSession.call('tools/call', { name: 'mba_resources_list', arguments: { inbox_id: 4, resource_kind: 'faqs' } });
+const mbaThreadGet = await mbaSession.call('tools/call', { name: 'mba_thread_control_get', arguments: { conversation_id: 42 } });
+const mbaHandoffGet = await mbaSession.call('tools/call', { name: 'mba_handoff_get', arguments: { inbox_id: 4 } });
+const mbaBudgetGet = await mbaSession.call('tools/call', { name: 'mba_budget_get', arguments: { inbox_id: 4 } });
+const mbaPreflight = await mbaSession.call('tools/call', { name: 'mba_preflight', arguments: { inbox_id: 4 } });
+check('meta_agent read and preflight tools fence untrusted data and fetch panels/control state', () => {
+  assert.ok(!mbaInboxes.isError);
+  assert.ok(!mbaWorkspace.isError && mbaWorkspace.structuredContent._untrusted);
+  assert.ok(mbaWorkspace.structuredContent.panel.can_rollback);
+  assert.ok(!mbaSettings.isError && mbaSettings.structuredContent._untrusted);
+  assert.ok(!mbaBizInfo.isError && mbaBizInfo.structuredContent._untrusted);
+  assert.ok(!mbaFaqs.isError && mbaFaqs.structuredContent._untrusted);
+  assert.ok(!mbaThreadGet.isError);
+  assert.equal(mbaThreadGet.structuredContent.conversation_id, 42);
+  assert.ok(!mbaHandoffGet.isError);
+  assert.ok(!mbaBudgetGet.isError);
+  assert.equal(mbaBudgetGet.structuredContent.payload[0].max_budget, 250);
+  assert.ok(!mbaPreflight.isError);
+  assert.equal(mbaPreflight.structuredContent.eligible, true);
+});
+
+const mbaSettingsUnconfirmed = await mbaSession.call('tools/call', {
+  name: 'mba_settings_update',
+  arguments: { inbox_id: 4, settings: { tone: 'formal' } },
+});
+const mbaSettingsConfirmed = await mbaSession.call('tools/call', {
+  name: 'mba_settings_update',
+  arguments: { inbox_id: 4, settings: { tone: 'formal' }, confirm: true },
+});
+const mbaReleaseUnconfirmed = await mbaSession.call('tools/call', {
+  name: 'mba_release',
+  arguments: { inbox_id: 4, action: 'promote' },
+});
+const mbaReleaseConfirmed = await mbaSession.call('tools/call', {
+  name: 'mba_release',
+  arguments: { inbox_id: 4, action: 'promote', confirm: true },
+});
+const mbaThreadReleaseConfirmed = await mbaSession.call('tools/call', {
+  name: 'mba_thread_control_release',
+  arguments: { conversation_id: 42, confirm: true },
+});
+const mbaBudgetUnconfirmed = await mbaSession.call('tools/call', {
+  name: 'mba_budget_update',
+  arguments: { inbox_id: 4, budgets: [{ unit_type: 'CONVERSATION', time_window: 'MONTHLY', max_budget: 500 }] },
+});
+const mbaBudgetConfirmed = await mbaSession.call('tools/call', {
+  name: 'mba_budget_update',
+  arguments: { inbox_id: 4, budgets: [{ unit_type: 'CONVERSATION', time_window: 'MONTHLY', max_budget: 500 }], confirm: true },
+});
+check('meta_agent writes enforce confirm, auto-populate observed_hash + idempotency_key, and preview current budget', () => {
+  assert.equal(mbaSettingsUnconfirmed.isError, true);
+  assert.match(text(mbaSettingsUnconfirmed), /hash-settings-v1/);
+  assert.ok(!mbaSettingsConfirmed.isError, text(mbaSettingsConfirmed));
+  assert.equal(mbaSettingsConfirmed.structuredContent.observed_hash, 'hash-settings-v2');
+  assert.equal(mbaReleaseUnconfirmed.isError, true);
+  assert.ok(!mbaReleaseConfirmed.isError, text(mbaReleaseConfirmed));
+  assert.ok(!mbaThreadReleaseConfirmed.isError, text(mbaThreadReleaseConfirmed));
+  assert.equal(mbaBudgetUnconfirmed.isError, true);
+  assert.match(text(mbaBudgetUnconfirmed), /current budgets: 1/);
+  assert.ok(!mbaBudgetConfirmed.isError, text(mbaBudgetConfirmed));
+});
+mbaSession.child.kill();
+
+const mbaExpSession = connect({ AIRYSCHAT_ACCOUNT_ID: '6', AIRYSCHAT_TOOLSETS: 'meta_agent', AIRYSCHAT_FEATURES: 'experimental' });
+await handshake(mbaExpSession);
+const mbaExpCases = await mbaExpSession.call('tools/call', {
+  name: 'mba_evals',
+  arguments: { inbox_id: 4, action: 'list_cases' },
+});
+const mbaExpTest = await mbaExpSession.call('tools/call', {
+  name: 'mba_evals',
+  arguments: { inbox_id: 4, action: 'run_test', user_msg: 'Oi' },
+});
+check('AIRYSCHAT_FEATURES=experimental exposes mba_evals and fences untrusted eval/playground outputs', () => {
+  assert.ok(!mbaExpCases.isError && mbaExpCases.structuredContent._untrusted);
+  assert.ok(!mbaExpTest.isError && mbaExpTest.structuredContent._untrusted);
+});
+mbaExpSession.child.kill();
 
 mock.close();
 console.log(`\n${checks} checks passed`);
