@@ -6,8 +6,8 @@
   "author": {
     "name": "AirysChat"
   },
-  "homepage": "https://github.com/AirysChat/AirysChat",
-  "repository": "https://github.com/AirysChat/claude-plugin",
+  "homepage": "https://github.com/AirysChat/mcp/tree/main/plugins/claude",
+  "repository": "https://github.com/AirysChat/mcp",
   "license": "MIT",
   "keywords": ["airyschat", "chatwoot", "whatsapp", "support", "mcp"]
 }

@@ -11,7 +11,7 @@ server it references is not yet published to npm.
 ## Install
 
 ```shell
-/plugin marketplace add AirysChat/claude-plugin
+/plugin marketplace add AirysChat/mcp
 /plugin install airyschat@airyschat
 ```
 
@@ -60,9 +60,10 @@ support ticket is the realistic threat here.
 ## Development
 
 ```bash
-claude plugin validate ./plugins/airyschat --strict
+# from the repository root
+claude plugin validate ./plugins/claude --strict
 claude plugin validate . --strict
-claude --plugin-dir ./plugins/airyschat
+claude --plugin-dir ./plugins/claude
 ```
 
 To test against a local build of the MCP server instead of npm, point the plugin's
@@ -73,7 +74,7 @@ To test against a local build of the MCP server instead of npm, point the plugin
   "mcpServers": {
     "airyschat": {
       "command": "node",
-      "args": ["/absolute/path/to/airyschat-mcp/dist/index.js"],
+      "args": ["/absolute/path/to/airyschat-mcp/packages/server/dist/index.js"],
       "env": { "AIRYSCHAT_BASE_URL": "${AIRYSCHAT_BASE_URL}", "AIRYSCHAT_API_KEY": "${AIRYSCHAT_API_KEY}", "AIRYSCHAT_ACCOUNT_ID": "${AIRYSCHAT_ACCOUNT_ID}" }
     }
   }

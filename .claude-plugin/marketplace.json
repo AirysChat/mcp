@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "airyschat",
-      "source": "./plugins/airyschat",
+      "source": "./plugins/claude",
       "description": "Operate an AirysChat helpdesk from Claude Code — triage conversations, manage WhatsApp templates, and run pre-launch checks on broadcast campaigns."
     }
   ]
