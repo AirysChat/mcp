@@ -54,7 +54,7 @@ gantt
 | [001-foundation](001-foundation/tasks.md) | FND | Done (2026-10-27) |
 | [002-api-catalog](002-api-catalog/tasks.md) | CAT | Done (2026-10-27) |
 | [003-crm-and-contacts](003-crm-and-contacts/tasks.md) | CRM | Done (2026-10-27) |
-| [004-ai-agents-and-meta-agent](004-ai-agents-and-meta-agent/tasks.md) | AIA | Planned |
+| [004-ai-agents-and-meta-agent](004-ai-agents-and-meta-agent/tasks.md) | AIA | In progress |
 | [005-hosted-mcp](005-hosted-mcp/tasks.md) | REM | Planned |
 | [006-whatsapp-and-reports](006-whatsapp-and-reports/tasks.md) | WAR | Planned |
 | [007-apps-elicitation-tasks](007-apps-elicitation-tasks/tasks.md) | APP | Planned |

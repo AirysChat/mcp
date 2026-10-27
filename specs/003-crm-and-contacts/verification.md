@@ -68,3 +68,11 @@ Executed the 4-step read-only workflow end-to-end against `staging.airys.app` ac
 - `crm_insights` (`report: "dashboard", pipeline_id: 5, days: "30"`): bottleneck stage `#32` (`stalled_count: 5`, `cards_count: 5`, `avg_seconds: 218005`), conversion `rate: 0.4` (`won_count: 18`, `leads_count: 45`)
 - `crm_deals_search` (`without_activity: true, pipeline_id: 5` → `0` deals without activity; `view: "list", status: "active", stale: true, sort: "-days_in_stage"` → `1` stale deal)
 - `crm_activities_list` (`scope: "overdue"`): `meta.counts` = `{ overdue: 18, today: 2, upcoming: 3, next_7_days: 5, deals_without_activity: 0 }`
+
+## 3. Release `@airyschat/mcp@0.3.0` (2026-10-27)
+
+- **Release PR**: `#88` (`89b8a5c`) — bumped `packages/server/package.json` and `plugins/claude/.claude-plugin/plugin.json` to `0.3.0` and updated `packages/server/CHANGELOG.md`.
+- **Release workflow**: `release.yml` run `40544734627` succeeded in 31s.
+- **GitHub Packages**: `@airyschat/mcp@0.3.0` published (`https://github.com/orgs/AirysChat/packages/npm/mcp/1455763285`).
+- **GitHub Release**: `@airyschat/mcp@0.3.0` (`https://github.com/AirysChat/mcp/releases/tag/%40airyschat/mcp%400.3.0`).
+- **Milestone `v0.3.0`**: closed with 19 / 19 issues closed (`0` open).
