@@ -27,6 +27,12 @@ interface ToolMetadata {
   irreversible?: boolean;
   /** True when repeating the call has the same effect as making it once. */
   idempotent?: boolean;
+  /**
+   * For write tools that also have a harmless read path (the escape hatch's GET). In a
+   * read-only build the tool stays registered, is annotated read-only, and its handler is
+   * responsible for refusing every write path itself (it can read `config.readOnly`).
+   */
+  readOnlyCapable?: boolean;
 }
 
 /**
@@ -50,7 +56,8 @@ export function defineTool<Schema extends z.ZodType>(
 
 /** Registers every tool the current config allows. Returns how many were registered. */
 export function registerTools(server: McpServer, tools: AnyToolDefinition[], context: ToolContext): number {
-  const enabled = context.config.readOnly ? tools.filter((tool) => !tool.write) : tools;
+  const readOnly = context.config.readOnly;
+  const enabled = readOnly ? tools.filter((tool) => !tool.write || tool.readOnlyCapable) : tools;
 
   for (const tool of enabled) {
     server.registerTool(
@@ -61,8 +68,8 @@ export function registerTools(server: McpServer, tools: AnyToolDefinition[], con
         inputSchema: tool.inputSchema,
         annotations: {
           title: tool.title,
-          readOnlyHint: !tool.write,
-          destructiveHint: Boolean(tool.irreversible),
+          readOnlyHint: !tool.write || (readOnly && Boolean(tool.readOnlyCapable)),
+          destructiveHint: Boolean(tool.irreversible) && !readOnly,
           idempotentHint: Boolean(tool.idempotent),
           // Every tool reaches a remote AirysChat instance whose state changes
           // independently of this server.
@@ -72,7 +79,7 @@ export function registerTools(server: McpServer, tools: AnyToolDefinition[], con
       async (args) => {
         // Belt and braces: read-only builds never register write tools, but a future
         // caller that registers directly should still hit the gate.
-        if (tool.write && context.config.readOnly) return readOnlyRefusal(tool.name);
+        if (tool.write && readOnly && !tool.readOnlyCapable) return readOnlyRefusal(tool.name);
         try {
           return await tool.handler(args, context);
         } catch (error) {
