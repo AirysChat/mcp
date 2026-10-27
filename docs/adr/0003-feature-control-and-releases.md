@@ -38,7 +38,7 @@ exercised (`me`, `inboxes_list`, `agents_list`, `labels_list`, `teams_list`).
 - Release flow: PRs with changesets → "Version Packages" PR opened by the Changesets action →
   merge → tag `@airyschat/mcp@x.y.z` + GitHub Release.
 - **Distribution until 1.0 (repo private):** GitHub Packages (`npm.pkg.github.com`) for internal
-  testers, plus the hosted endpoint from 0.5. **At 1.0:** public npm, MCP Registry, public repo,
+  testers, plus the hosted endpoint from 0.6. **At 1.0:** public npm, MCP Registry, public repo,
   marketplaces. This is `NEEDS_PRODUCT_DECISION` only if the owner wants public npm earlier.
 
 ### Branching

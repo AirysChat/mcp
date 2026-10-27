@@ -131,43 +131,43 @@
     ],
     "message_templates": [
       "whatsapp",
-      "0.6.0"
+      "0.5.0"
     ],
     "campaigns": [
       "whatsapp",
-      "0.6.0"
+      "0.5.0"
     ],
     "campaign_intelligence_reports": [
       "whatsapp",
-      "0.6.0"
+      "0.5.0"
     ],
     "whatsapp": [
       "whatsapp",
-      "0.6.0"
+      "0.5.0"
     ],
     "whatsapp_flows": [
       "whatsapp",
-      "0.6.0"
+      "0.5.0"
     ],
     "whatsapp_stickers": [
       "whatsapp",
-      "0.6.0"
+      "0.5.0"
     ],
     "whatsapp_contact_preferences": [
       "whatsapp",
-      "0.6.0"
+      "0.5.0"
     ],
     "whatsapp_calls": [
       "whatsapp",
-      "0.6.0"
+      "0.5.0"
     ],
     "calls": [
       "whatsapp",
-      "0.6.0"
+      "0.5.0"
     ],
     "salvy": [
       "whatsapp",
-      "0.6.0"
+      "0.5.0"
     ],
     "companies": [
       "crm",
@@ -195,25 +195,25 @@
     ],
     "csat_survey_responses": [
       "reports",
-      "0.6.0"
+      "0.5.0"
     ]
   },
   "core_v2": {
     "reports": [
       "reports",
-      "0.6.0"
+      "0.5.0"
     ],
     "summary_reports": [
       "reports",
-      "0.6.0"
+      "0.5.0"
     ],
     "live_reports": [
       "reports",
-      "0.6.0"
+      "0.5.0"
     ],
     "year_in_review": [
       "reports",
-      "0.6.0"
+      "0.5.0"
     ]
   },
   "saas": {
@@ -299,7 +299,7 @@
     ],
     "calls": [
       "whatsapp",
-      "0.6.0"
+      "0.5.0"
     ]
   },
   "raw": {

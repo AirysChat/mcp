@@ -31,8 +31,8 @@ Use staging credentials per the `live-verify` skill; `AIRYSCHAT_READ_ONLY=1` unl
 
 ## Remote (from lane 005)
 
-Point clients at `https://mcp.staging.airys.chat/mcp` with headers `Authorization: Bearer …` and
-`X-AirysChat-Account: 6`. For Claude.ai / ChatGPT / Muse connectors this requires OAuth (005b).
+Point clients at `https://mcp.staging.airys.chat/mcp` with a personal MCP token (`Authorization: Bearer …`, ADR 0006) and
+`X-AirysChat-Account: 6`. For Claude.ai / ChatGPT / Muse connectors this requires OAuth (lane 005, ADR 0006).
 
 ## What to check per client
 

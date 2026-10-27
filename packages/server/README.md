@@ -153,9 +153,10 @@ mode — the things unit tests over the handlers would miss.
 The release train, lanes and tasks live in [`specs/README.md`](../../specs/README.md);
 API coverage is tracked in [`docs/api/coverage.md`](../../docs/api/coverage.md).
 Highlights: API catalog + `airyschat_api_search` (0.2), CRM (0.3), AI agents and Meta
-Business Agent (0.4), hosted Streamable HTTP on Cloud Run at `mcp.airys.chat` (0.5,
-ADR 0004 — supersedes the earlier "inside the Rails app" plan), MCP Apps and elicitation
-(0.7), GA with public npm and the MCP Registry (1.0).
+Business Agent (0.4), WhatsApp complete and reports (0.5), hosted Streamable HTTP on
+Cloud Run at `mcp.airys.chat` with scoped MCP tokens (0.6, ADRs 0004/0006 — supersedes
+the earlier "inside the Rails app" plan), MCP Apps and elicitation (0.7), GA with public
+npm and the MCP Registry (1.0).
 
 ## License
 

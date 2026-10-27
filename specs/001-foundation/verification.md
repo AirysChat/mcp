@@ -19,3 +19,13 @@ Target: `staging.airys.app`, account 6 ("Airys Demo", fictitious data), GET-only
 | Tool | Date | Result | Notes |
 |---|---|---|---|
 | _pending_ | | | |
+
+## 2026-10-27 — foundation merged
+
+| Check | Result |
+|---|---|
+| PR #32 CI (`check`, node 20, node 22) | pass |
+| Merge | merge commit `828b180` (one-time ruleset exception to keep plugin history; ruleset restored to squash-only + linear history right after, merge commits disabled again) |
+| CI on `main` after merge | pass |
+| Dependabot open alerts | 0 (4 advisories on the old `package-lock.json` cleared by SDK ≥ 2.4.0 / zod ≥ 4.6.7) |
+| Release workflow on `main` | fail at PR creation — enterprise policy: "GitHub Actions is not permitted to create or approve pull requests" (FND-04) |
