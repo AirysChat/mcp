@@ -2,7 +2,7 @@
 
 | ID | P | Size | Task | Done when | Status |
 |---|---|---|---|---|---|
-| AIA-01 | P0 | M | Domain briefs `ai_agents.md`, `meta_agent.md` via `api-cartographer` | Briefs list permissions, side effects, ownership rule | Planned |
+| AIA-01 | P0 | M | Domain briefs `ai_agents.md`, `meta_agent.md` via `api-cartographer` | Briefs list permissions, side effects, ownership rule | Done (2026-10-27) |
 | AIA-02 | P0 | M | `ai_agents` read: list, get, analytics, versions, monitor, ownership | live readback | Planned |
 | AIA-03 | P1 | M | Workflow runs, KB search, documents list, AI usage | live readback | Planned |
 | AIA-04 | P0 | M | Writes: publish, restore, mode transition with ownership preflight + confirm | `safety-reviewer` sign-off; staging evidence | Planned · `NEEDS_SECURITY_REVIEW` |

@@ -62,6 +62,18 @@ task CRM-15 P1 003 v0.3.0 core    "canned_responses_list, global search, notific
 task CRM-16 P1 003 v0.3.0 plugins "Skill plugins/claude/.../crm-pipeline-review (stuck deals, next actions)"
 task CRM-17 P0 003 v0.3.0 crm     "Promote read tools to stable; changeset; coverage >= 60% crm"
 
+# --- v0.4.0: tasks of lane 004 (AI agents & Meta Business Agent) ---
+task AIA-01 P0 004 v0.4.0 ai_agents  "Domain briefs ai_agents.md, meta_agent.md via api-cartographer"
+task AIA-02 P0 004 v0.4.0 ai_agents  "ai_agents read: list, get, analytics, versions, monitor, ownership"
+task AIA-03 P1 004 v0.4.0 ai_agents  "Workflow runs, KB search, documents list, AI usage"
+task AIA-04 P0 004 v0.4.0 ai_agents  "Writes: publish, restore, mode transition with ownership preflight + confirm"
+task AIA-05 P2 004 v0.4.0 ai_agents  "KB document upload/delete"
+task AIA-06 P0 004 v0.4.0 meta_agent "meta_agent read: settings, business info, FAQs, skills, thread control, handoff, budget, allowlist"
+task AIA-07 P1 004 v0.4.0 meta_agent "meta_agent writes (irreversible + confirm): business info, FAQs, skills, thread control, handoff, budget, allowlist"
+task AIA-08 P2 004 v0.4.0 meta_agent "MBA evals experimental"
+task AIA-10 P1 004 v0.4.0 plugins    "Skill agent-supervision (daily health of AI agents + MBA, handoff gaps)"
+task AIA-11 P0 004 v0.4.0 ai_agents  "Promotions, changeset, coverage update"
+
 
 # --- one epic per release ---
 epic() { # milestone lane title
