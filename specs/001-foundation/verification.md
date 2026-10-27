@@ -80,3 +80,15 @@ first: `save_mode: "draft"` sets `campaign_status=draft`, `enabled=false`, `sche
 | Cleanup: `DELETE /campaigns/:id` | HTTP 200; `mcp-verify-*` fixtures left: 0 | |
 
 Nothing was sent; no launch or test-send tool was called (the driver refuses destructive tools).
+
+## 2026-10-27 — v0.2.0 release
+
+| Item | Value |
+|---|---|
+| Release PR | #63 (`chore(release): v0.2.0`), merged as `aa2df85` |
+| Version & Tag | `@airyschat/mcp@0.2.0` (Claude plugin synced to `0.2.0`) |
+| `release.yml` CI Run | `40532498661` (`success` — Check, Publish, Tag and GitHub Release) |
+| GitHub Packages | `https://github.com/orgs/AirysChat/packages/npm/mcp/1455315467` (`npm.pkg.github.com`) |
+| GitHub Release | `https://github.com/AirysChat/mcp/releases/tag/%40airyschat/mcp%400.2.0` |
+| Milestone `v0.2.0` | Closed (`39` closed issues, `0` open) |
+
