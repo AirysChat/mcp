@@ -51,8 +51,8 @@ gantt
 
 | Lane | Prefix | Status |
 |---|---|---|
-| [001-foundation](001-foundation/tasks.md) | FND | In progress |
-| [002-api-catalog](002-api-catalog/tasks.md) | CAT | In progress (inventory done) |
+| [001-foundation](001-foundation/tasks.md) | FND | Done (2026-10-27) |
+| [002-api-catalog](002-api-catalog/tasks.md) | CAT | Done (2026-10-27) |
 | [003-crm-and-contacts](003-crm-and-contacts/tasks.md) | CRM | Planned |
 | [004-ai-agents-and-meta-agent](004-ai-agents-and-meta-agent/tasks.md) | AIA | Planned |
 | [005-hosted-mcp](005-hosted-mcp/tasks.md) | REM | Planned |

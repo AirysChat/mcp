@@ -1,7 +1,7 @@
 # 002 — API catalog
 
 - Release: **0.2.0** · Target 2026-11-09 · Prefix `CAT`
-- Status: In progress (inventory done 2026-10-26)
+- Status: Done (2026-10-27)
 
 ## Why
 
