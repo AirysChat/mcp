@@ -1,7 +1,8 @@
 {
   "$comment": "Endpoints served by a curated (hand-written) tool. Path params are normalized to `{}`. Fifth element: the release the tool shipped in. `pnpm inventory:check` fails when a tool named here does not exist in packages/server/src/tools, or when a curated tool is missing from this list.",
   "unmapped_tools": {
-    "airyschat_api": "Escape hatch; reaches every endpoint with coverage `raw`"
+    "airyschat_api": "Escape hatch; reaches every endpoint with coverage `raw`",
+    "airyschat_api_search": "Catalog discovery; reads the shipped catalog, calls no endpoint"
   },
   "endpoints": [
     ["core", "GET", "/conversations", "conversations_list", "0.1.0"],
