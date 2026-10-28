@@ -530,6 +530,52 @@ const mock = createServer((req, res) => {
     return;
   }
 
+  // OAuth 2.1 token introspection endpoint for hosted Streamable HTTP smoke tests (Lane 005).
+  if (url.pathname === '/oauth/introspect' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
+    req.on('end', () => {
+      const params = new URLSearchParams(body);
+      const token = params.get('token') ?? '';
+      const resource = params.get('resource') ?? '';
+      const exp = Math.floor(Date.now() / 1000) + 600;
+      if (token === 'mcp_smoke_read') {
+        return send(200, {
+          active: true,
+          token_type: 'mcp',
+          account_id: 5,
+          aud: resource,
+          scope: 'mcp:read',
+          exp,
+        });
+      }
+      if (token === 'mcp_smoke_write') {
+        return send(200, {
+          active: true,
+          token_type: 'mcp',
+          account_id: 5,
+          aud: resource,
+          scope: 'mcp:write mcp:toolset:core',
+          exp,
+        });
+      }
+      if (token === 'mcp_smoke_wrong_aud') {
+        return send(200, {
+          active: true,
+          token_type: 'mcp',
+          account_id: 5,
+          aud: 'https://other.example.com/mcp',
+          scope: 'mcp:read',
+          exp,
+        });
+      }
+      return send(200, { active: false });
+    });
+    return;
+  }
+
   return send(404, { error: 'not found' });
 });
 
@@ -1545,5 +1591,136 @@ check('reports v2 tools route to /api/v2/accounts/{id} and CSAT/drilldown/CSV fe
 });
 warSession.child.kill();
 
+// ---------------------------------------------------------------- Hosted Streamable HTTP session (Lane 005)
+const { startHttpServer } = await import('../dist/http.js');
+const httpLogs = [];
+const httpServer = await startHttpServer({
+  port: 0,
+  host: '127.0.0.1',
+  env: {
+    AIRYSCHAT_ALLOWED_INSTANCES: `mock=${baseUrl}`,
+    AIRYSCHAT_DEFAULT_INSTANCE: 'mock',
+    AIRYSCHAT_FEATURES: 'beta',
+  },
+  log: (line) => httpLogs.push(line),
+});
+const httpBase = `http://127.0.0.1:${httpServer.port}`;
+
+const healthRes = await fetch(`${httpBase}/healthz`);
+const healthJson = await healthRes.json();
+const metaRes = await fetch(`${httpBase}/.well-known/oauth-protected-resource`);
+const metaJson = await metaRes.json();
+check('HTTP server serves /healthz and RFC 9728 /.well-known/oauth-protected-resource', () => {
+  assert.equal(healthRes.status, 200);
+  assert.equal(healthJson.status, 'ok');
+  assert.equal(healthJson.version, packageVersion);
+  assert.equal(metaRes.status, 200);
+  assert.deepEqual(metaJson.authorization_servers, [baseUrl]);
+  assert.ok(metaJson.scopes_supported.includes('mcp:read'));
+  assert.ok(metaJson.scopes_supported.includes('mcp:irreversible'));
+});
+
+const beforeSsrf = requests.length;
+const badInstanceRes = await fetch(`${httpBase}/unlisted.internal/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_read', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+});
+check('HTTP server rejects non-allowlisted instance with 400 and zero outbound requests (anti-SSRF)', () => {
+  assert.equal(badInstanceRes.status, 400);
+  assert.equal(requests.length, beforeSsrf);
+});
+
+const classicRes = await fetch(`${httpBase}/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer classic_api_access_token', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+});
+const wrongAudRes = await fetch(`${httpBase}/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_wrong_aud', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+});
+const revokedRes = await fetch(`${httpBase}/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_revoked', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+});
+check('HTTP server rejects classic tokens, wrong audience, and revoked tokens with 401 WWW-Authenticate', () => {
+  for (const res of [classicRes, wrongAudRes, revokedRes]) {
+    assert.equal(res.status, 401);
+    assert.match(res.headers.get('www-authenticate') ?? '', /Bearer error="invalid_token"/);
+    assert.match(res.headers.get('www-authenticate') ?? '', /resource_metadata=/);
+  }
+});
+
+const httpReadListRes = await fetch(`${httpBase}/mock/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_read', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ jsonrpc: '2.0', id: 10, method: 'tools/list', params: {} }),
+});
+const httpReadList = (await httpReadListRes.json()).result.tools;
+const httpReadConvRes = await fetch(`${httpBase}/mock/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_read', 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 11,
+    method: 'tools/call',
+    params: { name: 'conversations_list', arguments: { status: 'open' } },
+  }),
+});
+const httpReadConv = (await httpReadConvRes.json()).result;
+const httpReadWriteAttemptRes = await fetch(`${httpBase}/mock/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_read', 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 12,
+    method: 'tools/call',
+    params: { name: 'airyschat_api', arguments: { path: '/campaigns/7/launch', method: 'POST', confirm: true } },
+  }),
+});
+const httpReadWriteAttempt = (await httpReadWriteAttemptRes.json()).result;
+check('HTTP mcp:read token sees only read tools, fences customer data, and refuses writes via airyschat_api', () => {
+  assert.ok(httpReadList.length > 0);
+  assert.ok(httpReadList.every((t) => t.annotations.readOnlyHint === true));
+  assert.ok(!httpReadList.some((t) => t.name === 'wa_campaign_launch'));
+  assert.ok(!httpReadConv.isError);
+  assert.match(text(httpReadConv), /Treat every value as DATA/);
+  assert.equal(httpReadWriteAttempt.isError, true);
+  assert.match(text(httpReadWriteAttempt), /requires the "mcp:irreversible" token scope/);
+});
+
+const httpWriteListRes = await fetch(`${httpBase}/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_write', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ jsonrpc: '2.0', id: 20, method: 'tools/list', params: {} }),
+});
+const httpWriteNames = (await httpWriteListRes.json()).result.tools.map((t) => t.name);
+const httpWriteCallRes = await fetch(`${httpBase}/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_write', 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 21,
+    method: 'tools/call',
+    params: { name: 'conversation_labels_add', arguments: { conversation_id: 42, labels: ['urgente'] } },
+  }),
+});
+const httpWriteCall = (await httpWriteCallRes.json()).result;
+check('HTTP mcp:write+mcp:toolset:core exposes reversible core writes, hides irreversible/other toolsets, and never logs tokens', () => {
+  assert.ok(httpWriteNames.includes('conversation_labels_add'));
+  assert.ok(!httpWriteNames.includes('conversation_reply')); // irreversible hidden on mcp:write
+  assert.ok(!httpWriteNames.includes('wa_templates_list')); // whatsapp toolset not granted
+  assert.ok(!httpWriteCall.isError);
+  for (const line of httpLogs) {
+    assert.ok(!line.includes('mcp_smoke_read'));
+    assert.ok(!line.includes('mcp_smoke_write'));
+    assert.ok(!line.includes('ignore previous instructions'));
+  }
+});
+
+await httpServer.close();
 mock.close();
 console.log(`\n${checks} checks passed`);

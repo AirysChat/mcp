@@ -51,3 +51,11 @@
 | `reports_drilldown` | `{ metric: "conversations_count", bucket_timestamp: "1735689600", since: "1735689600", until: "1740787200", group_by: "day" }` | `200 OK` | `_untrusted`, `meta`, `payload` (`promoted to stable`) |
 | `csat_responses` | `view: "metrics"` & `view: "list"` | `200 OK` | `_untrusted`, `total_count`, `ratings_count`, `payload` (`promoted to stable`) |
 | `reports_csv_export` | `report: "agents"` & `report: "conversation_traffic"` | `200 OK` | `_untrusted`, `report`, `csv` (`promoted to stable`) |
+
+## 4. Release `v0.5.0` Evidence
+
+- **Release PR**: `#115` (`8d19172` — `chore(release): v0.5.0`).
+- **Release Workflow Run**: `release.yml` run `40560563291` (`success`).
+- **GitHub Packages**: published `@airyschat/mcp@0.5.0` to `https://npm.pkg.github.com`.
+- **GitHub Release**: [`@airyschat/mcp@0.5.0`](https://github.com/AirysChat/mcp/releases/tag/%40airyschat/mcp%400.5.0) created and verified (`prerelease: true`).
+- **Milestone `v0.5.0`**: closed with `11/11` issues closed (`0` open).

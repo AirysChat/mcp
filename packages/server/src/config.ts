@@ -10,12 +10,30 @@
 export const TOOLSET_NAMES = ['core', 'whatsapp', 'crm', 'ai_agents', 'meta_agent', 'reports'] as const;
 export type ToolsetName = (typeof TOOLSET_NAMES)[number];
 
-const DEFAULT_TOOLSETS: ToolsetName[] = ['core', 'whatsapp'];
+export const DEFAULT_TOOLSETS: ToolsetName[] = ['core', 'whatsapp'];
 
 /** Tool maturity, lowest to highest risk. `deprecated` is visible like `stable`. */
 export const STABILITY_LEVELS = ['stable', 'beta', 'experimental'] as const;
 export type Stability = (typeof STABILITY_LEVELS)[number] | 'deprecated';
 export const STABILITY_RANK: Record<Exclude<Stability, 'deprecated'>, number> = { stable: 0, beta: 1, experimental: 2 };
+
+/**
+ * Access levels from ADR 0006 (`mcp:read` ⊂ `mcp:write` ⊂ `mcp:irreversible`).
+ *
+ * - `read`: read-only tools and `GET` on `airyschat_api`
+ * - `write`: read tools plus reversible write tools
+ * - `irreversible`: all tools (customer-facing sends, Meta writes, deletes, merges, deal closes)
+ */
+export const ACCESS_LEVELS = ['read', 'write', 'irreversible'] as const;
+export type AccessLevel = (typeof ACCESS_LEVELS)[number];
+export const ACCESS_RANK: Record<AccessLevel, number> = { read: 0, write: 1, irreversible: 2 };
+
+export interface ParsedTokenScopes {
+  maxAccess: AccessLevel;
+  toolsets: Set<ToolsetName>;
+  toolsetsRestricted: boolean;
+  expandedScopes: string[];
+}
 
 export interface Config {
   baseUrl: string;
@@ -26,6 +44,12 @@ export interface Config {
   features: Exclude<Stability, 'deprecated'>;
   readOnly: boolean;
   timeoutMs: number;
+  /** Highest access tier allowed by the token (`mcp:read|write|irreversible`). Default `irreversible` (or `read` when `readOnly`). */
+  maxAccess?: AccessLevel;
+  /** True when token scopes explicitly restrict toolsets via `mcp:toolset:<name>`. */
+  toolsetsRestricted?: boolean;
+  /** Header scheme used when talking to AirysChat (`api_access_token` on stdio, `bearer` on hosted HTTP). */
+  authScheme?: 'api_access_token' | 'bearer';
 }
 
 export class ConfigError extends Error {}
@@ -42,16 +66,88 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new ConfigError('AIRYSCHAT_BASE_URL must start with http:// or https://');
   }
 
+  const baseToolsets = parseToolsets(env.AIRYSCHAT_TOOLSETS);
+  const envReadOnly = isTruthy(env.AIRYSCHAT_READ_ONLY);
+  const parsedScopes = env.AIRYSCHAT_SCOPES?.trim()
+    ? parseTokenScopes(env.AIRYSCHAT_SCOPES, baseToolsets)
+    : undefined;
+  const maxAccess: AccessLevel = envReadOnly
+    ? 'read'
+    : (parsedScopes?.maxAccess ?? 'irreversible');
+
   return {
     baseUrl,
     apiKey,
     accountId,
-    toolsets: parseToolsets(env.AIRYSCHAT_TOOLSETS),
+    toolsets: parsedScopes ? parsedScopes.toolsets : baseToolsets,
     features: parseFeatures(env.AIRYSCHAT_FEATURES),
-    // Opt-in read-only. The inverse default would be safer in isolation but would
-    // silently break every write tool for users who never set the variable.
-    readOnly: isTruthy(env.AIRYSCHAT_READ_ONLY),
+    // Opt-in read-only (or forced when token scope is mcp:read).
+    readOnly: envReadOnly || maxAccess === 'read',
     timeoutMs: Number(env.AIRYSCHAT_TIMEOUT_MS ?? 30_000),
+    maxAccess,
+    toolsetsRestricted: parsedScopes?.toolsetsRestricted ?? false,
+    authScheme: 'api_access_token',
+  };
+}
+
+/**
+ * Parses OAuth / MCP scopes per ADR 0006 (`mcp:read` ⊂ `mcp:write` ⊂ `mcp:irreversible`,
+ * plus optional `mcp:toolset:<name>` restrictions).
+ */
+export function parseTokenScopes(
+  rawScopes: string | readonly string[],
+  fallbackToolsets: Iterable<ToolsetName> = DEFAULT_TOOLSETS,
+): ParsedTokenScopes {
+  const tokens = (typeof rawScopes === 'string' ? rawScopes.split(/[\s,]+/) : rawScopes)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  let maxAccess: AccessLevel | undefined;
+  if (tokens.includes('mcp:irreversible')) {
+    maxAccess = 'irreversible';
+  } else if (tokens.includes('mcp:write')) {
+    maxAccess = 'write';
+  } else if (tokens.includes('mcp:read')) {
+    maxAccess = 'read';
+  }
+
+  if (!maxAccess) {
+    throw new ConfigError(
+      'Token must grant at least one access scope: mcp:read, mcp:write, or mcp:irreversible',
+    );
+  }
+
+  const scopedToolsets: ToolsetName[] = [];
+  const unknownToolsets: string[] = [];
+  for (const token of tokens) {
+    if (!token.startsWith('mcp:toolset:')) continue;
+    const name = token.slice('mcp:toolset:'.length);
+    if ((TOOLSET_NAMES as readonly string[]).includes(name)) {
+      scopedToolsets.push(name as ToolsetName);
+    } else {
+      unknownToolsets.push(name);
+    }
+  }
+
+  if (unknownToolsets.length > 0) {
+    throw new ConfigError(
+      `Unknown toolset scope(s): ${unknownToolsets.join(', ')}. Known: ${TOOLSET_NAMES.join(', ')}`,
+    );
+  }
+
+  const expandedScopes: string[] = ['mcp:read'];
+  if (ACCESS_RANK[maxAccess] >= ACCESS_RANK.write) expandedScopes.push('mcp:write');
+  if (ACCESS_RANK[maxAccess] >= ACCESS_RANK.irreversible) expandedScopes.push('mcp:irreversible');
+  for (const ts of scopedToolsets) expandedScopes.push(`mcp:toolset:${ts}`);
+
+  const toolsetsRestricted = scopedToolsets.length > 0;
+  const toolsets = toolsetsRestricted ? new Set(scopedToolsets) : new Set(fallbackToolsets);
+
+  return {
+    maxAccess,
+    toolsets,
+    toolsetsRestricted,
+    expandedScopes,
   };
 }
 
@@ -71,7 +167,7 @@ function required(env: NodeJS.ProcessEnv, name: string): string {
   return value;
 }
 
-function parseToolsets(raw: string | undefined): Set<ToolsetName> {
+export function parseToolsets(raw: string | undefined): Set<ToolsetName> {
   if (!raw) return new Set(DEFAULT_TOOLSETS);
 
   const requested = raw.split(',').map((entry) => entry.trim()).filter(Boolean);
@@ -83,7 +179,7 @@ function parseToolsets(raw: string | undefined): Set<ToolsetName> {
   return new Set(requested as ToolsetName[]);
 }
 
-function parseFeatures(raw: string | undefined): Exclude<Stability, 'deprecated'> {
+export function parseFeatures(raw: string | undefined): Exclude<Stability, 'deprecated'> {
   const value = raw?.trim().toLowerCase();
   if (!value) return 'stable';
   if (!(STABILITY_LEVELS as readonly string[]).includes(value)) {

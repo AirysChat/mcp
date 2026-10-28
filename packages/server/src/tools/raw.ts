@@ -13,8 +13,9 @@
 import { z } from 'zod';
 import { loadCatalog, matchEndpoint } from '../catalog.js';
 import type { Prefix } from '../client.js';
+import { ACCESS_RANK, type ToolsetName } from '../config.js';
 import { defineTool } from '../toolsets.js';
-import { failure, readOnlyRefusal, requireConfirmation, untrustedJson } from '../result.js';
+import { failure, readOnlyRefusal, requireConfirmation, scopeRefusal, untrustedJson } from '../result.js';
 
 export const rawTools = [
   defineTool({
@@ -47,8 +48,11 @@ export const rawTools = [
     handler: async (args, { client, config }) => {
       const method = args.method ?? 'GET';
       const prefix = args.prefix ?? 'core';
+      const maxAccess = config.readOnly ? 'read' : (config.maxAccess ?? 'irreversible');
 
-      if (method !== 'GET' && config.readOnly) return readOnlyRefusal(`airyschat_api ${method}`);
+      if (method !== 'GET' && config.readOnly && config.authScheme !== 'bearer') {
+        return readOnlyRefusal(`airyschat_api ${method}`);
+      }
 
       const entry = matchEndpoint(loadCatalog(), method, prefix, args.path);
       if (!entry) {
@@ -61,7 +65,21 @@ export const rawTools = [
         return failure(`${method} (${prefix}) ${entry.path} cannot be called through MCP: ${entry.excluded}.`);
       }
 
+      if (
+        config.toolsetsRestricted &&
+        entry.toolset !== 'none' &&
+        !config.toolsets.has(entry.toolset as ToolsetName)
+      ) {
+        return scopeRefusal(`airyschat_api ${method} ${entry.path}`, `mcp:toolset:${entry.toolset}`);
+      }
+
       if (method !== 'GET') {
+        if (ACCESS_RANK[maxAccess] < ACCESS_RANK.write) {
+          return scopeRefusal(`airyschat_api ${method} ${entry.path}`, entry.irreversible ? 'mcp:irreversible' : 'mcp:write');
+        }
+        if (entry.irreversible && ACCESS_RANK[maxAccess] < ACCESS_RANK.irreversible) {
+          return scopeRefusal(`airyschat_api ${method} ${entry.path}`, 'mcp:irreversible');
+        }
         const detail = entry.irreversible ?? `Writes to ${entry.action}${entry.summary ? ` (${entry.summary})` : ''}.`;
         const hint = entry.tool ? ` Prefer the dedicated tool \`${entry.tool}\` when possible.` : '';
         const refusal = requireConfirmation(

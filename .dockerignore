@@ -1,0 +1,14 @@
+.git
+.github
+.agents
+.claude
+.changeset
+node_modules
+packages/*/node_modules
+packages/*/dist
+packages/*/test
+evidence-raw
+docs/research
+specs
+*.log
+.DS_Store

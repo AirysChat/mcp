@@ -57,7 +57,14 @@ in the shared catalog → `irreversible`). The MCP server additionally hides too
   expiry, account and scopes; never logs tokens (fingerprint only).
 - Instance selection: `mcp.airys.chat` → `airys.chat`; `mcp.staging.airys.chat` →
   `staging.airys.app`; managed instances via an allowlisted path prefix (`/<instance>/mcp`).
-  Open question for lane 005.
+  - **Managed-instance routing (REM-15, resolved 2026-10-28)**: Dedicated customer instances configured
+    in `AIRYSCHAT_ALLOWED_INSTANCES` (e.g. `acme=https://acme.airys.chat`) are served at
+    `https://mcp.airys.chat/<instance>/mcp` with per-instance RFC 9728 Protected Resource Metadata
+    at `https://mcp.airys.chat/.well-known/oauth-protected-resource/<instance>/mcp` (and
+    `https://mcp.airys.chat/<instance>/.well-known/oauth-protected-resource`), pointing
+    `authorization_servers` at `https://<instance>.airys.chat` and binding token audience (`aud`) to
+    `https://mcp.airys.chat/<instance>/mcp`. Any `<instance>` not in `AIRYSCHAT_ALLOWED_INSTANCES`
+    is rejected with `400 unknown_instance` before any outbound network request.
 
 ## Consequences
 

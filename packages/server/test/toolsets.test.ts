@@ -104,3 +104,30 @@ test('handler exceptions become tool errors instead of protocol failures', async
   assert.equal(result.isError, true);
   assert.match(result.content[0]!.text!, /Not found — gone/);
 });
+
+test('scope-based access filters irreversible tools on mcp:write and refuses unscoped calls', async () => {
+  const { server, registered } = fakeServer();
+  registerTools(
+    server,
+    tools,
+    context({ AIRYSCHAT_FEATURES: 'beta', AIRYSCHAT_SCOPES: 'mcp:write' }),
+  );
+  assert.deepEqual(names(registered), ['hatch', 'old', 'read_stable', 'write_beta']);
+
+  const withRefusal = fakeServer();
+  const writeCtx = context({ AIRYSCHAT_FEATURES: 'beta', AIRYSCHAT_SCOPES: 'mcp:write' });
+  registerTools(withRefusal.server, tools, writeCtx, { keepUnscopedForRefusal: true });
+  const sendTool = withRefusal.registered.find((tool) => tool.name === 'send_beta')!;
+  const sendRes = await sendTool.handler({});
+  assert.equal(sendRes.isError, true);
+  assert.match(sendRes.content[0]!.text!, /requires the "mcp:irreversible" token scope/);
+
+  const readBearer = fakeServer();
+  const readCtx = context({ AIRYSCHAT_FEATURES: 'beta', AIRYSCHAT_SCOPES: 'mcp:read' });
+  readCtx.config.authScheme = 'bearer';
+  registerTools(readBearer.server, tools, readCtx, { keepUnscopedForRefusal: true });
+  const writeTool = readBearer.registered.find((tool) => tool.name === 'write_beta')!;
+  const writeRes = await writeTool.handler({});
+  assert.equal(writeRes.isError, true);
+  assert.match(writeRes.content[0]!.text!, /requires the "mcp:write" token scope/);
+});

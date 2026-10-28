@@ -73,6 +73,7 @@ export class AirysChatClient {
       method,
       headers: {
         api_access_token: this.config.apiKey,
+        ...(this.config.authScheme === 'bearer' ? { Authorization: `Bearer ${this.config.apiKey}` } : {}),
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },

@@ -85,6 +85,22 @@ task WAR-07 P0 006 v0.5.0 reports    "reports toolset: summary, agents, inboxes,
 task WAR-08 P1 006 v0.5.0 plugins    "Skill campaign-retro"
 task WAR-09 P0 006 v0.5.0 whatsapp   "Promotions, changeset, coverage"
 
+# --- v0.6.0: tasks of lane 005 (Hosted MCP on Cloud Run + scoped MCP tokens) ---
+task REM-01 P0 005 v0.6.0 server     "Refactor config to per-request context (no process-global env in tool handlers)"
+task REM-02 P0 005 v0.6.0 hosted     "src/http.ts Streamable HTTP stateless entry point"
+task REM-03 P0 005 v0.6.0 hosted     "Resource server: protected-resource metadata, introspection client + cache, audience/scope/account checks, WWW-Authenticate"
+task REM-04 P0 005 v0.6.0 server     "Scope-based tool filtering and pre-call refusal"
+task REM-05 P0 005 v0.6.0 hosted     "Instance allowlist + limits + structured logging without secrets"
+task REM-06 P0 005 v0.6.0 hosted     "Dockerfile (distroless), healthcheck, image build workflow (WIF -> Artifact Registry)"
+task REM-07 P0 005 v0.6.0 hosted     "Terraform PR in airys-platform/infra: Cloud Run mcp, NEG, host rules, Armor"
+task REM-09 P0 005 v0.6.0 hosted     "Draft the AirysChat lane MCP tokens & OAuth (spec + tasks) from ADR 0006"
+task REM-10 P0 005 v0.6.0 hosted     "AirysChat: token model, OAuth AS endpoints, consent UI, settings UI, scope enforcement"
+task REM-11 P0 005 v0.6.0 hosted     "Staging deploy + client checks (Claude.ai connector OAuth, Claude Code, Codex, Gemini CLI, Antigravity)"
+task REM-12 P0 005 v0.6.0 hosted     "Security review (SSRF, token handling, scope bypass, DoS, prompt-injection surface)"
+task REM-13 P1 005 v0.6.0 hosted     "Load test (k6) 50 rps"
+task REM-14 P1 005 v0.6.0 hosted     "Prod deploy mcp.airys.chat"
+task REM-15 P2 005 v0.6.0 hosted     "Managed-instance routing (/<instance>/mcp)"
+
 
 # --- one epic per release ---
 epic() { # milestone lane title
