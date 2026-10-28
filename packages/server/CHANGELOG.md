@@ -1,5 +1,40 @@
 # @airyschat/mcp
 
+## 0.6.0
+
+### Minor Changes
+
+- 87d620b: Add the stateless Streamable HTTP server (`airyschat-mcp-http` / `dist/http.js`) and OAuth 2.1 Resource Server for hosted MCP (`REM-01..REM-06`, `REM-09`, `REM-12`, `REM-13`, `REM-15`):
+  
+  - **Per-request server factory (`src/server.ts`)**: shares toolset selection and registration between `src/index.ts` (stdio) and `src/http.ts` (Streamable HTTP) with zero process-global state in tool handlers.
+  - **OAuth 2.1 Resource Server (`src/auth.ts`)**: serves RFC 9728 Protected Resource Metadata (`/.well-known/oauth-protected-resource`), validates scoped AirysChat MCP tokens (`mcp_...`) via `/oauth/introspect` with a bounded SHA-256-keyed cache (TTL ≤ 60 s), enforces audience (`aud`), expiration (`exp`), and single-account (`account_id`) binding, rejects classic `api_access_token` keys on hosted HTTP, and emits `WWW-Authenticate` challenges.
+  - **Scope-based tool filtering & pre-call refusal (`src/config.ts`, `src/toolsets.ts`, `src/tools/raw.ts`)**: enforces `mcp:read` ⊂ `mcp:write` ⊂ `mcp:irreversible` and optional `mcp:toolset:<name>` restrictions across `tools/list`, tool execution, and the `airyschat_api` escape hatch (also available locally via `AIRYSCHAT_SCOPES`).
+  - **Anti-SSRF instance allowlist & managed-instance routing (`/<instance>/mcp`)**: maps `mcp.airys.chat`, `mcp.staging.airys.chat`, and allowlisted `/<instance>/mcp` routes (`AIRYSCHAT_ALLOWED_INSTANCES`), rejecting unknown instances with `400` before any outbound call; enforces 256 KiB request body limits, per-token sliding-window rate limiting (`429`), and secret-free structured JSON logging (`token_fp` only).
+  - **Containerization (`Dockerfile`, `.github/workflows/image.yml`)**: multi-stage distroless Node 24 container (`gcr.io/distroless/nodejs24-debian12:nonroot`) and Workload Identity Federation build/deploy workflow.
+- 1794ed8: Ship Lane 007 (`v0.7.0`) — MCP Apps (`io.modelcontextprotocol/ui`), elicitation-based confirmations with `confirm: true` fallback, and MCP Tasks & progress notifications:
+  
+  - **MCP Apps (`APP-02..APP-05`)**: Register `ui://airyschat/crm-board.html`, `ui://airyschat/campaign-preflight-report.html`, and `ui://airyschat/conversation-view.html` (`mimeType: "text/html;profile=mcp-app"`) with strict zero-network CSP (`connectDomains: []`, `resourceDomains: []`, `frameDomains: []`, `baseUriDomains: []`), `Node.textContent`-only DOM rendering, and visual untrusted customer-content fencing, plus composite tools `crm_board`, `campaign_preflight_report`, and `conversation_view` (`stability: "stable"`).
+  - **Elicitation-based confirmations (`APP-06`)**: Irreversible tools return `inputRequired.elicit` with an HMAC-SHA256 `requestState` bound to `(method, accountId, toolName, sha256(args))` when the client advertises form elicitation (`capabilities.elicitation`), while preserving the deterministic `confirm: true` parameter fallback for headless clients and subagents.
+  - **MCP Tasks & progress (`APP-07`)**: Long-running tools (`crm_deals_bulk_update`, `wa_campaign_launch`, `wa_campaign_test_send`) emit `notifications/progress` when `_meta.progressToken` is supplied, stamp `_meta["io.modelcontextprotocol/related-task"]`, and expose account-isolated `tasks/list`, `tasks/get`, `tasks/result`, and `tasks/cancel` handlers with mid-batch cancellation.
+  - **Client compatibility matrix (`APP-01`)**: Add `docs/compat/matrix.md` and security review `docs/security/007-apps-elicitation-tasks.md`.
+- c55bdeb: Add the `admin` and `help_center` toolsets (Lane 008, `ADM-01..ADM-09`):
+  
+  - **`admin` toolset (`packages/server/src/tools/admin.ts`)**: 41 curated tools covering inboxes (`inbox_get`, `inbox_upsert`, `inbox_delete`, `inbox_members_sync`), agents (`agent_invite`, `agent_update`, `agent_delete`), teams (`team_get`, `team_upsert`, `team_delete`, `team_members_sync`), automation rules (`automation_rules_list`, `automation_rule_upsert`, `automation_rule_delete`), macros (`macros_list`, `macro_upsert`, `macro_execute`, `macro_delete`), webhooks with anti-SSRF URL validation (`webhooks_list`, `webhook_upsert`, `webhook_delete`), integrations & hooks with URL validation (`integrations_list`, `integration_hook_upsert`, `integration_hook_delete`), custom attribute definitions (`custom_attributes_list`, `custom_attribute_upsert`, `custom_attribute_delete`), SLA policies & applied SLAs (`sla_policies_list`, `sla_policy_upsert`, `sla_policy_delete`), assignment policies (`assignment_policies_list`, `assignment_policy_upsert`), labels CRUD (`label_upsert`, `label_delete`), canned responses CRUD (`canned_response_upsert`, `canned_response_delete`), custom filters CRUD (`custom_filter_upsert`, `custom_filter_delete`), account settings (`account_settings_get`, `account_settings_update`), and audit logs (`audit_logs_list`).
+  - **`help_center` toolset (`packages/server/src/tools/help_center.ts`)**: 11 curated tools (`portals_list`, `portal_get`, `portal_upsert`, `categories_list`, `category_upsert`, `category_delete`, `articles_list`, `article_get`, `article_upsert`, `article_publish`, `article_delete`), promoted to `stable` after live create → publish → delete verification on staging account 6.
+  - **`account-audit` skill (`plugins/claude/skills/account-audit/SKILL.md`)**: read-only administrative configuration audit across account settings, inboxes, teams, automations, webhooks, custom attributes, and help center portals.
+- b66651b: Add the `platform` toolset (`AirysPlatformClient`, `AIRYS_PLATFORM_URL`, `AIRYS_API_TOKEN`) for the Airys Platform API (`api.airys.chat` / `AirysBR/airys-platform`, lane 009):
+  
+  - **Second HTTP client (`AirysPlatformClient`)**: dedicated base URL (`AIRYS_PLATFORM_URL`, default `https://api.airys.chat`) and Bearer credential (`AIRYS_API_TOKEN`), isolated from `AIRYSCHAT_API_KEY`.
+  - **Live OpenAPI 3.1 tools**: `platform_health` (`stable`), `platform_signals_attribution_list` (`beta`, `untrustedJson`), and `platform_signals_outcome_record` (`beta`, idempotent Business Messaging Conversions API outcome writer).
+  - **Control-plane Management API tools (`experimental`, awaiting `PLAT-8.1` / `PLAT-8.5`)**: `platform_numbers_health`, `platform_alerts_list`, `platform_instances_list`, and `platform_usage`.
+  - **Skill**: `plugins/claude/skills/number-health-watch/SKILL.md`.
+- 9ccca70: Add multi-client plugin bundles, MCP Registry manifest, stability freeze, and GA documentation (lane `010-distribution-ga`, `GA-01..GA-12`):
+  
+  - **Shared skills & 4 client plugins (`GA-01..GA-04`)**: canonical `skills/*` synchronized into `plugins/claude`, `plugins/codex`, `plugins/gemini`, and `plugins/antigravity` via `pnpm plugins:sync` / `pnpm plugins:check`.
+  - **Official MCP Registry & npm provenance (`GA-05`, `GA-06`)**: `server.json` (`chat.airys/mcp`) with stdio + Streamable HTTP transports, and OIDC provenance publishing in `.github/workflows/release.yml`.
+  - **Security & stability freeze (`GA-07`, `GA-11`)**: `SECURITY.md`, full-history secret scanner (`pnpm security:scan`), `docs/stability-policy.md`, and `stability-freeze.test.ts` locking all 80 `stable` tools.
+  - **Documentation & guides (`GA-08..GA-10`, `GA-12`)**: generated 212-tool reference (`docs/tools/reference.md`), `docs/quickstart.md`, `docs/safety-model.md`, Meta WhatsApp Business Tools MCP complementarity guide, Meta Muse setup guide, and Claude/ChatGPT connector directory package.
+
 ## 0.5.0
 
 ### Minor Changes
