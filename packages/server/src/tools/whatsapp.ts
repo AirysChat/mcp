@@ -689,6 +689,42 @@ export const whatsappTools = [
   }),
 
   defineTool({
+    name: 'campaign_preflight_report',
+    stability: 'stable',
+    title: 'Generate an interactive WhatsApp campaign preflight report (MCP App)',
+    description:
+      'Run the WhatsApp campaign preflight check (`/campaigns/preflight`) together with WABA inbox health ' +
+      '(`/inboxes/:inbox_id/whatsapp_campaign_health`) and optional saved campaign details, rendering the interactive ' +
+      '`ui://airyschat/campaign-preflight-report.html` MCP App (`APP-03`). Read-only and safe to call repeatedly.',
+    inputSchema: z.object({
+      inbox_id: z.number().int().describe('WhatsApp inbox ID'),
+      campaign_id: z.number().int().optional().describe('Optional saved campaign display ID'),
+      message: z.string().optional().describe('Approved WhatsApp template name'),
+      whatsapp_template_category: TEMPLATE_CATEGORY.optional(),
+      audience: audienceSelector.optional(),
+      recipient_count: z.number().int().optional(),
+      starts_at: z.string().optional(),
+      ends_at: z.string().optional(),
+    }),
+    handler: async (args, { client }) => {
+      const [preflight, inbox_health, campaign] = await Promise.all([
+        client.request('/campaigns/preflight', { method: 'POST', body: args }),
+        client.request(`/inboxes/${args.inbox_id}/whatsapp_campaign_health`).catch(() => null),
+        args.campaign_id !== undefined
+          ? client.request(`/campaigns/${args.campaign_id}`).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+      return untrustedJson({
+        inbox_id: args.inbox_id,
+        campaign_id: args.campaign_id ?? null,
+        preflight,
+        inbox_health,
+        campaign,
+      });
+    },
+  }),
+
+  defineTool({
     name: 'wa_campaign_create',
     stability: 'beta',
     title: 'Create a campaign',
@@ -786,7 +822,7 @@ export const whatsappTools = [
       scheduled_at: z.string().optional().describe('Overrides the campaign’s stored schedule'),
       confirm: z.boolean().optional(),
     }),
-    handler: async ({ campaign_id, scheduled_at, confirm }, { client }) => {
+    handler: async ({ campaign_id, scheduled_at, confirm }, { client, task }) => {
       const campaign = (await client.request(`/campaigns/${campaign_id}`)) as { title?: string };
       const refusal = requireConfirmation(
         confirm,
@@ -794,7 +830,11 @@ export const whatsappTools = [
       );
       if (refusal) return refusal;
 
-      return json(await client.request(`/campaigns/${campaign_id}/launch`, { method: 'POST', body: { scheduled_at } }));
+      task?.throwIfAborted();
+      await task?.reportProgress(1, 2, `Launching campaign #${campaign_id} ("${campaign.title ?? 'untitled'}")…`);
+      const res = await client.request(`/campaigns/${campaign_id}/launch`, { method: 'POST', body: { scheduled_at } });
+      await task?.reportProgress(2, 2, `Campaign #${campaign_id} scheduled/launched.`);
+      return json(res);
     },
   }),
 
@@ -829,14 +869,18 @@ export const whatsappTools = [
       contact_id: z.number().int(),
       confirm: z.boolean().optional(),
     }),
-    handler: async ({ campaign_id, contact_id, confirm }, { client }) => {
+    handler: async ({ campaign_id, contact_id, confirm }, { client, task }) => {
       const refusal = requireConfirmation(
         confirm,
         `Contact ${contact_id} will receive a real WhatsApp message from campaign ${campaign_id}.`,
       );
       if (refusal) return refusal;
 
-      return json(await client.request(`/campaigns/${campaign_id}/test_send`, { method: 'POST', body: { contact_id } }));
+      task?.throwIfAborted();
+      await task?.reportProgress(1, 2, `Sending test message from campaign #${campaign_id} to contact #${contact_id}…`);
+      const res = await client.request(`/campaigns/${campaign_id}/test_send`, { method: 'POST', body: { contact_id } });
+      await task?.reportProgress(2, 2, `Test message sent from campaign #${campaign_id} to contact #${contact_id}.`);
+      return json(res);
     },
   }),
 

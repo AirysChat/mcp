@@ -133,6 +133,63 @@ export const crmTools = [
   }),
 
   defineTool({
+    name: 'crm_board',
+    stability: 'stable',
+    title: 'Load the interactive CRM pipeline board (MCP App)',
+    description:
+      'Fetch a complete CRM Kanban board snapshot (`pipeline`, ordered `stages`, and `deals_board` cards) in one call and ' +
+      'render the interactive `ui://airyschat/crm-board.html` MCP App (`APP-02`). If `pipeline_id` is omitted, loads the ' +
+      'first configured sales pipeline on the account.',
+    inputSchema: z.object({
+      pipeline_id: z.number().int().optional().describe('Sales pipeline ID (defaults to the first pipeline on the account)'),
+      owner_id: z.union([z.number().int(), z.literal('me'), z.literal('none')]).optional(),
+      status: z.enum(['active', 'open', 'won', 'lost']).optional(),
+      q: z.string().optional(),
+      per_page: z.number().int().min(1).max(100).optional().describe('Max cards per stage (default 25)'),
+    }),
+    handler: async ({ pipeline_id, owner_id, status, q, per_page }, { client }) => {
+      let resolvedPipelineId = pipeline_id;
+      let resolvedPipeline: Record<string, unknown> | null = null;
+
+      if (!resolvedPipelineId) {
+        const pipelines = (await client.request('/pipelines', { prefix: 'saas' })) as Array<Record<string, unknown>>;
+        const first = Array.isArray(pipelines) ? pipelines[0] : undefined;
+        if (!first || typeof first.id !== 'number') {
+          return untrustedJson({ pipeline: null, stages: [], deals_board: { payload: [], meta: {} } });
+        }
+        resolvedPipelineId = first.id;
+        resolvedPipeline = first;
+      }
+
+      const normalizedStatus = status === 'open' ? 'active' : status;
+      const [pipeline, stages, deals_board] = await Promise.all([
+        resolvedPipeline
+          ? Promise.resolve(resolvedPipeline)
+          : client.request(`/pipelines/${resolvedPipelineId}`, { prefix: 'saas' }),
+        client.request(`/pipelines/${resolvedPipelineId}/pipeline_stages`, { prefix: 'saas' }),
+        client.request('/crm_deals', {
+          prefix: 'saas',
+          query: {
+            view: 'board',
+            pipeline_id: resolvedPipelineId,
+            owner_id,
+            status: normalizedStatus,
+            q,
+            per_page: per_page ?? 25,
+          },
+        }),
+      ]);
+
+      return untrustedJson({
+        pipeline_id: resolvedPipelineId,
+        pipeline: (pipeline ?? {}) as Record<string, unknown>,
+        stages: Array.isArray(stages) ? stages : [],
+        deals_board,
+      });
+    },
+  }),
+
+  defineTool({
     name: 'crm_deal_get',
     stability: 'stable',
     title: 'Get a CRM deal',
@@ -413,13 +470,20 @@ export const crmTools = [
       labels: z.array(z.string()).optional().describe('Required for add_labels'),
       lost_reason_id: z.number().int().optional().describe('Required for mark_lost'),
       lost_comment: z.string().optional(),
+      batch_size: z
+        .number()
+        .int()
+        .min(1)
+        .max(50)
+        .optional()
+        .describe('Optional chunk size for incremental progress reporting and mid-batch cancellation (default 25)'),
       confirm: z
         .boolean()
         .optional()
         .describe(`Required when ids.length > ${BULK_CONFIRM_THRESHOLD} or operation is mark_lost / delete`),
     }),
-    handler: async (args, { client }) => {
-      const { operation, ids, stage_id, owner_id, labels, lost_reason_id, lost_comment, confirm } = args;
+    handler: async (args, { client, task }) => {
+      const { operation, ids, stage_id, owner_id, labels, lost_reason_id, lost_comment, batch_size, confirm } = args;
 
       if (operation === 'move_stage' && !stage_id) {
         return failure('Bulk `move_stage` requires `stage_id`.');
@@ -444,13 +508,45 @@ export const crmTools = [
         if (refusal) return refusal;
       }
 
-      return json(
-        await client.request('/crm_deals/bulk', {
+      const chunkSize = batch_size ?? 25;
+      await task?.reportProgress(0, ids.length, `Starting bulk "${operation}" across ${ids.length} deal(s)`);
+
+      if (ids.length <= chunkSize) {
+        task?.throwIfAborted();
+        const res = await client.request('/crm_deals/bulk', {
           prefix: 'saas',
           method: 'POST',
           body: { operation, ids, stage_id, owner_id, labels, lost_reason_id, lost_comment },
-        }),
-      );
+        });
+        await task?.reportProgress(ids.length, ids.length, `Completed bulk "${operation}" (${ids.length}/${ids.length})`);
+        return json(res);
+      }
+
+      const batches: unknown[] = [];
+      let processed = 0;
+      for (let i = 0; i < ids.length; i += chunkSize) {
+        task?.throwIfAborted();
+        const slice = ids.slice(i, i + chunkSize);
+        const res = await client.request('/crm_deals/bulk', {
+          prefix: 'saas',
+          method: 'POST',
+          body: { operation, ids: slice, stage_id, owner_id, labels, lost_reason_id, lost_comment },
+        });
+        batches.push(res);
+        processed += slice.length;
+        await task?.reportProgress(
+          processed,
+          ids.length,
+          `Processed ${processed}/${ids.length} deal(s) for bulk "${operation}"`,
+        );
+      }
+
+      return json({
+        operation,
+        total_requested: ids.length,
+        batches_executed: batches.length,
+        batches,
+      });
     },
   }),
 
