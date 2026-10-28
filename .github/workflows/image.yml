@@ -15,7 +15,7 @@ on:
       - '.dockerignore'
       - 'packages/server/**'
       - 'scripts/inventory/**'
-      - 'docs/api/inventory.csv'
+      - 'docs/api/**'
       - '.github/workflows/image.yml'
   pull_request:
     paths:

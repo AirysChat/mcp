@@ -13,7 +13,7 @@ COPY packages/server/package.json packages/server/tsconfig.json ./packages/serve
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --filter @airyschat/mcp
 
-COPY docs/api/inventory.csv ./docs/api/inventory.csv
+COPY docs/api/ ./docs/api/
 COPY scripts/inventory/ ./scripts/inventory/
 COPY packages/server/src ./packages/server/src
 COPY packages/server/README.md ./packages/server/README.md
