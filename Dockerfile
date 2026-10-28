@@ -8,7 +8,7 @@ FROM node:24-slim AS build
 RUN corepack enable
 WORKDIR /src
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/server/package.json packages/server/tsconfig.json ./packages/server/
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --filter @airyschat/mcp
