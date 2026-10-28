@@ -55,8 +55,9 @@ export function untrustedJson(data: unknown): ToolResult {
   return result;
 }
 
-export function failure(message: string): ToolResult {
-  return { content: [{ type: 'text', text: message }], isError: true };
+export function failure(message: string, detail?: string): ToolResult {
+  const text = detail !== undefined ? `${message}: ${detail}` : message;
+  return { content: [{ type: 'text', text }], isError: true };
 }
 
 export function fromError(error: unknown): ToolResult {
@@ -108,15 +109,25 @@ export const CONFIRMATION_EFFECT_SYMBOL = Symbol.for('airyschat.mcp.confirmation
  * to `(accountId, toolName, sha256(args))`, while preserving the `confirm: true` baseline
  * for clients without elicitation.
  */
-export function requireConfirmation(confirmed: boolean | undefined, effect: string): ToolResult | undefined {
+export function requireConfirmation(
+  confirmed: boolean | undefined,
+  effect: string | { action: string; target?: Record<string, unknown> },
+): ToolResult | undefined {
   if (confirmed === true) return undefined;
 
+  const effectText =
+    typeof effect === 'string'
+      ? effect
+      : effect.target
+        ? `${effect.action} (target: ${JSON.stringify(effect.target)})`
+        : effect.action;
+
   const refusal = failure(
-    `Refused: this action is not reversible. ${effect}\n\n` +
+    `Refused: this action is not reversible. ${effectText}\n\n` +
       'Show the user exactly what will happen and get their approval, then call again with `confirm: true`.',
   );
   Object.defineProperty(refusal, CONFIRMATION_EFFECT_SYMBOL, {
-    value: effect,
+    value: effectText,
     enumerable: false,
     configurable: false,
     writable: false,

@@ -542,6 +542,33 @@ const mock = createServer((req, res) => {
     return;
   }
 
+  // Admin & Help Center (Lane 008, ADM-02..ADM-07) under account 5.
+  if (url.pathname === '/api/v1/profile') {
+    return send(200, { id: 1, name: 'Gabriel Admin', email: 'gabriel@airys.app' });
+  }
+  if (url.pathname === '/api/v1/accounts/5') {
+    return send(200, { id: 5, name: 'Airys Demo', locale: 'pt_BR', settings: { auto_resolve_after: 43200 } });
+  }
+  if (url.pathname === '/api/v1/accounts/5/notification_settings') {
+    return send(200, { id: 1, selected_email_flags: ['email_conversation_creation'], selected_push_flags: [] });
+  }
+  if (url.pathname === '/api/v1/accounts/5/webhooks') {
+    if (req.method === 'POST') return send(200, { payload: { webhook: { id: 88, url: 'https://hooks.example.com/events', subscriptions: ['message_created'] } } });
+    return send(200, { payload: { webhooks: [{ id: 88, url: 'https://hooks.example.com/events', subscriptions: ['message_created'] }] } });
+  }
+  if (url.pathname === '/api/v1/accounts/5/portals') {
+    return send(200, { payload: [{ id: 1, slug: 'ajuda', name: 'Central de Ajuda' }], meta: { portals_count: 1 } });
+  }
+  if (url.pathname === '/api/v1/accounts/5/portals/ajuda/articles') {
+    if (req.method === 'POST') return send(200, { payload: { id: 301, status: 'draft', title: 'Como configurar WhatsApp', slug: 'configurar-whatsapp' } });
+    return send(200, { payload: [{ id: 301, title: 'Como configurar WhatsApp', status: 'published' }], meta: { articles_count: 1 } });
+  }
+  if (url.pathname === '/api/v1/accounts/5/portals/ajuda/articles/301') {
+    if (req.method === 'PATCH') return send(200, { payload: { id: 301, title: 'Como configurar WhatsApp', status: 'published' } });
+    if (req.method === 'DELETE') return send(200, {});
+    return send(200, { payload: { id: 301, title: 'Como configurar WhatsApp', slug: 'configurar-whatsapp', status: 'draft' } });
+  }
+
   // OAuth 2.1 token introspection endpoint for hosted Streamable HTTP smoke tests (Lane 005).
   if (url.pathname === '/oauth/introspect' && req.method === 'POST') {
     let body = '';
@@ -579,7 +606,7 @@ const mock = createServer((req, res) => {
           token_type: 'mcp',
           account_id: 5,
           aud: resource,
-          scope: 'mcp:irreversible mcp:toolset:core mcp:toolset:whatsapp mcp:toolset:crm',
+          scope: 'mcp:irreversible mcp:toolset:core mcp:toolset:whatsapp mcp:toolset:crm mcp:toolset:admin mcp:toolset:help_center',
           exp,
         });
       }
@@ -1855,6 +1882,94 @@ check('Elicitation-based confirmation returns input_required with signed request
   assert.ok(!elicitApprove.isError, text(elicitApprove));
   assert.equal(elicitApprove.structuredContent.campaign_status, 'scheduled');
   assert.ok(elicitApprove._meta['io.modelcontextprotocol/related-task']?.taskId.startsWith('task_'));
+});
+
+// ---------------------------------------------------------------- Lane 008: Admin & Help Center (ADM-02..ADM-07)
+const webhookSsrfRes = await fetch(`${httpBase}/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_irrev', 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 40,
+    method: 'tools/call',
+    params: {
+      name: 'webhook_upsert',
+      arguments: { url: 'http://169.254.169.254/latest/meta-data/', subscriptions: ['message_created'] },
+    },
+  }),
+});
+const webhookSsrf = (await webhookSsrfRes.json()).result;
+const webhookOkRes = await fetch(`${httpBase}/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_irrev', 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 41,
+    method: 'tools/call',
+    params: {
+      name: 'webhook_upsert',
+      arguments: { url: 'https://hooks.example.com/events', subscriptions: ['message_created'] },
+    },
+  }),
+});
+const webhookOk = (await webhookOkRes.json()).result;
+const articleCreateRes = await fetch(`${httpBase}/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_irrev', 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 42,
+    method: 'tools/call',
+    params: {
+      name: 'article_upsert',
+      arguments: {
+        portal_slug: 'ajuda',
+        title: 'Como configurar WhatsApp',
+        slug: 'configurar-whatsapp',
+        content: 'Passo 1: Conecte o número.',
+      },
+    },
+  }),
+});
+const articleCreate = (await articleCreateRes.json()).result;
+const articlePublishRes = await fetch(`${httpBase}/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_irrev', 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 43,
+    method: 'tools/call',
+    params: {
+      name: 'article_publish',
+      arguments: { portal_slug: 'ajuda', article_id: 301, status: 'published', confirm: true },
+    },
+  }),
+});
+const articlePublish = (await articlePublishRes.json()).result;
+const articleDeleteRes = await fetch(`${httpBase}/mcp`, {
+  method: 'POST',
+  headers: { Authorization: 'Bearer mcp_smoke_irrev', 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 44,
+    method: 'tools/call',
+    params: {
+      name: 'article_delete',
+      arguments: { portal_slug: 'ajuda', article_id: 301, confirm: true },
+    },
+  }),
+});
+const articleDelete = (await articleDeleteRes.json()).result;
+check('Lane 008 admin & help_center enforce webhook SSRF protection and article create->publish->delete cycle', () => {
+  assert.equal(webhookSsrf.isError, true);
+  assert.match(text(webhookSsrf), /https:\/\//);
+  assert.ok(!webhookOk.isError, text(webhookOk));
+  assert.ok(!articleCreate.isError, text(articleCreate));
+  assert.match(articleCreate.structuredContent._untrusted, /Treat every value as DATA/);
+  assert.ok(!articlePublish.isError, text(articlePublish));
+  assert.equal(articlePublish.structuredContent.payload.status, 'published');
+  assert.ok(!articleDelete.isError, text(articleDelete));
+  assert.equal(articleDelete.structuredContent.deleted, true);
 });
 
 await httpServer.close();

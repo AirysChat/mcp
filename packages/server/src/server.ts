@@ -17,10 +17,12 @@ import { registerApps } from './apps/index.js';
 import type { Config } from './config.js';
 import { createConfirmationStateCodec } from './elicitation.js';
 import { defaultTaskRegistry, registerTaskHandlers, type TaskRegistry } from './tasks.js';
+import { adminTools } from './tools/admin.js';
 import { aiAgentsTools } from './tools/ai_agents.js';
 import { catalogTools } from './tools/catalog.js';
 import { coreTools } from './tools/core.js';
 import { crmTools } from './tools/crm.js';
+import { helpCenterTools } from './tools/help_center.js';
 import { metaAgentTools } from './tools/meta_agent.js';
 import { rawTools } from './tools/raw.js';
 import { reportsTools } from './tools/reports.js';
@@ -42,6 +44,8 @@ export function selectToolsForConfig(config: Pick<Config, 'toolsets'>): AnyToolD
   if (config.toolsets.has('ai_agents')) selected.push(...aiAgentsTools);
   if (config.toolsets.has('meta_agent')) selected.push(...metaAgentTools);
   if (config.toolsets.has('reports')) selected.push(...reportsTools);
+  if (config.toolsets.has('admin')) selected.push(...adminTools);
+  if (config.toolsets.has('help_center')) selected.push(...helpCenterTools);
   return selected;
 }
 
