@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "airyschat": {
+      "command": "npx",
+      "args": ["-y", "@airyschat/mcp@latest"],
+      "env": {
+        "AIRYSCHAT_BASE_URL": "${AIRYSCHAT_BASE_URL}",
+        "AIRYSCHAT_API_KEY": "${AIRYSCHAT_API_KEY}",
+        "AIRYSCHAT_ACCOUNT_ID": "${AIRYSCHAT_ACCOUNT_ID}",
+        "AIRYSCHAT_TOOLSETS": "${AIRYSCHAT_TOOLSETS:-core,whatsapp}",
+        "AIRYSCHAT_FEATURES": "${AIRYSCHAT_FEATURES:-stable}",
+        "AIRYSCHAT_READ_ONLY": "${AIRYSCHAT_READ_ONLY:-}"
+      }
+    }
+  }
+}

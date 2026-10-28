@@ -4,9 +4,7 @@ MCP server for [AirysChat](https://github.com/AirysChat/AirysChat) — drive Wha
 campaigns, message templates, conversations, contacts, CRM, and AI agents from Claude Code,
 Claude Desktop, Codex, Gemini CLI, Antigravity, Cursor, or any MCP client.
 
-**Status: v0.2.0 (pre-1.0, GitHub Packages).** 29 curated tools + embedded 807-endpoint API
-catalog (`airyschat_api_search` + `airyschat_api`), verified against `staging.airys.app`
-account 6 and the end-to-end stdio smoke suite (`pnpm smoke`).
+**Status: 212 curated & catalog tools across 9 toolsets (`core`, `whatsapp`, `crm`, `ai_agents`, `meta_agent`, `reports`, `admin`, `help_center`, `platform`) + embedded 807-endpoint API catalog (`airyschat_api_search` + `airyschat_api`) + 3 MCP Apps (`crm_board`, `campaign_preflight_report`, `conversation_view`).** See the full [Generated Tool Reference](../../docs/tools/reference.md), [Per-Client Quickstart](../../docs/quickstart.md), and [Safety Model](../../docs/safety-model.md).
 
 ## Install
 

@@ -60,7 +60,7 @@ gantt
 | [007-apps-elicitation-tasks](007-apps-elicitation-tasks/tasks.md) | APP | Done (2026-10-28) |
 | [008-admin-and-help-center](008-admin-and-help-center/tasks.md) | ADM | Done (2026-10-28) |
 | [009-airys-platform-toolset](009-airys-platform-toolset/tasks.md) | PLT | Done (in-repo 2026-10-28; M2 promotion awaits `PLAT-8.1`/`PLAT-8.5`) |
-| [010-distribution-ga](010-distribution-ga/tasks.md) | GA | Planned |
+| [010-distribution-ga](010-distribution-ga/tasks.md) | GA | Done (in-repo 2026-10-28; 4 plugins, `server.json`, stability freeze, docs & security scan) |
 
 ## Owner decisions
 

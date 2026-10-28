@@ -27,12 +27,8 @@ current=$(node -p "require('./packages/server/package.json').version")
 pnpm -s changeset version
 version=$(node -p "require('./packages/server/package.json').version")
 
-# Plugin manifests ship in lockstep with the server (ADR 0003).
-for manifest in plugins/*/.claude-plugin/plugin.json; do
-  [[ -f "$manifest" ]] || continue
-  # Replace only the version value so the manifest keeps its formatting.
-  sed -i.bak -E "s/(\"version\"[[:space:]]*:[[:space:]]*\")[^\"]+(\")/\1$version\2/" "$manifest" && rm -f "$manifest.bak"
-done
+# Plugin manifests, shared skills, and server.json ship in lockstep with the server (ADR 0003, GA-01, GA-06).
+node scripts/plugins/sync-plugins.mjs
 pnpm -s install --lockfile-only >/dev/null
 
 echo "@airyschat/mcp $current → $version ($pending changeset(s))"
