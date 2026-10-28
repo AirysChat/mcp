@@ -40,9 +40,21 @@ export class ApiError extends Error {
     if (typeof this.payload === 'string' && this.payload.trim()) return this.payload.trim();
     if (this.payload && typeof this.payload === 'object') {
       const record = this.payload as Record<string, unknown>;
-      for (const key of ['error', 'message', 'errors']) {
+      for (const key of ['error', 'message', 'errors', 'detail']) {
         const value = record[key];
         if (typeof value === 'string' && value.trim()) return value.trim();
+        if (key === 'detail' && Array.isArray(value) && value.length > 0) {
+          const messages = value
+            .map((item) => {
+              if (!item || typeof item !== 'object') return undefined;
+              const obj = item as Record<string, unknown>;
+              const loc = Array.isArray(obj.loc) ? obj.loc.join('.') : undefined;
+              const msg = typeof obj.msg === 'string' ? obj.msg : undefined;
+              return loc && msg ? `${loc}: ${msg}` : msg;
+            })
+            .filter(Boolean);
+          if (messages.length > 0) return messages.join('; ');
+        }
       }
     }
     return undefined;

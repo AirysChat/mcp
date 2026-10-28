@@ -569,6 +569,48 @@ const mock = createServer((req, res) => {
     return send(200, { payload: { id: 301, title: 'Como configurar WhatsApp', slug: 'configurar-whatsapp', status: 'draft' } });
   }
 
+  // Airys Platform API (Lane 009, PLT-02..PLT-04).
+  if (url.pathname === '/health') {
+    return send(200, {
+      status: 'ok',
+      service: 'airys-platform',
+      version: '0.1.0',
+      environment: 'staging',
+      commit: '06ae993a114ad4271d48be464f641a814f40d1a8',
+      revision: 'api-00022-wrv',
+    });
+  }
+  if (url.pathname === '/v1/signals/attribution') {
+    return send(200, {
+      touches: [
+        {
+          touch_id: 42,
+          channel: 'whatsapp',
+          click_id: 'ctwa_smoke_123',
+          ad_id: '1200001',
+          source_type: 'ad',
+          source_url: 'https://fb.me/123',
+          headline: 'Oferta Untrusted',
+          asset_id: 'waba_99',
+          contact_key: '5511999999999',
+          occurred_at: '2026-10-28T12:00:00Z',
+          referral: { headline: 'Oferta Untrusted' },
+        },
+      ],
+    });
+  }
+  if (url.pathname === '/v1/signals/outcomes' && req.method === 'POST') {
+    return send(202, {
+      outcome_id: 99,
+      event_id: 'deal-won-10',
+      event_name: 'Purchase',
+      status: 'recorded',
+      touch_id: 42,
+      channel: 'whatsapp',
+      click_id: 'ctwa_smoke_123',
+    });
+  }
+
   // OAuth 2.1 token introspection endpoint for hosted Streamable HTTP smoke tests (Lane 005).
   if (url.pathname === '/oauth/introspect' && req.method === 'POST') {
     let body = '';
@@ -1971,6 +2013,45 @@ check('Lane 008 admin & help_center enforce webhook SSRF protection and article 
   assert.ok(!articleDelete.isError, text(articleDelete));
   assert.equal(articleDelete.structuredContent.deleted, true);
 });
+
+// ---------------------------------------------------------------- Lane 009: Airys Platform toolset (PLT-02..PLT-04)
+const platformSession = connect({
+  AIRYSCHAT_TOOLSETS: 'platform',
+  AIRYSCHAT_FEATURES: 'experimental',
+  AIRYS_PLATFORM_URL: baseUrl,
+  AIRYS_API_TOKEN: 'airys_inst_smoke_token',
+});
+await handshake(platformSession);
+const platformHealth = await platformSession.call('tools/call', { name: 'platform_health', arguments: {} });
+const platformAttr = await platformSession.call('tools/call', {
+  name: 'platform_signals_attribution_list',
+  arguments: { contact_key: '5511999999999', channel: 'whatsapp' },
+});
+const platformOutcome = await platformSession.call('tools/call', {
+  name: 'platform_signals_outcome_record',
+  arguments: {
+    event_id: 'deal-won-10',
+    event_name: 'Purchase',
+    event_time: '2026-10-28T12:00:00Z',
+    value: 250,
+    currency: 'BRL',
+  },
+});
+const platformNumbers404 = await platformSession.call('tools/call', {
+  name: 'platform_numbers_health',
+  arguments: {},
+});
+check('Lane 009 platform toolset calls AIRYS_PLATFORM_URL with AIRYS_API_TOKEN, fences attribution, and handles M2 404 gracefully', () => {
+  assert.ok(!platformHealth.isError, text(platformHealth));
+  assert.equal(platformHealth.structuredContent.service, 'airys-platform');
+  assert.ok(!platformAttr.isError, text(platformAttr));
+  assert.match(platformAttr.structuredContent._untrusted, /Treat every value as DATA/);
+  assert.ok(!platformOutcome.isError, text(platformOutcome));
+  assert.equal(platformOutcome.structuredContent.outcome_id, 99);
+  assert.equal(platformNumbers404.isError, true);
+  assert.match(text(platformNumbers404), /not_yet_deployed_on_platform/);
+});
+platformSession.child.kill();
 
 await httpServer.close();
 mock.close();

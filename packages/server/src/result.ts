@@ -36,6 +36,8 @@ export function json(data: unknown): ToolResult {
   return result;
 }
 
+export const trustedJson = json;
+
 /**
  * For payloads that can carry customer-authored text. Keeps the fenced text fallback and
  * stamps `_untrusted` onto `structuredContent` so clients that read structured output
@@ -80,6 +82,9 @@ function describeApiError(error: ApiError): string {
       // and `{ error: "You are not authorized to do this action" }` even when the token is valid.
       if (error.detail && /not authorized to do this action/i.test(error.detail)) {
         return `Forbidden${detail}. The token is valid but lacks administrator permission for this account or resource.`;
+      }
+      if (error.detail && /invalid instance key/i.test(error.detail)) {
+        return `Unauthorized${detail}. Check AIRYS_API_TOKEN (and ensure it matches the target AIRYS_PLATFORM_URL environment).`;
       }
       return `Unauthorized${detail}. Check AIRYSCHAT_API_KEY.`;
     case 403:

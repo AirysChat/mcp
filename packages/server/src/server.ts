@@ -24,6 +24,7 @@ import { coreTools } from './tools/core.js';
 import { crmTools } from './tools/crm.js';
 import { helpCenterTools } from './tools/help_center.js';
 import { metaAgentTools } from './tools/meta_agent.js';
+import { platformTools } from './tools/platform.js';
 import { rawTools } from './tools/raw.js';
 import { reportsTools } from './tools/reports.js';
 import { whatsappTools } from './tools/whatsapp.js';
@@ -46,6 +47,7 @@ export function selectToolsForConfig(config: Pick<Config, 'toolsets'>): AnyToolD
   if (config.toolsets.has('reports')) selected.push(...reportsTools);
   if (config.toolsets.has('admin')) selected.push(...adminTools);
   if (config.toolsets.has('help_center')) selected.push(...helpCenterTools);
+  if (config.toolsets.has('platform')) selected.push(...platformTools);
   return selected;
 }
 
