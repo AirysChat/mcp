@@ -16,10 +16,12 @@ export const TOOLSET_NAMES = [
   'reports',
   'admin',
   'help_center',
+  'platform',
 ] as const;
 export type ToolsetName = (typeof TOOLSET_NAMES)[number];
 
 export const DEFAULT_TOOLSETS: ToolsetName[] = ['core', 'whatsapp'];
+export const DEFAULT_PLATFORM_BASE_URL = 'https://api.airys.chat';
 
 /** Tool maturity, lowest to highest risk. `deprecated` is visible like `stable`. */
 export const STABILITY_LEVELS = ['stable', 'beta', 'experimental'] as const;
@@ -59,6 +61,10 @@ export interface Config {
   toolsetsRestricted?: boolean;
   /** Header scheme used when talking to AirysChat (`api_access_token` on stdio, `bearer` on hosted HTTP). */
   authScheme?: 'api_access_token' | 'bearer';
+  /** Base URL for the Airys Platform API (`AIRYS_PLATFORM_URL`, default `https://api.airys.chat`). */
+  platformBaseUrl?: string;
+  /** Bearer credential for the Airys Platform API (`AIRYS_API_TOKEN`), separate from `AIRYSCHAT_API_KEY`. */
+  platformApiToken?: string;
 }
 
 export class ConfigError extends Error {}
@@ -74,6 +80,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (!/^https?:\/\//.test(baseUrl)) {
     throw new ConfigError('AIRYSCHAT_BASE_URL must start with http:// or https://');
   }
+
+  const rawPlatformUrl = optional(env, 'AIRYS_PLATFORM_URL');
+  const platformBaseUrl = (rawPlatformUrl ?? DEFAULT_PLATFORM_BASE_URL).replace(/\/+$/, '');
+  if (!/^https?:\/\//.test(platformBaseUrl)) {
+    throw new ConfigError('AIRYS_PLATFORM_URL must start with http:// or https://');
+  }
+  const platformApiToken = optional(env, 'AIRYS_API_TOKEN');
 
   const baseToolsets = parseToolsets(env.AIRYSCHAT_TOOLSETS);
   const envReadOnly = isTruthy(env.AIRYSCHAT_READ_ONLY);
@@ -96,6 +109,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     maxAccess,
     toolsetsRestricted: parsedScopes?.toolsetsRestricted ?? false,
     authScheme: 'api_access_token',
+    platformBaseUrl,
+    platformApiToken,
   };
 }
 
@@ -173,6 +188,17 @@ function required(env: NodeJS.ProcessEnv, name: string): string {
     throw new ConfigError(`${name} was passed unexpanded as "${value}" — the referenced environment variable is not set on your machine`);
   }
 
+  return value;
+}
+
+function optional(env: NodeJS.ProcessEnv, name: string): string | undefined {
+  const value = env[name]?.trim();
+  if (!value) return undefined;
+  if (/^\$\{.*\}$/.test(value)) {
+    throw new ConfigError(
+      `${name} was passed unexpanded as "${value}" — the referenced environment variable is not set on your machine`,
+    );
+  }
   return value;
 }
 

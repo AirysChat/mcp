@@ -11,6 +11,7 @@ import type { z } from 'zod';
 import { TOOL_APP_META } from './apps/index.js';
 import type { AirysChatClient } from './client.js';
 import { ACCESS_RANK, STABILITY_RANK, type AccessLevel, type Config, type Stability } from './config.js';
+import type { AirysPlatformClient } from './platform-client.js';
 import {
   buildConfirmationInputRequired,
   clientSupportsFormElicitation,
@@ -39,6 +40,7 @@ import {
 export interface ToolContext {
   client: AirysChatClient;
   config: Config;
+  platformClient?: AirysPlatformClient;
   mcp?: ServerContext;
   task?: TaskProgressReporter;
 }

@@ -122,6 +122,28 @@ task ADM-07 P0 008 v0.8.0 help_center "help_center: portals, categories, article
 task ADM-08 P1 008 v0.8.0 plugins    "Skill account-audit"
 task ADM-09 P0 008 v0.8.0 admin      "Promotions, changeset, coverage"
 
+# --- v0.9.0: tasks of lane 009 (Airys platform API toolset) ---
+task PLT-01 P0 009 v0.9.0 specs      "Map platform roadmap (Airys-AI specs) to candidate tools; contract doc in docs/api/domains/platform.md"
+task PLT-02 P0 009 v0.9.0 platform   "Second HTTP client + AIRYS_API_TOKEN config; toolset platform"
+task PLT-03 P0 009 v0.9.0 platform   "platform_health, platform_signals_attribution_list, platform_signals_outcome_record, platform_numbers_health, platform_alerts_list"
+task PLT-04 P1 009 v0.9.0 platform   "platform_instances_list, platform_usage"
+task PLT-05 P1 009 v0.9.0 plugins    "Skill number-health-watch"
+task PLT-06 P0 009 v0.9.0 platform   "Changeset, verification, docs"
+
+# --- v1.0.0: tasks of lane 010 (Distribution & GA) ---
+task GA-01 P0 010 v1.0.0 plugins     "Shared skills/ + build step copying into each plugin bundle"
+task GA-02 P0 010 v1.0.0 plugins     "Codex plugin (.codex-plugin)"
+task GA-03 P0 010 v1.0.0 plugins     "Gemini CLI extension (gemini-extension.json)"
+task GA-04 P0 010 v1.0.0 plugins     "Antigravity plugin (.agents plugin)"
+task GA-05 P0 010 v1.0.0 server      "npm scope @airyschat + trusted publishing with provenance"
+task GA-06 P0 010 v1.0.0 server      "MCP Registry chat.airys/mcp (server.json + publish workflow)"
+task GA-07 P0 010 v1.0.0 server      "Secret scan of full history; LICENSE review; SECURITY.md"
+task GA-08 P0 010 v1.0.0 specs       "Docs: per-client quickstarts, generated tool reference, safety model"
+task GA-09 P1 010 v1.0.0 specs       "Guide: AirysChat MCP + Meta WhatsApp Business Tools MCP"
+task GA-10 P1 010 v1.0.0 specs       "Muse Code / Muse connector setup guide"
+task GA-11 P0 010 v1.0.0 server      "API stability policy + freeze stable tools"
+task GA-12 P1 010 v1.0.0 hosted      "Claude/ChatGPT connector directory submission package"
+
 
 # --- one epic per release ---
 epic() { # milestone lane title

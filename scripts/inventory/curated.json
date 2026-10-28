@@ -6,7 +6,14 @@
     "wa_template_rejection_explain": "Diagnostic helper; reads GET /message_templates/:id (mapped to wa_template_get) and explains Meta rejection reasons",
     "crm_board": "MCP App composite helper (`ui://airyschat/crm-board.html`); combines GET /pipelines/:id, GET /pipelines/:id/pipeline_stages, and GET /crm_deals?view=board",
     "campaign_preflight_report": "MCP App composite helper (`ui://airyschat/campaign-preflight-report.html`); combines POST /campaigns/preflight and GET /inboxes/:id/whatsapp_campaign_health",
-    "conversation_view": "MCP App composite helper (`ui://airyschat/conversation-view.html`); combines GET /conversations/:id and GET /conversations/:id/messages"
+    "conversation_view": "MCP App composite helper (`ui://airyschat/conversation-view.html`); combines GET /conversations/:id and GET /conversations/:id/messages",
+    "platform_health": "Airys Platform API (`AirysBR/airys-platform`, `api.airys.chat`): GET /health",
+    "platform_signals_attribution_list": "Airys Platform API (`AirysBR/airys-platform`, `api.airys.chat`): GET /v1/signals/attribution",
+    "platform_signals_outcome_record": "Airys Platform API (`AirysBR/airys-platform`, `api.airys.chat`): POST /v1/signals/outcomes",
+    "platform_numbers_health": "Airys Platform API (`AirysBR/airys-platform`, `api.airys.chat`, PLAT-8.1): GET /v1/numbers",
+    "platform_alerts_list": "Airys Platform API (`AirysBR/airys-platform`, `api.airys.chat`, PLAT-8.1): GET /v1/alerts",
+    "platform_instances_list": "Airys Platform API (`AirysBR/airys-platform`, `api.airys.chat`, PLAT-8.1): GET /v1/instances",
+    "platform_usage": "Airys Platform API (`AirysBR/airys-platform`, `api.airys.chat`, PLAT-8.5): GET /v1/usage"
   },
   "endpoints": [
     ["core", "GET", "/conversations", "conversations_list", "0.1.0"],
