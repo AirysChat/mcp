@@ -65,11 +65,23 @@ jobs:
 
       # Disabled until FND-11 sets the repository variable PUBLISH_ENABLED=true
       # (GitHub Packages before 1.0, public npm at 1.0 — ADR 0003).
-      - name: Publish
+      - name: Publish to GitHub Packages
         if: steps.decide.outputs.release == 'true' && vars.PUBLISH_ENABLED == 'true'
         run: pnpm --filter @airyschat/mcp publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Public npm with OIDC provenance at 1.0+ when NPM_PUBLIC_ENABLED=true (GA-05).
+      - name: Publish to public npm with provenance
+        if: steps.decide.outputs.release == 'true' && vars.NPM_PUBLIC_ENABLED == 'true'
+        run: npm publish ./packages/server --registry https://registry.npmjs.org --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Official MCP Registry (`chat.airys/mcp`) when MCP_REGISTRY_PUBLISH_ENABLED=true (GA-06).
+      - name: Publish to MCP Registry (chat.airys/mcp)
+        if: steps.decide.outputs.release == 'true' && vars.MCP_REGISTRY_PUBLISH_ENABLED == 'true'
+        run: npx -y @modelcontextprotocol/registry-publisher publish server.json
 
       - name: Tag and GitHub Release
         if: steps.decide.outputs.release == 'true'

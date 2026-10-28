@@ -8,13 +8,18 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "pnpm -r build && node scripts/plugins/sync-plugins.mjs",
     "typecheck": "pnpm -r typecheck",
     "smoke": "pnpm -r smoke",
-    "check": "pnpm typecheck && pnpm test && pnpm smoke && pnpm inventory:check",
+    "check": "pnpm typecheck && pnpm test && pnpm smoke && pnpm inventory:check && pnpm plugins:check && pnpm docs:check && pnpm security:scan",
     "inventory": "node scripts/inventory/build-inventory.mjs",
     "inventory:check": "node scripts/inventory/build-inventory.mjs --check",
     "inventory:sync": "bash scripts/inventory/sync.sh",
+    "plugins:sync": "node scripts/plugins/sync-plugins.mjs",
+    "plugins:check": "node scripts/plugins/sync-plugins.mjs --check",
+    "docs:tools": "node scripts/docs/generate-tool-reference.mjs",
+    "docs:check": "node scripts/docs/generate-tool-reference.mjs --check",
+    "security:scan": "node scripts/security/secret-scan.mjs",
     "changeset": "changeset",
     "release:prepare": "bash scripts/release/prepare.sh",
     "test": "pnpm -r test"

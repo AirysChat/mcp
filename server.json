@@ -1,0 +1,67 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
+  "name": "chat.airys/mcp",
+  "title": "AirysChat MCP Server",
+  "description": "Operate AirysChat — conversations, CRM, AI Agents, Meta Business Agent, and WhatsApp campaigns.",
+  "version": "0.5.0",
+  "websiteUrl": "https://airys.chat",
+  "repository": {
+    "url": "https://github.com/AirysChat/mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@airyschat/mcp",
+      "version": "0.5.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "AIRYSCHAT_BASE_URL",
+          "description": "Base URL of the AirysChat instance (e.g. https://airys.chat)",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "AIRYSCHAT_API_KEY",
+          "description": "AirysChat API access token (or scoped MCP token)",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "AIRYSCHAT_ACCOUNT_ID",
+          "description": "Numeric AirysChat account ID",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "AIRYSCHAT_TOOLSETS",
+          "description": "Comma-separated toolsets to enable (core,whatsapp,crm,ai_agents,meta_agent,reports,admin,help_center,platform)",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "AIRYSCHAT_FEATURES",
+          "description": "Highest tool maturity tier exposed (stable, beta, experimental)",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "AIRYSCHAT_READ_ONLY",
+          "description": "Set to 1 or true to disable all write tools",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.airys.chat/mcp"
+    }
+  ]
+}
