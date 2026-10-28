@@ -92,6 +92,31 @@ export const coreTools = [
   }),
 
   defineTool({
+    name: 'conversation_view',
+    stability: 'stable',
+    title: 'Load the interactive conversation view (MCP App)',
+    description:
+      'Fetch a conversation (`GET /conversations/:id`) together with its message thread (`GET /conversations/:id/messages`) ' +
+      'in one call and render the untrusted-fenced `ui://airyschat/conversation-view.html` MCP App (`APP-04`). Customer ' +
+      'identity and message text are strictly fenced via `untrustedJson`.',
+    inputSchema: z.object({
+      conversation_id: z.number().int().describe('Account-scoped conversation display ID'),
+      before: z.number().int().optional().describe('Optional cursor to fetch messages older than this message ID'),
+    }),
+    handler: async ({ conversation_id, before }, { client }) => {
+      const [conversation, messages] = await Promise.all([
+        client.request(`/conversations/${conversation_id}`),
+        client.request(`/conversations/${conversation_id}/messages`, { query: { before } }),
+      ]);
+      return untrustedJson({
+        conversation_id,
+        conversation,
+        messages,
+      });
+    },
+  }),
+
+  defineTool({
     name: 'conversation_reply',
     stability: 'beta',
     title: 'Reply to a conversation',

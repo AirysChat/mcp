@@ -101,6 +101,27 @@ task REM-13 P1 005 v0.6.0 hosted     "Load test (k6) 50 rps"
 task REM-14 P1 005 v0.6.0 hosted     "Prod deploy mcp.airys.chat"
 task REM-15 P2 005 v0.6.0 hosted     "Managed-instance routing (/<instance>/mcp)"
 
+# --- v0.7.0: tasks of lane 007 (MCP Apps, elicitation, tasks) ---
+task APP-01 P0 007 v0.7.0 apps       "Client capability matrix (Apps, elicitation, tasks) for Claude, ChatGPT, Muse, Codex, Gemini CLI, Antigravity, Cursor"
+task APP-02 P0 007 v0.7.0 apps       "Apps scaffolding (packages/server/src/apps), build pipeline, CSP"
+task APP-03 P0 007 v0.7.0 apps       "crm_board app"
+task APP-04 P0 007 v0.7.0 apps       "campaign_preflight_report app"
+task APP-05 P2 007 v0.7.0 apps       "conversation_view app with untrusted fencing"
+task APP-06 P0 007 v0.7.0 server     "Elicitation-based confirmation with confirm fallback"
+task APP-07 P1 007 v0.7.0 server     "Tasks for campaign send and bulk updates (progress, cancel)"
+task APP-08 P0 007 v0.7.0 apps       "Changeset, docs, promotions"
+
+# --- v0.8.0: tasks of lane 008 (Admin & help center) ---
+task ADM-01 P0 008 v0.8.0 specs      "Domain briefs admin.md, help_center.md"
+task ADM-02 P0 008 v0.8.0 admin      "Inboxes, agents, teams (CRUD + members)"
+task ADM-03 P1 008 v0.8.0 admin      "Automation rules, macros"
+task ADM-04 P0 008 v0.8.0 admin      "Webhooks + integrations hooks with URL validation"
+task ADM-05 P1 008 v0.8.0 admin      "Custom attributes, SLA policies, labels CRUD, canned responses CRUD"
+task ADM-06 P2 008 v0.8.0 admin      "Account settings, audit logs read"
+task ADM-07 P0 008 v0.8.0 help_center "help_center: portals, categories, articles CRUD + publish, search"
+task ADM-08 P1 008 v0.8.0 plugins    "Skill account-audit"
+task ADM-09 P0 008 v0.8.0 admin      "Promotions, changeset, coverage"
+
 
 # --- one epic per release ---
 epic() { # milestone lane title

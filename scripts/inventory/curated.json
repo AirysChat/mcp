@@ -3,7 +3,10 @@
   "unmapped_tools": {
     "airyschat_api": "Escape hatch; reaches every endpoint with coverage `raw`",
     "airyschat_api_search": "Catalog discovery; reads the shipped catalog, calls no endpoint",
-    "wa_template_rejection_explain": "Diagnostic helper; reads GET /message_templates/:id (mapped to wa_template_get) and explains Meta rejection reasons"
+    "wa_template_rejection_explain": "Diagnostic helper; reads GET /message_templates/:id (mapped to wa_template_get) and explains Meta rejection reasons",
+    "crm_board": "MCP App composite helper (`ui://airyschat/crm-board.html`); combines GET /pipelines/:id, GET /pipelines/:id/pipeline_stages, and GET /crm_deals?view=board",
+    "campaign_preflight_report": "MCP App composite helper (`ui://airyschat/campaign-preflight-report.html`); combines POST /campaigns/preflight and GET /inboxes/:id/whatsapp_campaign_health",
+    "conversation_view": "MCP App composite helper (`ui://airyschat/conversation-view.html`); combines GET /conversations/:id and GET /conversations/:id/messages"
   },
   "endpoints": [
     ["core", "GET", "/conversations", "conversations_list", "0.1.0"],

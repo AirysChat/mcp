@@ -95,23 +95,39 @@ function describeApiError(error: ApiError): string {
   }
 }
 
+export const CONFIRMATION_EFFECT_SYMBOL = Symbol.for('airyschat.mcp.confirmationEffect');
+
 /**
  * Guard for actions a customer or teammate will see. Returns a refusal when the caller
  * has not set `confirm: true`.
  *
  * This is a deliberate speed bump, not a security boundary: it forces the model to
  * restate the exact effect in a second turn, giving the human a chance to stop it.
- * Elicitation (2026-07-28 multi-round-trip requests) would be a better fit and is the
- * planned upgrade, but it needs client support this server has not yet been tested
- * against, and an untested confirmation path is worse than an explicit argument.
+ * When the connected client advertises form elicitation (ADR 0005, APP-06), `registerTools`
+ * upgrades this refusal into a multi-round-trip `input_required` elicitation prompt bound
+ * to `(accountId, toolName, sha256(args))`, while preserving the `confirm: true` baseline
+ * for clients without elicitation.
  */
 export function requireConfirmation(confirmed: boolean | undefined, effect: string): ToolResult | undefined {
   if (confirmed === true) return undefined;
 
-  return failure(
+  const refusal = failure(
     `Refused: this action is not reversible. ${effect}\n\n` +
       'Show the user exactly what will happen and get their approval, then call again with `confirm: true`.',
   );
+  Object.defineProperty(refusal, CONFIRMATION_EFFECT_SYMBOL, {
+    value: effect,
+    enumerable: false,
+    configurable: false,
+    writable: false,
+  });
+  return refusal;
+}
+
+export function getConfirmationEffect(result: unknown): string | undefined {
+  if (!result || typeof result !== 'object') return undefined;
+  const effect = (result as Record<symbol, unknown>)[CONFIRMATION_EFFECT_SYMBOL];
+  return typeof effect === 'string' ? effect : undefined;
 }
 
 export function readOnlyRefusal(tool: string): ToolResult {

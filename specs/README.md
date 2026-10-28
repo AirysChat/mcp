@@ -57,7 +57,7 @@ gantt
 | [004-ai-agents-and-meta-agent](004-ai-agents-and-meta-agent/tasks.md) | AIA | Done (2026-10-27) |
 | [005-hosted-mcp](005-hosted-mcp/tasks.md) | REM | In progress (in-repo Done 2026-10-28; REM-07/10/11/14 `BLOCKED_EXTERNAL`) |
 | [006-whatsapp-and-reports](006-whatsapp-and-reports/tasks.md) | WAR | Done (2026-10-27) |
-| [007-apps-elicitation-tasks](007-apps-elicitation-tasks/tasks.md) | APP | Planned |
+| [007-apps-elicitation-tasks](007-apps-elicitation-tasks/tasks.md) | APP | Done (2026-10-28) |
 | [008-admin-and-help-center](008-admin-and-help-center/tasks.md) | ADM | Planned |
 | [009-airys-platform-toolset](009-airys-platform-toolset/tasks.md) | PLT | Planned |
 | [010-distribution-ga](010-distribution-ga/tasks.md) | GA | Planned |
