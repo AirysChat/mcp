@@ -1,9 +1,0 @@
----
-"@airyschat/mcp": minor
----
-
-Add the `admin` and `help_center` toolsets (Lane 008, `ADM-01..ADM-09`):
-
-- **`admin` toolset (`packages/server/src/tools/admin.ts`)**: 41 curated tools covering inboxes (`inbox_get`, `inbox_upsert`, `inbox_delete`, `inbox_members_sync`), agents (`agent_invite`, `agent_update`, `agent_delete`), teams (`team_get`, `team_upsert`, `team_delete`, `team_members_sync`), automation rules (`automation_rules_list`, `automation_rule_upsert`, `automation_rule_delete`), macros (`macros_list`, `macro_upsert`, `macro_execute`, `macro_delete`), webhooks with anti-SSRF URL validation (`webhooks_list`, `webhook_upsert`, `webhook_delete`), integrations & hooks with URL validation (`integrations_list`, `integration_hook_upsert`, `integration_hook_delete`), custom attribute definitions (`custom_attributes_list`, `custom_attribute_upsert`, `custom_attribute_delete`), SLA policies & applied SLAs (`sla_policies_list`, `sla_policy_upsert`, `sla_policy_delete`), assignment policies (`assignment_policies_list`, `assignment_policy_upsert`), labels CRUD (`label_upsert`, `label_delete`), canned responses CRUD (`canned_response_upsert`, `canned_response_delete`), custom filters CRUD (`custom_filter_upsert`, `custom_filter_delete`), account settings (`account_settings_get`, `account_settings_update`), and audit logs (`audit_logs_list`).
-- **`help_center` toolset (`packages/server/src/tools/help_center.ts`)**: 11 curated tools (`portals_list`, `portal_get`, `portal_upsert`, `categories_list`, `category_upsert`, `category_delete`, `articles_list`, `article_get`, `article_upsert`, `article_publish`, `article_delete`), promoted to `stable` after live create → publish → delete verification on staging account 6.
-- **`account-audit` skill (`plugins/claude/skills/account-audit/SKILL.md`)**: read-only administrative configuration audit across account settings, inboxes, teams, automations, webhooks, custom attributes, and help center portals.
