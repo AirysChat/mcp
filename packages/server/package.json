@@ -4,7 +4,8 @@
   "description": "MCP server for AirysChat \u2014 conversations, contacts, CRM, AI agents, and WhatsApp campaigns for Claude, Codex, Gemini, Antigravity, and any MCP client",
   "type": "module",
   "bin": {
-    "airyschat-mcp": "dist/index.js"
+    "airyschat-mcp": "dist/index.js",
+    "airyschat-mcp-http": "dist/http.js"
   },
   "files": [
     "dist",
@@ -27,6 +28,7 @@
   "scripts": {
     "build": "node ../../scripts/inventory/build-catalog.mjs --stats && tsc",
     "dev": "tsx src/index.ts",
+    "dev:http": "tsx src/http.ts",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "prepublishOnly": "pnpm build",
     "smoke": "pnpm build && node scripts/smoke.mjs",

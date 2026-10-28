@@ -118,6 +118,12 @@ export function readOnlyRefusal(tool: string): ToolResult {
   return failure(`Refused: ${tool} performs a write and AIRYSCHAT_READ_ONLY is set. Unset it to allow writes.`);
 }
 
+export function scopeRefusal(tool: string, requiredScope: string): ToolResult {
+  return failure(
+    `Refused: ${tool} requires the "${requiredScope}" token scope, which is not granted on the current MCP token.`,
+  );
+}
+
 function stringify(data: unknown): string {
   return typeof data === 'string' ? data : JSON.stringify(data, null, 2);
 }

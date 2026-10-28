@@ -9,8 +9,8 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import type { z } from 'zod';
 import type { AirysChatClient } from './client.js';
-import { STABILITY_RANK, type Config, type Stability } from './config.js';
-import { fromError, readOnlyRefusal, type ToolResult } from './result.js';
+import { ACCESS_RANK, STABILITY_RANK, type AccessLevel, type Config, type Stability } from './config.js';
+import { fromError, readOnlyRefusal, scopeRefusal, type ToolResult } from './result.js';
 
 export interface ToolContext {
   client: AirysChatClient;
@@ -64,11 +64,24 @@ export function defineTool<Schema extends z.ZodType>(
 }
 
 /** Registers every tool the current config allows. Returns how many were registered. */
-export function registerTools(server: McpServer, tools: AnyToolDefinition[], context: ToolContext): number {
-  const readOnly = context.config.readOnly;
+export function registerTools(
+  server: McpServer,
+  tools: AnyToolDefinition[],
+  context: ToolContext,
+  options: { keepUnscopedForRefusal?: boolean } = {},
+): number {
+  const maxAccess: AccessLevel = context.config.readOnly ? 'read' : (context.config.maxAccess ?? 'irreversible');
+  const readOnly = context.config.readOnly || maxAccess === 'read';
   const enabled = tools
     .filter((tool) => isVisible(tool.stability, context.config.features))
-    .filter((tool) => !readOnly || !tool.write || tool.readOnlyCapable);
+    .filter((tool) => options.keepUnscopedForRefusal || !readOnly || !tool.write || tool.readOnlyCapable)
+    .filter(
+      (tool) =>
+        options.keepUnscopedForRefusal ||
+        ACCESS_RANK[maxAccess] >= ACCESS_RANK.irreversible ||
+        !tool.irreversible ||
+        tool.readOnlyCapable,
+    );
 
   for (const tool of enabled) {
     server.registerTool(
@@ -89,9 +102,16 @@ export function registerTools(server: McpServer, tools: AnyToolDefinition[], con
         },
       },
       async (args) => {
-        // Belt and braces: read-only builds never register write tools, but a future
-        // caller that registers directly should still hit the gate.
-        if (tool.write && readOnly && !tool.readOnlyCapable) return readOnlyRefusal(tool.name);
+        // Belt and braces: read-only / scoped builds filter write/irreversible tools from
+        // tools/list, and also enforce pre-call refusal if invoked directly.
+        if (tool.write && readOnly && !tool.readOnlyCapable) {
+          return context.config.authScheme === 'bearer'
+            ? scopeRefusal(tool.name, tool.irreversible ? 'mcp:irreversible' : 'mcp:write')
+            : readOnlyRefusal(tool.name);
+        }
+        if (tool.irreversible && ACCESS_RANK[maxAccess] < ACCESS_RANK.irreversible && !tool.readOnlyCapable) {
+          return scopeRefusal(tool.name, 'mcp:irreversible');
+        }
         try {
           return await tool.handler(args, context);
         } catch (error) {

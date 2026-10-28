@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ConfigError, loadConfig } from '../src/config.js';
+import { ConfigError, loadConfig, parseTokenScopes } from '../src/config.js';
 
 const base = { AIRYSCHAT_BASE_URL: 'https://staging.example/', AIRYSCHAT_API_KEY: 'k', AIRYSCHAT_ACCOUNT_ID: '6' };
 
@@ -48,4 +48,36 @@ test('read-only accepts 1 or true only', () => {
   assert.equal(loadConfig({ ...base, AIRYSCHAT_READ_ONLY: '1' }).readOnly, true);
   assert.equal(loadConfig({ ...base, AIRYSCHAT_READ_ONLY: 'TRUE' }).readOnly, true);
   assert.equal(loadConfig({ ...base, AIRYSCHAT_READ_ONLY: 'yes' }).readOnly, false);
+});
+
+test('parseTokenScopes enforces mcp:read < mcp:write < mcp:irreversible and toolset restrictions', () => {
+  const readOnly = parseTokenScopes('mcp:read');
+  assert.equal(readOnly.maxAccess, 'read');
+  assert.equal(readOnly.toolsetsRestricted, false);
+  assert.deepEqual([...readOnly.toolsets], ['core', 'whatsapp']);
+  assert.deepEqual(readOnly.expandedScopes, ['mcp:read']);
+
+  const writeScoped = parseTokenScopes(['mcp:write', 'mcp:toolset:crm', 'mcp:toolset:reports']);
+  assert.equal(writeScoped.maxAccess, 'write');
+  assert.equal(writeScoped.toolsetsRestricted, true);
+  assert.deepEqual([...writeScoped.toolsets], ['crm', 'reports']);
+  assert.deepEqual(writeScoped.expandedScopes, [
+    'mcp:read',
+    'mcp:write',
+    'mcp:toolset:crm',
+    'mcp:toolset:reports',
+  ]);
+
+  const irreversible = parseTokenScopes('mcp:irreversible');
+  assert.equal(irreversible.maxAccess, 'irreversible');
+  assert.deepEqual(irreversible.expandedScopes, ['mcp:read', 'mcp:write', 'mcp:irreversible']);
+
+  assert.throws(() => parseTokenScopes('openid profile'), /at least one access scope/);
+  assert.throws(() => parseTokenScopes('mcp:read mcp:toolset:unknown'), /Unknown toolset scope/);
+
+  const fromEnv = loadConfig({ ...base, AIRYSCHAT_SCOPES: 'mcp:read,mcp:toolset:reports' });
+  assert.equal(fromEnv.readOnly, true);
+  assert.equal(fromEnv.maxAccess, 'read');
+  assert.equal(fromEnv.toolsetsRestricted, true);
+  assert.deepEqual([...fromEnv.toolsets], ['reports']);
 });
