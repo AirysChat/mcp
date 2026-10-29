@@ -1,7 +1,7 @@
 # 005 — Hosted MCP · Verification
 
-- **Date**: 2026-10-28
-- **Scope**: `REM-01..REM-06`, `REM-08`, `REM-09`, `REM-12`, `REM-13`, `REM-15` (with `REM-07`, `REM-10`, `REM-11`, `REM-14` tracked as `BLOCKED_EXTERNAL` awaiting `airys-platform/infra` Terraform apply and `AirysChat/AirysChat` lane `025-mcp-tokens-and-oauth`).
+- **Date**: 2026-10-29
+- **Scope**: `REM-01..REM-13`, `REM-15` (`REM-14` prod cutover gated on explicit owner approval).
 
 ## 1. Automated Verification (`pnpm check`)
 
@@ -33,4 +33,33 @@
   - Dedicated Workload Identity Pool `airyschat-mcp` + provider `github` and least-privilege `deployer-mcp@airys-platform-staging.iam.gserviceaccount.com`.
   - Cloud Run v2 service `mcp` (`https://mcp-tdtyqbghua-rj.a.run.app`) running under `run-mcp@airys-platform-staging.iam.gserviceaccount.com` + Secret Manager container `mcp-introspection-secret`.
   - Prod edge routing (`mcp.airys.chat`) planned (`0 to destroy`, separate managed SSL certificate `google_compute_managed_ssl_certificate.mcp`).
-- **AirysChat Lane (`REM-09`)**: [`specs/005-hosted-mcp/airyschat-lane-mcp-tokens.md`](airyschat-lane-mcp-tokens.md) ready to open as `specs/025-mcp-tokens-and-oauth` in `AirysChat/AirysChat`.
+- **AirysChat Lane (`REM-09`, `REM-10`, Done 2026-10-29)**: Implemented in `AirysChat/AirysChat` lane `specs/025-mcp-tokens-and-oauth` (`AirysChat/AirysChat#498`, `21/21` CI + CodeQL checks green, merged to `develop` at `06ffe3a63f`) and deployed to `https://staging.airys.app` (workflow run `40889339934`).
+
+## 5. Live Staging End-to-End Verification (`REM-10`, `REM-11` — 2026-10-29)
+
+- **Date**: 2026-10-29
+- **Targets**:
+  - Authorization Server & Upstream API: `https://staging.airys.app` (account `6`, "Airys Demo", fictitious data)
+  - Hosted MCP Resource Server (Cloud Run): `https://mcp-tdtyqbghua-rj.a.run.app` (`@airyschat/mcp@0.6.0`)
+- **Result**: `18/18` live end-to-end checks passed (`0` failures); all temporary personal MCP tokens (`4` tokens) deleted with `204 No Content` in `finally`.
+
+| Check | Endpoint / Transport | Observed Status & Sanitized Evidence |
+|---|---|---|
+| `hosted_mcp_health` | `GET /health` on Cloud Run | `200 OK` (`{"status":"ok","version":"0.6.0"}`) |
+| `hosted_mcp_protected_resource_metadata` | `GET /.well-known/oauth-protected-resource` | `200 OK` (`resource: "https://mcp-tdtyqbghua-rj.a.run.app/mcp"`, `authorization_servers: ["https://staging.airys.app"]`, `12` scopes) |
+| `hosted_mcp_unknown_instance_ssrf_block` | `POST /unlisted.internal/mcp` | `400 Bad Request` (`unknown_instance`, zero outbound HTTP requests) |
+| `airyschat_oauth_as_metadata` | `GET /.well-known/oauth-authorization-server` (`Origin: https://claude.ai`) | `200 OK` (`issuer: "https://staging.airys.app"`, `code_challenge_methods_supported: ["S256"]`, `client_id_metadata_document_supported: true`, `Access-Control-Allow-Origin: *`, `12` scopes) |
+| `airyschat_oauth_authorize_unauthenticated_redirect` | `GET /oauth/authorize?client_id=...&code_challenge_method=S256&resource=...` | `302 Found` → `/app/login?redirect_to=%2Foauth%2Fauthorize...` |
+| `hosted_mcp_rejects_classic_token` | `POST /mcp` (`Authorization: Bearer <classic_api_access_token>`) | `401 Unauthorized` with `WWW-Authenticate: Bearer ..., resource_metadata="https://mcp-tdtyqbghua-rj.a.run.app/.well-known/oauth-protected-resource"` |
+| `personal_tokens_list_redacts_plaintext` | `POST` + `GET /saas/api/v1/accounts/6/mcp_tokens` | `201 Created` returns one-time `mcp_...`; subsequent `GET` returns `200 OK` with `token_prefix` only (`plain_token` absent) |
+| `hosted_mcp_protocol_apps_and_oauth_token_endpoint` | `POST /mcp` (`initialize` `2025-11-25`, stateless `Accept: application/json` `tools/list`, `resources/list`) + `POST /oauth/token` | `200 OK` (`protocolVersion: "2025-11-25"`, `3` `ui://airyschat/*` MCP App resources); invalid grant on `/oauth/token` returns RFC 6749 `400 invalid_grant` with CORS |
+| `token_read_tools_list_filtering` | `POST /mcp` `tools/list` (`mcp:read` token) | `200 OK` (`35` tools exposed; `100%` `readOnlyHint: true`; write & irreversible tools hidden) |
+| `token_read_me_call_and_classic_token_redaction` | `POST /mcp` `tools/call` `me` (`mcp:read` token) | `200 OK` (`isError: false`; classic `access_token` redacted from `/api/v1/profile` response) |
+| `token_read_conversations_list_fenced` | `POST /mcp` `tools/call` `conversations_list` (`mcp:read` token) | `200 OK` (`isError: false`; `untrustedJson` prompt-injection notice present) |
+| `token_read_airyschat_api_precall_write_refusal` | `POST /mcp` `tools/call` `airyschat_api` (`POST /api/v1/accounts/6/labels` with `mcp:read`) | `200 OK` (`isError: true`, refused pre-call before upstream dispatch) |
+| `upstream_rails_defense_in_depth_token_a` | Direct Rails API calls with `Authorization: Bearer mcp_...` (`mcp:read`, account `6`) | `GET` same account → `200`; `POST /labels` → `403 insufficient_scope`; `GET /accounts/1/conversations` → `403 account_mismatch`; `POST /mcp_tokens` → `403 forbidden_for_mcp_token` |
+| `token_core_write_toolset_and_irreversible_boundaries` | `POST /mcp` `tools/list` + direct Rails API (`mcp:read mcp:write mcp:toolset:core`) | `23` tools (`conversation_labels_add` exposed; `conversation_reply`, `crm_*`, `wa_*` hidden); direct `GET /crm_saved_views` → `403 insufficient_scope`; direct `DELETE /labels/:id` → `403 insufficient_scope` |
+| `token_wrong_audience_rejected` | `POST /mcp` on staging Cloud Run with token bound to `https://mcp.airys.chat/mcp` | `401 Unauthorized` (`aud` mismatch rejected) |
+| `hosted_mcp_2026_mrtr_elicitation_gate` | `POST /mcp` `tools/call` `conversation_reply` without `confirm` (`_meta["io.modelcontextprotocol/clientCapabilities"].elicitation`) | `200 OK` (`resultType: "input_required"`, HMAC-signed `requestState` present, zero upstream write executed) |
+| `token_revocation_and_cache_ttl` | `POST /oauth/revoke` → `POST /oauth/introspect` → `POST /mcp` poll | `/oauth/revoke` → `200`; `/oauth/introspect` immediately `{"active":false}`; Cloud Run evicted cached entry and returned `401` after `54,007 ms` (`<= 60 s` TTL) |
+| `local_stdio_against_live_staging` | Local `dist/index.js` over `stdio` → `https://staging.airys.app` account `6` | `initialize` (`2025-11-25`), `me`, `inboxes_list`, and fenced `conversations_list` all `PASS` |

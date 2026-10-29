@@ -1,7 +1,7 @@
 # MCP Client Compatibility Matrix (`APP-01`)
 
-- **Last verified**: 2026-10-28
-- **Server version**: `@airyschat/mcp` (`0.6.0` / `0.7.0` lane)
+- **Last verified**: 2026-10-29
+- **Server version**: `@airyschat/mcp` (`0.6.0` live on staging Cloud Run `https://mcp-tdtyqbghua-rj.a.run.app`)
 - **SDK**: `@modelcontextprotocol/server@2.4.0` (dual-era `2025-11-25` + `2026-07-28`)
 - **Maintainer skill**: [`.agents/skills/mcp-client-check/SKILL.md`](../../.agents/skills/mcp-client-check/SKILL.md)
 
@@ -31,3 +31,8 @@
    - When `confirm` is omitted and the client does **not** advertise form elicitation (e.g. headless CLI, subagent, or stateless legacy call), the server returns the deterministic refusal (`isError: true`) instructing the assistant to show the preview and re-call with `confirm: true`.
 3. **Tasks & Progress (`APP-07`)**:
    - Long-running operations (`wa_campaign_launch`, `wa_campaign_test_send`, `crm_deals_bulk_update`) emit `notifications/progress` whenever the client supplies `_meta.progressToken`, honor `ctx.mcpReq.signal` for mid-operation cancellation, and record task state queryable via `tasks/list`, `tasks/get`, `tasks/result`, and `tasks/cancel`.
+4. **Live Hosted Streamable HTTP + OAuth 2.1 Staging Verification (`REM-11`, 2026-10-29)**:
+   - Verified end-to-end between `https://staging.airys.app` (account `6`, OAuth 2.1 AS + token introspection) and Cloud Run `https://mcp-tdtyqbghua-rj.a.run.app/mcp` (`18/18` checks passing — see [`specs/005-hosted-mcp/verification.md`](../../specs/005-hosted-mcp/verification.md)):
+     - RFC 9728 discovery (`/.well-known/oauth-protected-resource`) + RFC 8414 metadata (`/.well-known/oauth-authorization-server` with PKCE `S256`, CIMD, and CORS) + `WWW-Authenticate` `resource_metadata` challenge for connector clients (Claude.ai, ChatGPT, Cursor, MCP Inspector).
+     - Both `Accept: application/json, text/event-stream` (`2025-11-25` handshake) and bare `Accept: application/json` (`2026-07-28` stateless calls + MRTR `input_required` elicitation) for CLI and IDE hosts (Claude Code, Codex, Gemini CLI, Antigravity, Muse).
+     - Scope-filtered `tools/list` (`mcp:read` → `35` read-only tools; `mcp:read mcp:write mcp:toolset:core` → `23` core tools without irreversible operations), audience binding (`401` on `aud` mismatch), classic token rejection (`401`), and `<= 60 s` revocation propagation (`54.0 s` observed).
