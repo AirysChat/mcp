@@ -93,8 +93,8 @@ jobs:
           persist-credentials: false
       - uses: google-github-actions/auth@v3
         with:
-          workload_identity_provider: projects/807136505272/locations/global/workloadIdentityPools/github/providers/airyschat-mcp
-          service_account: deployer@airys-platform-staging.iam.gserviceaccount.com
+          workload_identity_provider: projects/807136505272/locations/global/workloadIdentityPools/airyschat-mcp/providers/github
+          service_account: deployer-mcp@airys-platform-staging.iam.gserviceaccount.com
       - uses: google-github-actions/setup-gcloud@v3
       - run: gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
       - uses: docker/setup-buildx-action@v4
@@ -141,8 +141,8 @@ jobs:
     steps:
       - uses: google-github-actions/auth@v3
         with:
-          workload_identity_provider: projects/164414754876/locations/global/workloadIdentityPools/github/providers/airyschat-mcp
-          service_account: deployer@airys-platform-prod.iam.gserviceaccount.com
+          workload_identity_provider: projects/164414754876/locations/global/workloadIdentityPools/airyschat-mcp/providers/github
+          service_account: deployer-mcp@airys-platform-prod.iam.gserviceaccount.com
       - uses: google-github-actions/setup-gcloud@v3
       - run: gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
       - id: copy

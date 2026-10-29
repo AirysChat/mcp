@@ -27,7 +27,10 @@
 
 - Recorded in [`docs/security/005-hosted-mcp.md`](../../docs/security/005-hosted-mcp.md) (`PASS` across SSRF, token handling/audience binding, scope bypass prevention, DoS/container hardening, and prompt-injection surface).
 
-## 4. External Deliverables Prepared (`REM-07`, `REM-09`)
+## 4. Infrastructure & Staging Provisioning (`REM-07`, `REM-09`)
 
-- **Terraform (`REM-07`)**: [`specs/005-hosted-mcp/terraform-reference.tf`](terraform-reference.tf) ready for `airys-platform/infra` (`google_iam_workload_identity_pool_provider.airyschat_mcp`, `google_cloud_run_v2_service.mcp`, `google_compute_region_network_endpoint_group.mcp`, `google_compute_backend_service.mcp`, and `edge.tf` host rule).
+- **Terraform (`REM-07`, Done 2026-10-29)**: Merged via `AirysBR/airys-platform#28` (`7bf662b`) and applied in `airys-platform-staging` (CI run `40874305967`, `Plan: 13 to add, 0 to change, 0 to destroy`):
+  - Dedicated Workload Identity Pool `airyschat-mcp` + provider `github` and least-privilege `deployer-mcp@airys-platform-staging.iam.gserviceaccount.com`.
+  - Cloud Run v2 service `mcp` (`https://mcp-tdtyqbghua-rj.a.run.app`) running under `run-mcp@airys-platform-staging.iam.gserviceaccount.com` + Secret Manager container `mcp-introspection-secret`.
+  - Prod edge routing (`mcp.airys.chat`) planned (`0 to destroy`, separate managed SSL certificate `google_compute_managed_ssl_certificate.mcp`).
 - **AirysChat Lane (`REM-09`)**: [`specs/005-hosted-mcp/airyschat-lane-mcp-tokens.md`](airyschat-lane-mcp-tokens.md) ready to open as `specs/025-mcp-tokens-and-oauth` in `AirysChat/AirysChat`.
