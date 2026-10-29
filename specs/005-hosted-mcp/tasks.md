@@ -11,8 +11,8 @@
 | REM-07 | P0 | M | Terraform PR in `airys-platform/infra`: Cloud Run `mcp`, NEG, host rules, Armor | applied in staging (`AirysBR/airys-platform#28`, `https://mcp-tdtyqbghua-rj.a.run.app`) | Done (2026-10-29) |
 | REM-08 | P0 | XS | Auth design decision | ADR 0006 accepted | Done (2026-10-27, owner chose scoped MCP tokens issued by AirysChat) |
 | REM-09 | P0 | M | Draft the AirysChat lane "MCP tokens & OAuth" (spec + tasks) from ADR 0006 for the owner to open in `AirysChat/AirysChat` | drafted in [`airyschat-lane-mcp-tokens.md`](airyschat-lane-mcp-tokens.md) | Done (2026-10-28) |
-| REM-10 | P0 | L | AirysChat: token model, OAuth AS endpoints, consent UI, settings UI, scope enforcement | AirysChat lane closed with staging evidence | `BLOCKED_EXTERNAL` |
-| REM-11 | P0 | S | Staging deploy + client checks (Claude.ai connector OAuth, Claude Code, Codex, Gemini CLI, Antigravity) | `compat-tester` matrix in verification | `BLOCKED_EXTERNAL` |
+| REM-10 | P0 | L | AirysChat: token model, OAuth AS endpoints, consent UI, settings UI, scope enforcement | AirysChat lane `025-mcp-tokens-and-oauth` merged (`AirysChat/AirysChat#498`) and deployed to staging (`40889339934`) | Done (2026-10-29) |
+| REM-11 | P0 | S | Staging deploy + client checks (Claude.ai connector OAuth, Claude Code, Codex, Gemini CLI, Antigravity) | `18/18` live staging E2E checks recorded in [`verification.md`](verification.md) & [`docs/compat/matrix.md`](../../docs/compat/matrix.md) | Done (2026-10-29) |
 | REM-12 | P0 | S | Security review (SSRF, token handling, scope bypass, DoS, prompt-injection surface) | review doc in [`docs/security/005-hosted-mcp.md`](../../docs/security/005-hosted-mcp.md) | Done (2026-10-28) |
 | REM-13 | P1 | S | Load test (k6) 50 rps | k6 script in [`k6-load-test.js`](k6-load-test.js); local benchmark `713.9 rps`, `p95=91.03 ms` | Done (2026-10-28) |
 | REM-14 | P1 | S | Prod deploy `mcp.airys.chat` | Owner approval + GET-only smoke against prod | `BLOCKED_EXTERNAL` |
