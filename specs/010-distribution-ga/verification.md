@@ -34,6 +34,10 @@
   - Package URL: `https://www.npmjs.com/package/@airyschat/mcp/v/1.0.0`
   - Metadata verified via `GET https://registry.npmjs.org/@airyschat%2fmcp/1.0.0` (`200 OK`): `version: "1.0.0"`, `mcpName: "chat.airys/mcp"`, `shasum: "0b5497f0cf4fb31c6ca63f33ff856760ef7713fd"`.
   - SLSA v1 provenance attestation verified: `https://registry.npmjs.org/-/npm/v1/attestations/@airyschat%2fmcp@1.0.0` (`predicateType: "https://slsa.dev/provenance/v1"`, Sigstore transparency `logIndex=3602376090`).
+  - OIDC Trusted Publisher (`AirysChat/mcp` `release.yml`, `Allow npm publish`) enabled on `npmjs.com` with `Require two-factor authentication and disallow bypass 2fa tokens`, and temporary bootstrap `NPM_TOKEN` deleted.
+- **Official MCP Registry (`registry.modelcontextprotocol.io`, `GA-06`)**:
+  - Ed25519 DNS TXT proof verified on apex `airys.chat`; published via `release.yml` run `41131422598` (`success`).
+  - Live listing verified via `GET https://registry.modelcontextprotocol.io/v0/servers?search=chat.airys/mcp` (`200 OK`): `name: "chat.airys/mcp"`, `version: "1.0.0"`, `status: "active"`, `isLatest: true`, advertising both npm `stdio` (`@airyschat/mcp@1.0.0`) and Streamable HTTP (`https://mcp.airys.chat/mcp`).
 - **GitHub Packages (`npm.pkg.github.com`)**: `@airyschat/mcp@1.0.0` published (`release.yml` run `41123062945`).
 - **Hosted Streamable HTTP service (`image.yml`)**:
   - Staging (`41123063034`): `GET https://mcp-tdtyqbghua-rj.a.run.app/health` -> `200 OK` (`{"status":"ok","version":"1.0.0"}`).
