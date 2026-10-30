@@ -15,5 +15,5 @@
 | REM-11 | P0 | S | Staging deploy + client checks (Claude.ai connector OAuth, Claude Code, Codex, Gemini CLI, Antigravity) | `18/18` live staging E2E checks recorded in [`verification.md`](verification.md) & [`docs/compat/matrix.md`](../../docs/compat/matrix.md) | Done (2026-10-29) |
 | REM-12 | P0 | S | Security review (SSRF, token handling, scope bypass, DoS, prompt-injection surface) | review doc in [`docs/security/005-hosted-mcp.md`](../../docs/security/005-hosted-mcp.md) | Done (2026-10-28) |
 | REM-13 | P1 | S | Load test (k6) 50 rps | k6 script in [`k6-load-test.js`](k6-load-test.js); local benchmark `713.9 rps`, `p95=91.03 ms` | Done (2026-10-28) |
-| REM-14 | P1 | S | Prod deploy `mcp.airys.chat` | Owner approval + GET-only smoke against prod | `BLOCKED_EXTERNAL` |
+| REM-14 | P1 | S | Prod deploy `mcp.airys.chat` | Owner approval + GET-only smoke against prod (`https://mcp.airys.chat` TLS active, `7/7` GET checks recorded in [`verification.md`](verification.md)) | Done (2026-10-30) |
 | REM-15 | P2 | S | Managed-instance routing (`/<instance>/mcp`) | ADR 0006 note + tests | Done (2026-10-28) |

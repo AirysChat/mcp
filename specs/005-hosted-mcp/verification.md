@@ -1,7 +1,7 @@
 # 005 — Hosted MCP · Verification
 
-- **Date**: 2026-10-29
-- **Scope**: `REM-01..REM-13`, `REM-15` (`REM-14` prod cutover gated on explicit owner approval).
+- **Date**: 2026-10-30
+- **Scope**: `REM-01..REM-15` (all tasks complete, including live staging E2E and `REM-14` `mcp.airys.chat` production cutover).
 
 ## 1. Automated Verification (`pnpm check`)
 
@@ -63,3 +63,24 @@
 | `hosted_mcp_2026_mrtr_elicitation_gate` | `POST /mcp` `tools/call` `conversation_reply` without `confirm` (`_meta["io.modelcontextprotocol/clientCapabilities"].elicitation`) | `200 OK` (`resultType: "input_required"`, HMAC-signed `requestState` present, zero upstream write executed) |
 | `token_revocation_and_cache_ttl` | `POST /oauth/revoke` → `POST /oauth/introspect` → `POST /mcp` poll | `/oauth/revoke` → `200`; `/oauth/introspect` immediately `{"active":false}`; Cloud Run evicted cached entry and returned `401` after `54,007 ms` (`<= 60 s` TTL) |
 | `local_stdio_against_live_staging` | Local `dist/index.js` over `stdio` → `https://staging.airys.app` account `6` | `initialize` (`2025-11-25`), `me`, `inboxes_list`, and fenced `conversations_list` all `PASS` |
+
+## 6. Live Production Cutover & GET-Only Verification (`REM-14` — 2026-10-30)
+
+- **Date**: 2026-10-30
+- **Owner Approval**: Explicit owner approval granted in conversation before dispatching production workflows or configuring DNS.
+- **Production Rollout**:
+  - **`AirysBR/airys-platform` Terraform (`prod`)**: Workflow `terraform.yml` run `41107957510` applied Cloud Run service `mcp` (`https://mcp-164414754876.southamerica-east1.run.app`), dedicated Workload Identity Pool `airyschat-mcp` (`deployer-mcp@airys-platform-prod.iam.gserviceaccount.com`), Serverless NEG + Backend Service + URL Map host rule + Cloud Armor policy + Google-managed SSL certificate for `mcp.airys.chat`, and `reconcile-usage` schedule (`AirysBR/airys-platform#30` `367ec54` granted staging registry reader access).
+  - **`AirysBR/airys-platform` API (`https://api.airys.chat`)**: Workflow `deploy.yml` run `41108725241` executed migration `0014_pricing_usage` and promoted commit `a292f204fd3d79482a8188f004a6a86ff798d30e` (`revision: "api-00018-65f"`).
+  - **`AirysChat/mcp` Cloud Run (`https://mcp.airys.chat`)**: Workflow `image.yml` run `41109347284` promoted staging-verified commit `a33571c213f5b2bab5c4db0acb7a14d05efd5ffe` to `airys-platform-prod`.
+  - **DNS & TLS**: Cloudflare DNS-only (`proxied: false`) `A` record `mcp.airys.chat` → `8.233.87.110`; Google Trust Services (`CN=WR3`, SAN `DNS:mcp.airys.chat`) certificate `ACTIVE` on Global External Application Load Balancer.
+- **GET-Only Production Smoke Result**: `7/7` checks passed (`0` writes executed):
+
+| Check | Target & Method | Observed Status & Sanitized Evidence |
+|---|---|---|
+| `prod_mcp_healthz` | `GET https://mcp.airys.chat/healthz` | `200 OK` (`{"status":"ok","version":"0.6.0"}`, TLS `O=Google Trust Services, CN=WR3`, SAN `DNS:mcp.airys.chat`) |
+| `prod_mcp_health` | `GET https://mcp.airys.chat/health` | `200 OK` (`{"status":"ok","version":"0.6.0"}`) |
+| `prod_mcp_protected_resource` | `GET https://mcp.airys.chat/.well-known/oauth-protected-resource` | `200 OK` (`resource: "https://mcp.airys.chat/mcp"`, `authorization_servers: ["https://airys.chat"]`, `12` scopes) |
+| `prod_mcp_oauth_challenge` | `GET https://mcp.airys.chat/mcp` (no `Authorization`) | `401 Unauthorized` (`WWW-Authenticate: Bearer error="invalid_token", ..., scope="mcp:read", resource_metadata="https://mcp.airys.chat/.well-known/oauth-protected-resource"`) |
+| `prod_mcp_ssrf_allowlist_block` | `GET https://mcp.airys.chat/unlisted.internal/mcp` | `400 Bad Request` (`unknown_instance`, zero outbound HTTP requests) |
+| `prod_airyschat_oauth_as` | `GET https://airys.chat/.well-known/oauth-authorization-server` (`Origin: https://claude.ai`) | `200 OK` (`issuer: "https://airys.chat"`, `Access-Control-Allow-Origin: *`, PKCE `S256`, `client_id_metadata_document_supported: true`, `12` scopes) |
+| `prod_platform_api_health` | `GET https://api.airys.chat/health` | `200 OK` (`environment: "prod"`, `commit: "a292f204fd3d79482a8188f004a6a86ff798d30e"`, `revision: "api-00018-65f"`) |
