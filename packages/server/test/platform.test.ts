@@ -8,7 +8,7 @@
  *   - `platform_signals_attribution_list` (`beta`, `untrustedJson`)
  *   - `platform_signals_outcome_record` (`beta`, `write: true`, `idempotent: true`)
  *   - `platform_numbers_health`, `platform_alerts_list`, `platform_instances_list`, `platform_usage`
- *     (`experimental`, graceful `not_yet_deployed_on_platform` message on 404 and full payload on 200).
+ *     (`beta`, 15 alert rules, 7 pricing categories, graceful `not_yet_deployed_on_platform` fallback on 404).
  */
 
 import assert from 'node:assert/strict';
@@ -17,7 +17,11 @@ import { after, before, describe, it } from 'node:test';
 import { AirysChatClient } from '../src/client.js';
 import { loadConfig, type Config } from '../src/config.js';
 import { AirysPlatformClient } from '../src/platform-client.js';
-import { platformTools } from '../src/tools/platform.js';
+import {
+  PLATFORM_ALERT_RULES,
+  PLATFORM_PRICING_CATEGORIES,
+  platformTools,
+} from '../src/tools/platform.js';
 import type { AnyToolDefinition, ToolContext } from '../src/toolsets.js';
 
 interface RecordedPlatformRequest {
@@ -74,7 +78,7 @@ describe('AirysPlatformClient and platform toolset (PLT-02..PLT-04)', () => {
       apiKey: 'airyschat-secret-token',
       accountId: 6,
       toolsets: new Set(['core', 'whatsapp', 'platform']),
-      features: 'experimental',
+      features: 'beta',
       readOnly: false,
       timeoutMs: 5_000,
       platformBaseUrl: baseUrl,
@@ -222,7 +226,24 @@ describe('AirysPlatformClient and platform toolset (PLT-02..PLT-04)', () => {
     assert.equal((lastReq?.body as Record<string, unknown>)?.currency, 'BRL');
   });
 
-  it('handles management endpoints (numbers, alerts, instances, usage) on both 200 and 404 (PLAT-8.1/8.5)', async () => {
+  it('handles management endpoints (numbers, alerts, instances, usage) at beta stability with full rule and category enums', async () => {
+    assert.equal(PLATFORM_ALERT_RULES.length, 15);
+    assert.ok(PLATFORM_ALERT_RULES.includes('delivery_rejected'));
+    assert.ok(PLATFORM_ALERT_RULES.includes('webhook_unrouted'));
+    assert.equal(PLATFORM_PRICING_CATEGORIES.length, 7);
+    assert.ok(PLATFORM_PRICING_CATEGORIES.includes('MARKETING_LITE'));
+    assert.ok(PLATFORM_PRICING_CATEGORIES.includes('AUTHENTICATION_INTERNATIONAL'));
+    assert.ok(PLATFORM_PRICING_CATEGORIES.includes('REFERRAL_CONVERSION'));
+
+    for (const toolName of [
+      'platform_numbers_health',
+      'platform_alerts_list',
+      'platform_instances_list',
+      'platform_usage',
+    ]) {
+      assert.equal(getTool(toolName).stability, 'beta');
+    }
+
     const ctx = makeContext();
 
     // 200 OK path
@@ -232,9 +253,13 @@ describe('AirysPlatformClient and platform toolset (PLT-02..PLT-04)', () => {
     assert.equal(numbersOk.isError, undefined);
     assert.ok((numbersOk.structuredContent as Record<string, unknown>)?._untrusted);
 
-    nextResponse = { alerts: [{ alert_id: 1, rule: 'token_expiring', severity: 'warning', status: 'open' }] };
-    const alertsOk = await getTool('platform_alerts_list').handler({ status: 'open' }, ctx);
+    nextResponse = { alerts: [{ alert_id: 1, rule: 'delivery_rejected', severity: 'critical', status: 'open' }] };
+    const alertsOk = await getTool('platform_alerts_list').handler(
+      { status: 'open', rule: 'delivery_rejected' },
+      ctx,
+    );
     assert.equal(alertsOk.isError, undefined);
+    assert.equal(lastReq?.url, '/v1/alerts?status=open&rule=delivery_rejected');
     assert.ok((alertsOk.structuredContent as Record<string, unknown>)?._untrusted);
 
     nextResponse = { instances: [{ tenant_id: 'airys-staging', active: true }] };
@@ -242,11 +267,17 @@ describe('AirysPlatformClient and platform toolset (PLT-02..PLT-04)', () => {
     assert.equal(instancesOk.isError, undefined);
     assert.ok((instancesOk.structuredContent as Record<string, unknown>)?._untrusted);
 
-    nextResponse = { usage: [{ phone_number_id: '123', category: 'MARKETING', messages: 100 }] };
-    const usageOk = await getTool('platform_usage').handler({ category: 'MARKETING' }, ctx);
+    nextResponse = {
+      since: '2026-10-01',
+      until: '2026-10-30',
+      usage: [{ phone_number_id: '123', pricing_category: 'MARKETING_LITE', volume: 100 }],
+      totals: { volume: 100, by_category: { MARKETING_LITE: 100 }, cost_by_currency: { BRL: '31.250000' } },
+    };
+    const usageOk = await getTool('platform_usage').handler({ category: 'MARKETING_LITE' }, ctx);
     assert.equal(usageOk.isError, undefined);
+    assert.equal(lastReq?.url, '/v1/usage?category=MARKETING_LITE');
 
-    // 404 Not Found before PLAT-8.1 / PLAT-8.5 deploy
+    // 404 Not Found fallback on unpromoted platform environments
     nextStatus = 404;
     nextResponse = { detail: 'Not Found' };
     for (const toolName of [
