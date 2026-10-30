@@ -18,7 +18,7 @@ The `core` and `whatsapp` toolsets are enabled by default. For cross-instance co
 
 ```bash
 export AIRYSCHAT_TOOLSETS=core,whatsapp,platform
-export AIRYSCHAT_FEATURES=experimental
+export AIRYSCHAT_FEATURES=beta
 export AIRYS_API_TOKEN="<instance-or-platform-bearer-token>"
 ```
 
@@ -32,7 +32,7 @@ If `platform` tools are not enabled or return `not_yet_deployed_on_platform`, co
    - Group any open control-plane alerts by severity (`critical` first, then `warning`, then `info`):
      - **Token & Auth**: `channel_token_invalid` (Graph 190), `token_expiring` (<14d warning, <3d critical), `channel_ids_stale` (Graph 100).
      - **Messaging & Quality**: `number_banned`, `number_cannot_send` (`BLOCKED` / `LIMITED`), `number_quality_red` (`RED`).
-     - **Webhook Routing & Delivery**: `channel_phone_mismatch`, `number_unowned`, `number_claimed_twice`, `webhook_jobs_dying` (>50 dead jobs/h), `dead_set_full`, `callback_dead`, `instance_silent`.
+     - **Webhook Routing & Delivery**: `channel_phone_mismatch`, `number_unowned`, `number_claimed_twice`, `webhook_jobs_dying` (>50 dead jobs/h), `dead_set_full`, `callback_dead`, `delivery_rejected`, `webhook_unrouted`, `instance_silent`.
 
 2. **Instance WhatsApp Inboxes & Campaign Health (`inboxes_list`, `wa_inbox_health`)**
    - Call `inboxes_list` and filter for WhatsApp channels (`channel_type === "Channel::Whatsapp"`).
