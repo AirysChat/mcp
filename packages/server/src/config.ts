@@ -192,7 +192,7 @@ function required(env: NodeJS.ProcessEnv, name: string): string {
 }
 
 function optional(env: NodeJS.ProcessEnv, name: string): string | undefined {
-  const value = env[name]?.trim();
+  const value = resolveDefaultPlaceholder(env[name]);
   if (!value) return undefined;
   if (/^\$\{.*\}$/.test(value)) {
     throw new ConfigError(
@@ -202,10 +202,25 @@ function optional(env: NodeJS.ProcessEnv, name: string): string | undefined {
   return value;
 }
 
-export function parseToolsets(raw: string | undefined): Set<ToolsetName> {
-  if (!raw) return new Set(DEFAULT_TOOLSETS);
+/**
+ * Resolves unexpanded `${VAR:-fallback}` strings that MCP clients without shell-default
+ * expansion (e.g. Antigravity, Codex, Cursor) may pass verbatim from plugin manifest
+ * `env` blocks, while leaving bare `${VAR}` intact so callers can report unset secrets.
+ */
+function resolveDefaultPlaceholder(raw: string | undefined): string | undefined {
+  const trimmed = raw?.trim();
+  if (!trimmed) return undefined;
+  const match = /^\$\{[A-Za-z_][A-Za-z0-9_]*:-(.*)\}$/.exec(trimmed);
+  if (!match) return trimmed;
+  const fallback = match[1]?.trim();
+  return fallback || undefined;
+}
 
-  const requested = raw.split(',').map((entry) => entry.trim()).filter(Boolean);
+export function parseToolsets(raw: string | undefined): Set<ToolsetName> {
+  const resolved = resolveDefaultPlaceholder(raw);
+  if (!resolved) return new Set(DEFAULT_TOOLSETS);
+
+  const requested = resolved.split(',').map((entry) => entry.trim()).filter(Boolean);
   const unknown = requested.filter((entry) => !TOOLSET_NAMES.includes(entry as ToolsetName));
   if (unknown.length > 0) {
     throw new ConfigError(`Unknown toolset(s): ${unknown.join(', ')}. Known: ${TOOLSET_NAMES.join(', ')}`);
@@ -215,7 +230,7 @@ export function parseToolsets(raw: string | undefined): Set<ToolsetName> {
 }
 
 export function parseFeatures(raw: string | undefined): Exclude<Stability, 'deprecated'> {
-  const value = raw?.trim().toLowerCase();
+  const value = resolveDefaultPlaceholder(raw)?.toLowerCase();
   if (!value) return 'stable';
   if (!(STABILITY_LEVELS as readonly string[]).includes(value)) {
     throw new ConfigError(`AIRYSCHAT_FEATURES must be one of: ${STABILITY_LEVELS.join(', ')} (got "${raw}")`);
@@ -224,5 +239,6 @@ export function parseFeatures(raw: string | undefined): Exclude<Stability, 'depr
 }
 
 function isTruthy(value: string | undefined): boolean {
-  return value === '1' || value?.toLowerCase() === 'true';
+  const resolved = resolveDefaultPlaceholder(value);
+  return resolved === '1' || resolved?.toLowerCase() === 'true';
 }

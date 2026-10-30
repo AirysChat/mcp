@@ -1,5 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { ConfigError, loadConfig, parseTokenScopes } from '../src/config.js';
 
 const base = { AIRYSCHAT_BASE_URL: 'https://staging.example/', AIRYSCHAT_API_KEY: 'k', AIRYSCHAT_ACCOUNT_ID: '6' };
@@ -80,4 +83,28 @@ test('parseTokenScopes enforces mcp:read < mcp:write < mcp:irreversible and tool
   assert.equal(fromEnv.maxAccess, 'read');
   assert.equal(fromEnv.toolsetsRestricted, true);
   assert.deepEqual([...fromEnv.toolsets], ['reports']);
+});
+
+test('resolves unexpanded ${VAR:-default} placeholders from plugin manifests', () => {
+  const cfg = loadConfig({
+    ...base,
+    AIRYSCHAT_TOOLSETS: '${AIRYSCHAT_TOOLSETS:-core,whatsapp}',
+    AIRYSCHAT_FEATURES: '${AIRYSCHAT_FEATURES:-stable}',
+    AIRYSCHAT_READ_ONLY: '${AIRYSCHAT_READ_ONLY:-}',
+  });
+  assert.deepEqual([...cfg.toolsets], ['core', 'whatsapp']);
+  assert.equal(cfg.features, 'stable');
+  assert.equal(cfg.readOnly, false);
+});
+
+test('package.json bin maps unscoped name "mcp" so npx @airyschat/mcp resolves default executable', () => {
+  const pkgPath = resolve(dirname(fileURLToPath(import.meta.url)), '../package.json');
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as {
+    name: string;
+    bin: Record<string, string>;
+  };
+  const unscoped = pkg.name.includes('/') ? pkg.name.split('/')[1]! : pkg.name;
+  assert.equal(pkg.bin[unscoped], 'dist/index.js');
+  assert.equal(pkg.bin['airyschat-mcp'], 'dist/index.js');
+  assert.equal(pkg.bin['airyschat-mcp-http'], 'dist/http.js');
 });

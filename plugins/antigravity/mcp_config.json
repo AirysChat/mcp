@@ -2,7 +2,7 @@
   "mcpServers": {
     "airyschat": {
       "command": "npx",
-      "args": ["-y", "@airyschat/mcp@latest"],
+      "args": ["-y", "-p", "@airyschat/mcp@latest", "airyschat-mcp"],
       "env": {
         "AIRYSCHAT_BASE_URL": "${AIRYSCHAT_BASE_URL}",
         "AIRYSCHAT_API_KEY": "${AIRYSCHAT_API_KEY}",

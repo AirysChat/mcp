@@ -8,7 +8,9 @@
       "command": "npx",
       "args": [
         "-y",
-        "@airyschat/mcp@latest"
+        "-p",
+        "@airyschat/mcp@latest",
+        "airyschat-mcp"
       ],
       "env": {
         "AIRYSCHAT_BASE_URL": "${AIRYSCHAT_BASE_URL}",
