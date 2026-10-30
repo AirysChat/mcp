@@ -4,11 +4,17 @@ Bundles the [`@airyschat/mcp`](https://github.com/AirysChat/mcp) server together
 skills that make it safe to use: the trust boundary for customer-authored content, the
 approval rules for irreversible sends, and the API behaviours that mislead callers.
 
-**Status: v0.1.0, unreleased.** Manifests pass `claude plugin validate --strict` and all
-three skills load. Not yet exercised against a live AirysChat instance, and the MCP
-server it references is not yet published to npm.
+**Status: v1.0 GA.** Published on [`npmjs.org`](https://www.npmjs.com/package/@airyschat/mcp), indexed in the Official MCP Registry (`chat.airys/mcp`), and available as a hosted OAuth 2.1 Streamable HTTP service at `https://mcp.airys.chat/mcp`.
 
 ## Install
+
+### Hosted OAuth 2.1 (zero local secrets)
+
+```bash
+claude mcp add --transport http airyschat https://mcp.airys.chat/mcp
+```
+
+### Claude Code Plugin (local `stdio` + all 8 operational skills)
 
 ```shell
 /plugin marketplace add AirysChat/mcp
@@ -19,9 +25,9 @@ Then export the server's credentials before starting Claude Code — the plugin 
 from your environment rather than storing them:
 
 ```bash
-export AIRYSCHAT_BASE_URL=https://app.airyschat.com
+export AIRYSCHAT_BASE_URL=https://airys.chat
 export AIRYSCHAT_API_KEY=...        # agent or admin token
-export AIRYSCHAT_ACCOUNT_ID=5
+export AIRYSCHAT_ACCOUNT_ID=1
 ```
 
 Optional: `AIRYSCHAT_TOOLSETS` (default `core,whatsapp`; add `crm`, `ai_agents`, and `meta_agent` to enable those toolsets), `AIRYSCHAT_FEATURES` (default `stable`;

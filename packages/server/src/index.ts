@@ -12,7 +12,7 @@
 
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { AirysChatClient } from './client.js';
-import { ConfigError, loadConfig } from './config.js';
+import { ConfigError, TOOLSET_NAMES, loadConfig } from './config.js';
 import { VERSION, createServerForContext } from './server.js';
 
 async function main(): Promise<void> {
@@ -33,16 +33,17 @@ main().catch((error: unknown) => {
   if (error instanceof ConfigError) {
     process.stderr.write(
       `airyschat-mcp: ${error.message}\n\n` +
-        'Required environment:\n' +
-        '  AIRYSCHAT_BASE_URL    e.g. https://app.airyschat.com\n' +
+        'Required environment (stdio):\n' +
+        '  AIRYSCHAT_BASE_URL    e.g. https://airys.chat\n' +
         '  AIRYSCHAT_API_KEY     agent or admin access token (sent as the api_access_token header)\n' +
         '  AIRYSCHAT_ACCOUNT_ID  numeric account ID\n\n' +
         'Optional:\n' +
-        '  AIRYSCHAT_TOOLSETS    comma-separated: core, whatsapp, crm, ai_agents, meta_agent, reports (default: core, whatsapp)\n' +
+        `  AIRYSCHAT_TOOLSETS    comma-separated: ${TOOLSET_NAMES.join(', ')} (default: core, whatsapp)\n` +
         '  AIRYSCHAT_FEATURES    stable (default), beta or experimental — highest tool maturity to expose\n' +
         '  AIRYSCHAT_READ_ONLY   1 to disable every write tool\n' +
         '  AIRYSCHAT_SCOPES      optional MCP token scopes (mcp:read, mcp:write, mcp:irreversible, mcp:toolset:<name>)\n' +
-        '  AIRYSCHAT_TIMEOUT_MS  request timeout, default 30000\n',
+        '  AIRYSCHAT_TIMEOUT_MS  request timeout, default 30000\n\n' +
+        'Or connect via hosted OAuth 2.1 (zero local env vars): https://mcp.airys.chat/mcp\n',
     );
   } else {
     process.stderr.write(`airyschat-mcp: fatal: ${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);

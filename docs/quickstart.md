@@ -19,6 +19,16 @@
 
 ## 1. Claude Code
 
+### Option A — Hosted OAuth 2.1 (Recommended, zero local env vars)
+
+Connect directly to `https://mcp.airys.chat/mcp` and sign in via browser OAuth 2.1 (`mcp:read`, `mcp:write`, `mcp:irreversible`):
+
+```bash
+claude mcp add --transport http airyschat https://mcp.airys.chat/mcp
+```
+
+### Option B — Bundled Claude Code Plugin or Local `stdio`
+
 Install the bundled Claude Code plugin (includes `.mcp.json` and all 8 operational skills):
 
 ```bash
@@ -33,7 +43,7 @@ export AIRYSCHAT_TOOLSETS="core,whatsapp,crm,ai_agents,meta_agent,reports,admin,
 /plugin install airyschat@airyschat
 ```
 
-Or add the server directly via CLI:
+Or add the local `stdio` server directly via CLI:
 
 ```bash
 claude mcp add airyschat -- npx -y @airyschat/mcp@latest
