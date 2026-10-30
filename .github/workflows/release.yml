@@ -67,11 +67,16 @@ jobs:
         if: steps.decide.outputs.release == 'true' && vars.PUBLISH_ENABLED == 'true'
         env:
           GH_PKG_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.decide.outputs.version }}
         run: |
           npmrc="$(mktemp)"
           trap 'rm -f "$npmrc"' EXIT
           printf '@airyschat:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\n' "$GH_PKG_TOKEN" > "$npmrc"
-          NPM_CONFIG_USERCONFIG="$npmrc" pnpm --filter @airyschat/mcp publish --no-git-checks --registry https://npm.pkg.github.com
+          if [ "$(NPM_CONFIG_USERCONFIG="$npmrc" npm view "@airyschat/mcp@${VERSION}" version --registry https://npm.pkg.github.com 2>/dev/null || true)" = "$VERSION" ]; then
+            echo "@airyschat/mcp@${VERSION} already published to GitHub Packages; skipping."
+          else
+            NPM_CONFIG_USERCONFIG="$npmrc" pnpm --filter @airyschat/mcp publish --no-git-checks --registry https://npm.pkg.github.com
+          fi
 
       # Public npm with SLSA provenance at 1.0+ when NPM_PUBLIC_ENABLED=true (GA-05).
       # Uses NPM_TOKEN only when present (first-time bootstrap before package exists on npmjs.com);
@@ -80,16 +85,21 @@ jobs:
         if: steps.decide.outputs.release == 'true' && vars.NPM_PUBLIC_ENABLED == 'true'
         env:
           BOOTSTRAP_NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VERSION: ${{ steps.decide.outputs.version }}
         run: |
           npmrc="$(mktemp)"
           trap 'rm -f "$npmrc"' EXIT
           if [ -n "$BOOTSTRAP_NPM_TOKEN" ]; then
-            printf '//registry.npmjs.org/:_authToken=%s\n' "$BOOTSTRAP_NPM_TOKEN" > "$npmrc"
+            printf '@airyschat:registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=%s\n' "$BOOTSTRAP_NPM_TOKEN" > "$npmrc"
           fi
-          (
-            cd packages/server
-            NPM_CONFIG_USERCONFIG="$npmrc" npm publish --registry https://registry.npmjs.org --access public --provenance
-          )
+          if [ "$(NPM_CONFIG_USERCONFIG="$npmrc" npm view "@airyschat/mcp@${VERSION}" version --registry https://registry.npmjs.org 2>/dev/null || true)" = "$VERSION" ]; then
+            echo "@airyschat/mcp@${VERSION} already published to public npm; skipping."
+          else
+            (
+              cd packages/server
+              NPM_CONFIG_USERCONFIG="$npmrc" npm publish --registry https://registry.npmjs.org --access public --provenance
+            )
+          fi
 
       # Official MCP Registry (`chat.airys/mcp`) when MCP_REGISTRY_PUBLISH_ENABLED=true (GA-06).
       - name: Publish to MCP Registry (chat.airys/mcp)
