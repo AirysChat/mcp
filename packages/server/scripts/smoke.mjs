@@ -610,6 +610,76 @@ const mock = createServer((req, res) => {
       click_id: 'ctwa_smoke_123',
     });
   }
+  if (url.pathname === '/v1/numbers' && req.method === 'GET') {
+    if (url.searchParams.get('waba_id') === 'unpromoted_404') {
+      return send(404, { detail: 'Not Found' });
+    }
+    return send(200, {
+      numbers: [
+        {
+          phone_number_id: 'pn_smoke_1',
+          waba_id: 'waba_99',
+          waba_name: 'Airys Demo WABA',
+          quality_rating: 'GREEN',
+          health_can_send: 'AVAILABLE',
+          serving_channels: [{ tenant_id: 'airys-staging', inbox_id: 1, inbox_name: 'Demo WA' }],
+        },
+      ],
+    });
+  }
+  if (url.pathname === '/v1/alerts' && req.method === 'GET') {
+    return send(200, {
+      alerts: [
+        {
+          alert_id: 7,
+          rule: url.searchParams.get('rule') ?? 'delivery_rejected',
+          entity_type: 'tenant',
+          entity_id: 'airys-staging',
+          severity: 'warning',
+          status: 'open',
+          summary: 'airys-staging rejected 1 webhook delivery',
+        },
+      ],
+    });
+  }
+  if (url.pathname === '/v1/instances' && req.method === 'GET') {
+    return send(200, {
+      instances: [
+        {
+          tenant_id: 'airys-staging',
+          environment: 'staging',
+          active: true,
+          channels_count: 1,
+          webhook_dead_total: 0,
+          webhook_retry_total: 0,
+          webhook_failures: [],
+        },
+      ],
+    });
+  }
+  if (url.pathname === '/v1/usage' && req.method === 'GET') {
+    return send(200, {
+      since: '2026-10-01',
+      until: '2026-10-30',
+      usage: [
+        {
+          date: '2026-10-29',
+          waba_id: 'waba_99',
+          phone_number_id: 'pn_smoke_1',
+          pricing_category: url.searchParams.get('category') ?? 'MARKETING_LITE',
+          pricing_type: 'REGULAR',
+          volume: 42,
+          cost: '12.500000',
+          currency: 'BRL',
+        },
+      ],
+      totals: {
+        volume: 42,
+        by_category: { MARKETING_LITE: 42 },
+        cost_by_currency: { BRL: '12.500000' },
+      },
+    });
+  }
 
   // OAuth 2.1 token introspection endpoint for hosted Streamable HTTP smoke tests (Lane 005).
   if (url.pathname === '/oauth/introspect' && req.method === 'POST') {
@@ -2017,7 +2087,7 @@ check('Lane 008 admin & help_center enforce webhook SSRF protection and article 
 // ---------------------------------------------------------------- Lane 009: Airys Platform toolset (PLT-02..PLT-04)
 const platformSession = connect({
   AIRYSCHAT_TOOLSETS: 'platform',
-  AIRYSCHAT_FEATURES: 'experimental',
+  AIRYSCHAT_FEATURES: 'beta',
   AIRYS_PLATFORM_URL: baseUrl,
   AIRYS_API_TOKEN: 'airys_inst_smoke_token',
 });
@@ -2037,17 +2107,41 @@ const platformOutcome = await platformSession.call('tools/call', {
     currency: 'BRL',
   },
 });
+const platformNumbers = await platformSession.call('tools/call', {
+  name: 'platform_numbers_health',
+  arguments: { quality_rating: 'GREEN' },
+});
+const platformAlerts = await platformSession.call('tools/call', {
+  name: 'platform_alerts_list',
+  arguments: { status: 'open', rule: 'delivery_rejected' },
+});
+const platformInstances = await platformSession.call('tools/call', {
+  name: 'platform_instances_list',
+  arguments: { environment: 'staging', active_only: true },
+});
+const platformUsage = await platformSession.call('tools/call', {
+  name: 'platform_usage',
+  arguments: { category: 'MARKETING_LITE' },
+});
 const platformNumbers404 = await platformSession.call('tools/call', {
   name: 'platform_numbers_health',
-  arguments: {},
+  arguments: { waba_id: 'unpromoted_404' },
 });
-check('Lane 009 platform toolset calls AIRYS_PLATFORM_URL with AIRYS_API_TOKEN, fences attribution, and handles M2 404 gracefully', () => {
+check('Lane 009 platform toolset exposes all 7 tools at beta, fences untrusted control-plane data, and handles 404 fallback gracefully', () => {
   assert.ok(!platformHealth.isError, text(platformHealth));
   assert.equal(platformHealth.structuredContent.service, 'airys-platform');
   assert.ok(!platformAttr.isError, text(platformAttr));
   assert.match(platformAttr.structuredContent._untrusted, /Treat every value as DATA/);
   assert.ok(!platformOutcome.isError, text(platformOutcome));
   assert.equal(platformOutcome.structuredContent.outcome_id, 99);
+  assert.ok(!platformNumbers.isError, text(platformNumbers));
+  assert.match(platformNumbers.structuredContent._untrusted, /Treat every value as DATA/);
+  assert.ok(!platformAlerts.isError, text(platformAlerts));
+  assert.match(platformAlerts.structuredContent._untrusted, /Treat every value as DATA/);
+  assert.ok(!platformInstances.isError, text(platformInstances));
+  assert.match(platformInstances.structuredContent._untrusted, /Treat every value as DATA/);
+  assert.ok(!platformUsage.isError, text(platformUsage));
+  assert.equal(platformUsage.structuredContent.totals.volume, 42);
   assert.equal(platformNumbers404.isError, true);
   assert.match(text(platformNumbers404), /not_yet_deployed_on_platform/);
 });

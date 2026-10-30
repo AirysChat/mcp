@@ -59,7 +59,7 @@ gantt
 | [006-whatsapp-and-reports](006-whatsapp-and-reports/tasks.md) | WAR | Done (2026-10-27) |
 | [007-apps-elicitation-tasks](007-apps-elicitation-tasks/tasks.md) | APP | Done (2026-10-28) |
 | [008-admin-and-help-center](008-admin-and-help-center/tasks.md) | ADM | Done (2026-10-28) |
-| [009-airys-platform-toolset](009-airys-platform-toolset/tasks.md) | PLT | Done (in-repo 2026-10-28; M2 promotion awaits `PLAT-8.1`/`PLAT-8.5`) |
+| [009-airys-platform-toolset](009-airys-platform-toolset/tasks.md) | PLT | Done (2026-10-30; all 7 tools live on staging at `stable`/`beta` via `AirysBR/airys-platform#29`) |
 | [010-distribution-ga](010-distribution-ga/tasks.md) | GA | Done (in-repo 2026-10-28; 4 plugins, `server.json`, stability freeze, docs & security scan) |
 
 ## Owner decisions

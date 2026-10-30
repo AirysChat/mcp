@@ -5,9 +5,10 @@
  * from the per-instance AirysChat client (`AIRYSCHAT_BASE_URL` + `AIRYSCHAT_API_KEY`).
  *
  * Source of truth:
- * - `AirysBR/airys-platform` `openapi/openapi.json` (`GET /health`, `GET /v1/signals/attribution`,
+ * - `AirysBR/airys-platform` `openapi/openapi.json` (`GET /health`, `GET /v1/instances`,
+ *   `GET /v1/numbers`, `GET /v1/alerts`, `GET /v1/usage`, `GET /v1/signals/attribution`,
  *   `POST /v1/signals/outcomes`)
- * - `AirysBR/Airys-AI` `specs/20260930-131823-airys-whatsapp-platform/tasks.md` (`PLAT-8.1..8.5`)
+ * - `AirysBR/Airys-AI` `specs/20260930-131823-airys-whatsapp-platform/tasks.md` (`PLAT-8.1..8.5`, `PLAT-11.1`)
  *   and `specs/20260930-125720-meta-control-plane/contracts/event-catalog.md`
  * - `docs/api/domains/platform.md`
  */
@@ -49,6 +50,18 @@ export const PLATFORM_ALERT_RULES = [
   'webhook_jobs_dying',
   'dead_set_full',
   'callback_dead',
+  'delivery_rejected',
+  'webhook_unrouted',
+] as const;
+
+export const PLATFORM_PRICING_CATEGORIES = [
+  'MARKETING',
+  'MARKETING_LITE',
+  'UTILITY',
+  'AUTHENTICATION',
+  'AUTHENTICATION_INTERNATIONAL',
+  'SERVICE',
+  'REFERRAL_CONVERSION',
 ] as const;
 
 function getPlatformClient(context: ToolContext): AirysPlatformClient {
@@ -194,14 +207,14 @@ export const platformTools: AnyToolDefinition[] = [
     },
   }),
 
-  // --- Control-plane Management API endpoints (`PLAT-8.1..PLAT-8.5` in AirysBR/Airys-AI) ---
+  // --- Control-plane Management & Usage API endpoints (`PLAT-8.1..8.5`, `PLAT-11.1`) ---
 
   defineTool({
     name: 'platform_numbers_health',
-    stability: 'experimental',
+    stability: 'beta',
     title: 'List cross-instance WhatsApp number health on Airys Platform',
     description:
-      'Queries cross-instance WhatsApp number state from the Airys control plane (`GET /v1/numbers` on `api.airys.chat`, `PLAT-8.1`): `status`, `quality_rating` (`GREEN`|`YELLOW`|`RED`), `messaging_limit`, `health_can_send` (`AVAILABLE`|`LIMITED`|`BLOCKED`), `health_errors`, and serving channels. Requires `AIRYS_API_TOKEN`.',
+      'Queries WhatsApp number state from the Airys control plane (`GET /v1/numbers` on `api.airys.chat`, `PLAT-8.1`): `status`, `quality_rating` (`GREEN`|`YELLOW`|`RED`|`UNKNOWN`), `messaging_limit`, `health_can_send` (`AVAILABLE`|`LIMITED`|`BLOCKED`), `health_errors`, WABA metadata, and serving channels scoped to the calling token. Requires `AIRYS_API_TOKEN`.',
     inputSchema: z.object({
       tenant_id: z.string().optional().describe('Optional instance tenant ID filter (e.g. `airys-chat`, `airys-staging`)'),
       waba_id: z.string().optional().describe('Optional WhatsApp Business Account ID filter'),
@@ -236,10 +249,10 @@ export const platformTools: AnyToolDefinition[] = [
 
   defineTool({
     name: 'platform_alerts_list',
-    stability: 'experimental',
+    stability: 'beta',
     title: 'List control-plane alerts on Airys Platform',
     description:
-      'Lists open or resolved alerts from the Airys control plane (`GET /v1/alerts` on `api.airys.chat`, `PLAT-4.3` / `PLAT-8.1`) across the 13 health rules (`instance_silent`, `channel_token_invalid`, `channel_ids_stale`, `channel_phone_mismatch`, `number_banned`, `number_cannot_send`, `number_quality_red`, `number_unowned`, `number_claimed_twice`, `token_expiring`, `webhook_jobs_dying`, `dead_set_full`, `callback_dead`). Requires `AIRYS_API_TOKEN`.',
+      'Lists open or resolved alerts from the Airys control plane (`GET /v1/alerts` on `api.airys.chat`, `PLAT-4.3` / `PLAT-8.1`) across all 15 health and delivery rules (`instance_silent`, `channel_token_invalid`, `channel_ids_stale`, `channel_phone_mismatch`, `number_banned`, `number_cannot_send`, `number_quality_red`, `number_unowned`, `number_claimed_twice`, `token_expiring`, `webhook_jobs_dying`, `dead_set_full`, `callback_dead`, `delivery_rejected`, `webhook_unrouted`). Requires `AIRYS_API_TOKEN`.',
     inputSchema: z.object({
       status: z.enum(['open', 'resolved', 'all']).optional().describe('Filter by alert status (default `open`)'),
       severity: z.enum(['critical', 'warning', 'info']).optional().describe('Filter by alert severity'),
@@ -277,10 +290,10 @@ export const platformTools: AnyToolDefinition[] = [
 
   defineTool({
     name: 'platform_instances_list',
-    stability: 'experimental',
+    stability: 'beta',
     title: 'List registered AirysChat instances on Airys Platform',
     description:
-      'Lists AirysChat instances (`meta.tenants`) registered with the Airys control plane (`GET /v1/instances` on `api.airys.chat`, `PLAT-8.1`), including `last_inventory_at`, reported channel counts, and webhook dead/retry job counts. Requires `AIRYS_API_TOKEN`.',
+      'Lists AirysChat instances (`meta.tenants`) visible to the caller on the Airys control plane (`GET /v1/instances` on `api.airys.chat`, `PLAT-8.1`), including `last_inventory_at`, reported channel counts, and webhook dead/retry job counts. Requires `AIRYS_API_TOKEN`.',
     inputSchema: z.object({
       environment: z.enum(['staging', 'prod']).optional().describe('Optional environment filter'),
       active_only: z.boolean().optional().describe('When true, only return active tenants'),
@@ -309,20 +322,20 @@ export const platformTools: AnyToolDefinition[] = [
 
   defineTool({
     name: 'platform_usage',
-    stability: 'experimental',
+    stability: 'beta',
     title: 'Get cross-instance WhatsApp usage and cost on Airys Platform',
     description:
-      'Queries metered WhatsApp message volume and Meta cost per number and pricing category (`GET /v1/usage` on `api.airys.chat`, `PLAT-8.5` / `PLAT-11.1`). Requires `AIRYS_API_TOKEN`.',
+      'Queries daily WhatsApp message volume and Meta cost buckets reconciled from `pricing_analytics` per number, country, tier, and pricing category (`GET /v1/usage` on `api.airys.chat`, `PLAT-8.5` / `PLAT-11.1`). Requires `AIRYS_API_TOKEN`.',
     inputSchema: z.object({
       tenant_id: z.string().optional().describe('Optional tenant ID filter'),
       waba_id: z.string().optional().describe('Optional WABA ID filter'),
       phone_number_id: z.string().optional().describe('Optional phone_number_id filter'),
-      since: z.string().optional().describe('Start date (ISO-8601 `YYYY-MM-DD`)'),
-      until: z.string().optional().describe('End date (ISO-8601 `YYYY-MM-DD`)'),
+      since: z.string().optional().describe('Start date (ISO-8601 `YYYY-MM-DD`, defaults to 30 days ago)'),
+      until: z.string().optional().describe('End date (ISO-8601 `YYYY-MM-DD`, defaults to today)'),
       category: z
-        .enum(['MARKETING', 'UTILITY', 'AUTHENTICATION', 'SERVICE'])
+        .enum(PLATFORM_PRICING_CATEGORIES)
         .optional()
-        .describe('Optional Meta conversation/pricing category filter'),
+        .describe('Optional Meta pricing category filter (`MARKETING`, `MARKETING_LITE`, `UTILITY`, `AUTHENTICATION`, `AUTHENTICATION_INTERNATIONAL`, `SERVICE`, `REFERRAL_CONVERSION`)'),
     }),
     async handler(args, context) {
       const client = getPlatformClient(context);

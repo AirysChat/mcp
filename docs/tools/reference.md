@@ -2,7 +2,7 @@
 
 > Generated from `packages/server/src/tools/*.ts` via `pnpm docs:tools`. Do not edit by hand.
 
-Total curated & catalog tools: **212** (**80** `stable`, **113** `beta`, **19** `experimental`).
+Total curated & catalog tools: **212** (**80** `stable`, **117** `beta`, **15** `experimental`).
 
 ## Summary by Toolset
 
@@ -17,7 +17,7 @@ Total curated & catalog tools: **212** (**80** `stable`, **113** `beta`, **19** 
 | `reports` | off | 9 | 9 | 0 | 0 |
 | `admin` | off | 41 | 11 | 30 | 0 |
 | `help_center` | off | 11 | 11 | 0 | 0 |
-| `platform` | off | 7 | 1 | 2 | 4 |
+| `platform` | off | 7 | 1 | 6 | 0 |
 
 ## Always-on (`catalog` + `raw`)
 
@@ -276,7 +276,7 @@ Total curated & catalog tools: **212** (**80** `stable`, **113** `beta`, **19** 
 | `platform_health` | `stable` | `mcp:read` | — | — | Get Airys Platform API health and revision |
 | `platform_signals_attribution_list` | `beta` | `mcp:read` | — | — | List ad touches attributed to a contact on Airys Platform |
 | `platform_signals_outcome_record` | `beta` | `mcp:write` | yes | — | Record a Business Messaging conversion outcome on Airys Platform |
-| `platform_numbers_health` | `experimental` | `mcp:read` | — | — | List cross-instance WhatsApp number health on Airys Platform |
-| `platform_alerts_list` | `experimental` | `mcp:read` | — | — | List control-plane alerts on Airys Platform |
-| `platform_instances_list` | `experimental` | `mcp:read` | — | — | List registered AirysChat instances on Airys Platform |
-| `platform_usage` | `experimental` | `mcp:read` | — | — | Get cross-instance WhatsApp usage and cost on Airys Platform |
+| `platform_numbers_health` | `beta` | `mcp:read` | — | — | List cross-instance WhatsApp number health on Airys Platform |
+| `platform_alerts_list` | `beta` | `mcp:read` | — | — | List control-plane alerts on Airys Platform |
+| `platform_instances_list` | `beta` | `mcp:read` | — | — | List registered AirysChat instances on Airys Platform |
+| `platform_usage` | `beta` | `mcp:read` | — | — | Get cross-instance WhatsApp usage and cost on Airys Platform |
