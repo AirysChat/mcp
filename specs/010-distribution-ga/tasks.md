@@ -13,4 +13,4 @@
 | GA-09 | P1 | S | Guide: AirysChat MCP + Meta WhatsApp Business Tools MCP | `docs/guides/meta-whatsapp-business-tools-mcp.md` | Done |
 | GA-10 | P1 | S | Muse Code / Muse connector setup guide | `docs/guides/meta-muse-setup.md` | Done |
 | GA-11 | P0 | S | API stability policy + freeze stable tools | `docs/stability-policy.md` + `packages/server/test/stability-freeze.test.ts` (80 frozen stable tools) | Done |
-| GA-12 | P1 | S | Claude/ChatGPT connector directory submission package | `docs/distribution/connector-directories.md` (submission awaits `REM-14` `mcp.airys.chat` prod deploy) | Done (in-repo) |
+| GA-12 | P1 | S | Claude/ChatGPT connector directory submission package | `docs/distribution/connector-directories.md` (`mcp.airys.chat` prod live on `1.0.0`) | Done |

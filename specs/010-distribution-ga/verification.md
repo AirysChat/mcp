@@ -15,7 +15,7 @@
 ## 2. Public npm Provenance & Official MCP Registry (`GA-05`, `GA-06`)
 
 - `server.json` (`$schema: https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json`) declares `name: "chat.airys/mcp"` with npm stdio package (`@airyschat/mcp`) and remote Streamable HTTP endpoint (`https://mcp.airys.chat/mcp`).
-- `.github/workflows/release.yml` includes OIDC provenance publishing (`npm publish ./packages/server --registry https://registry.npmjs.org --access public --provenance` when `vars.NPM_PUBLIC_ENABLED == 'true'`) and MCP Registry publishing (`npx -y @modelcontextprotocol/registry-publisher publish server.json` when `vars.MCP_REGISTRY_PUBLISH_ENABLED == 'true'`).
+- `.github/workflows/release.yml` includes OIDC provenance publishing (`npm publish --registry https://registry.npmjs.org --access public --provenance` when `vars.NPM_PUBLIC_ENABLED == 'true'`) and MCP Registry publishing (`./mcp-publisher publish` when `vars.MCP_REGISTRY_PUBLISH_ENABLED == 'true'`).
 - Version lockstep across `packages/server/package.json`, all 4 plugin manifests, and `server.json` enforced by `scripts/plugins/sync-plugins.mjs` and `scripts/release/prepare.sh`.
 
 ## 3. Security Scan, Stability Freeze & Documentation (`GA-07..GA-12`)
@@ -25,3 +25,16 @@
 - `pnpm docs:check` (`scripts/docs/generate-tool-reference.mjs --check`): generated and verified `docs/tools/reference.md` covering all **212** tools (`80` `stable`, `98` `beta`, `34` `experimental`) (`GA-08`).
 - `docs/quickstart.md`, `docs/safety-model.md`, `docs/guides/meta-whatsapp-business-tools-mcp.md` (`GA-09`), `docs/guides/meta-muse-setup.md` (`GA-10`), `docs/stability-policy.md` (`GA-11`), `docs/distribution/npm-and-registry.md` (`GA-05`/`GA-06`), and `docs/distribution/connector-directories.md` (`GA-12`) authored and linked from `README.md`.
 - `packages/server/test/stability-freeze.test.ts` (`GA-11`): freezes all `80` `stable` tools and their required input parameters in CI.
+
+## 4. `v1.0.0` GA Release & Live Distribution Evidence (2026-10-30)
+
+- **Repository visibility**: `AirysChat/mcp` switched to `public` after `node scripts/security/secret-scan.mjs --history` confirmed `0` findings.
+- **Release & Git tag**: `@airyschat/mcp@1.0.0` (`008955740ce591b4c9cdfca8a267e9e4b80fcf31`), GitHub Release `https://github.com/AirysChat/mcp/releases/tag/%40airyschat/mcp%401.0.0` (`isPrerelease: false`), CI `release.yml` run `41126285718` (`success`).
+- **Public npm (`npmjs.org`)**:
+  - Package URL: `https://www.npmjs.com/package/@airyschat/mcp/v/1.0.0`
+  - Metadata verified via `GET https://registry.npmjs.org/@airyschat%2fmcp/1.0.0` (`200 OK`): `version: "1.0.0"`, `mcpName: "chat.airys/mcp"`, `shasum: "0b5497f0cf4fb31c6ca63f33ff856760ef7713fd"`.
+  - SLSA v1 provenance attestation verified: `https://registry.npmjs.org/-/npm/v1/attestations/@airyschat%2fmcp@1.0.0` (`predicateType: "https://slsa.dev/provenance/v1"`, Sigstore transparency `logIndex=3602376090`).
+- **GitHub Packages (`npm.pkg.github.com`)**: `@airyschat/mcp@1.0.0` published (`release.yml` run `41123062945`).
+- **Hosted Streamable HTTP service (`image.yml`)**:
+  - Staging (`41123063034`): `GET https://mcp-tdtyqbghua-rj.a.run.app/health` -> `200 OK` (`{"status":"ok","version":"1.0.0"}`).
+  - Production (`41126501900`): `GET https://mcp.airys.chat/healthz` -> `200 OK` (`{"status":"ok","version":"1.0.0"}`), `GET https://mcp.airys.chat/.well-known/oauth-protected-resource` -> `200 OK` (`{"resource":"https://mcp.airys.chat/mcp","authorization_servers":["https://airys.chat"]}`).
