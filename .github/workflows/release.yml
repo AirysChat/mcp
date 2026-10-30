@@ -57,8 +57,6 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-          registry-url: https://npm.pkg.github.com
-          scope: '@airyschat'
       - name: Check
         if: steps.decide.outputs.release == 'true'
         run: pnpm install --frozen-lockfile && pnpm check
@@ -67,21 +65,47 @@ jobs:
       # (GitHub Packages before 1.0, public npm at 1.0 — ADR 0003).
       - name: Publish to GitHub Packages
         if: steps.decide.outputs.release == 'true' && vars.PUBLISH_ENABLED == 'true'
-        run: pnpm --filter @airyschat/mcp publish --no-git-checks
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PKG_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npmrc="$(mktemp)"
+          trap 'rm -f "$npmrc"' EXIT
+          printf '@airyschat:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\n' "$GH_PKG_TOKEN" > "$npmrc"
+          NPM_CONFIG_USERCONFIG="$npmrc" pnpm --filter @airyschat/mcp publish --no-git-checks --registry https://npm.pkg.github.com
 
-      # Public npm with OIDC provenance at 1.0+ when NPM_PUBLIC_ENABLED=true (GA-05).
+      # Public npm with SLSA provenance at 1.0+ when NPM_PUBLIC_ENABLED=true (GA-05).
+      # Uses NPM_TOKEN only when present (first-time bootstrap before package exists on npmjs.com);
+      # once deleted, npm 11 exchanges the GitHub Actions OIDC token natively via Trusted Publishing.
       - name: Publish to public npm with provenance
         if: steps.decide.outputs.release == 'true' && vars.NPM_PUBLIC_ENABLED == 'true'
-        run: npm publish ./packages/server --registry https://registry.npmjs.org --access public --provenance
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          BOOTSTRAP_NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npmrc="$(mktemp)"
+          trap 'rm -f "$npmrc"' EXIT
+          if [ -n "$BOOTSTRAP_NPM_TOKEN" ]; then
+            printf '//registry.npmjs.org/:_authToken=%s\n' "$BOOTSTRAP_NPM_TOKEN" > "$npmrc"
+          fi
+          (
+            cd packages/server
+            NPM_CONFIG_USERCONFIG="$npmrc" npm publish --registry https://registry.npmjs.org --access public --provenance
+          )
 
       # Official MCP Registry (`chat.airys/mcp`) when MCP_REGISTRY_PUBLISH_ENABLED=true (GA-06).
       - name: Publish to MCP Registry (chat.airys/mcp)
         if: steps.decide.outputs.release == 'true' && vars.MCP_REGISTRY_PUBLISH_ENABLED == 'true'
-        run: npx -y @modelcontextprotocol/registry-publisher publish server.json
+        env:
+          MCP_DNS_KEY: ${{ secrets.MCP_REGISTRY_DNS_PRIVATE_KEY }}
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+          chmod +x ./mcp-publisher
+          if [ -n "$MCP_DNS_KEY" ]; then
+            ./mcp-publisher login dns --domain airys.chat --private-key "$MCP_DNS_KEY"
+          else
+            ./mcp-publisher login github-oidc
+          fi
+          ./mcp-publisher publish
+          rm -f ./mcp-publisher
 
       - name: Tag and GitHub Release
         if: steps.decide.outputs.release == 'true'
