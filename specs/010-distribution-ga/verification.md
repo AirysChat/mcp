@@ -14,7 +14,7 @@
 
 ## 2. Public npm Provenance & Official MCP Registry (`GA-05`, `GA-06`)
 
-- `server.json` (`$schema: https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json`) declares `name: "chat.airys/mcp"` with npm stdio package (`@airyschat/mcp`) and remote Streamable HTTP endpoint (`https://mcp.airys.chat/mcp`).
+- `server.json` (`$schema: https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`) declares `name: "chat.airys/mcp"` with npm stdio package (`@airyschat/mcp`) and remote Streamable HTTP endpoint (`https://mcp.airys.chat/mcp`).
 - `.github/workflows/release.yml` includes OIDC provenance publishing (`npm publish --registry https://registry.npmjs.org --access public --provenance` when `vars.NPM_PUBLIC_ENABLED == 'true'`) and MCP Registry publishing (`./mcp-publisher publish` when `vars.MCP_REGISTRY_PUBLISH_ENABLED == 'true'`).
 - Version lockstep across `packages/server/package.json`, all 4 plugin manifests, and `server.json` enforced by `scripts/plugins/sync-plugins.mjs` and `scripts/release/prepare.sh`.
 
