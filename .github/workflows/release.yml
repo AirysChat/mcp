@@ -11,6 +11,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      mcp_registry_only:
+        description: Publish current server.json to the Official MCP Registry even if git tag already exists
+        type: boolean
+        default: false
 
 concurrency: release-${{ github.ref }}
 
@@ -103,19 +108,22 @@ jobs:
 
       # Official MCP Registry (`chat.airys/mcp`) when MCP_REGISTRY_PUBLISH_ENABLED=true (GA-06).
       - name: Publish to MCP Registry (chat.airys/mcp)
-        if: steps.decide.outputs.release == 'true' && vars.MCP_REGISTRY_PUBLISH_ENABLED == 'true'
+        if: >-
+          (steps.decide.outputs.release == 'true' || inputs.mcp_registry_only == true) &&
+          vars.MCP_REGISTRY_PUBLISH_ENABLED == 'true'
         env:
           MCP_DNS_KEY: ${{ secrets.MCP_REGISTRY_DNS_PRIVATE_KEY }}
         run: |
+          trap 'rm -f ./mcp-publisher' EXIT
           curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
           chmod +x ./mcp-publisher
+          ./mcp-publisher validate
           if [ -n "$MCP_DNS_KEY" ]; then
             ./mcp-publisher login dns --domain airys.chat --private-key "$MCP_DNS_KEY"
           else
             ./mcp-publisher login github-oidc
           fi
           ./mcp-publisher publish
-          rm -f ./mcp-publisher
 
       - name: Tag and GitHub Release
         if: steps.decide.outputs.release == 'true'
