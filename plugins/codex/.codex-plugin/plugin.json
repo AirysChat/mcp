@@ -1,7 +1,7 @@
 {
   "name": "airyschat",
   "displayName": "AirysChat",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "description": "Operate an AirysChat helpdesk, CRM, AI Agents, Meta Business Agent, and WhatsApp Business Platform from OpenAI Codex.",
   "author": {
     "name": "AirysChat",
