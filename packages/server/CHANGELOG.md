@@ -1,5 +1,15 @@
 # @airyschat/mcp
 
+## 0.7.0
+
+### Minor Changes
+
+- a33571c: Promote `platform_numbers_health`, `platform_alerts_list`, `platform_instances_list`, and `platform_usage` from `experimental` to `beta` following the `AirysBR/airys-platform` Management & Usage API (`PLAT-8.1`, `PLAT-8.5`, `PLAT-11.1`), expanding `platform_alerts_list` to all 15 control-plane rules (`delivery_rejected`, `webhook_unrouted`) and `platform_usage` to all 7 Meta `pricing_analytics` categories (`MARKETING_LITE`, `AUTHENTICATION_INTERNATIONAL`, `REFERRAL_CONVERSION`).
+
+### Patch Changes
+
+- 3592a87: Complete `REM-14` production cutover of the hosted Streamable HTTP MCP server at `https://mcp.airys.chat/mcp` behind Cloud Run, Cloud Armor, and Google-managed TLS, paired with the `https://airys.chat` OAuth 2.1 Authorization Server and `https://api.airys.chat` Management & Usage API.
+
 ## 0.6.0
 
 ### Minor Changes

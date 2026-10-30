@@ -3,7 +3,7 @@
   "name": "chat.airys/mcp",
   "title": "AirysChat MCP Server",
   "description": "Operate AirysChat — conversations, CRM, AI Agents, Meta Business Agent, and WhatsApp campaigns.",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "websiteUrl": "https://airys.chat",
   "repository": {
     "url": "https://github.com/AirysChat/mcp",
@@ -14,7 +14,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@airyschat/mcp",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "transport": {
         "type": "stdio"
       },
