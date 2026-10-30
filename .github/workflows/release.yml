@@ -92,17 +92,21 @@ jobs:
           BOOTSTRAP_NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.decide.outputs.version }}
         run: |
-          npmrc="$(mktemp)"
-          trap 'rm -f "$npmrc"' EXIT
-          if [ -n "$BOOTSTRAP_NPM_TOKEN" ]; then
-            printf '@airyschat:registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=%s\n' "$BOOTSTRAP_NPM_TOKEN" > "$npmrc"
-          fi
-          if [ "$(NPM_CONFIG_USERCONFIG="$npmrc" npm view "@airyschat/mcp@${VERSION}" version --registry https://registry.npmjs.org 2>/dev/null || true)" = "$VERSION" ]; then
+          if [ "$(npm view "@airyschat/mcp@${VERSION}" version --registry https://registry.npmjs.org/ 2>/dev/null || true)" = "$VERSION" ]; then
             echo "@airyschat/mcp@${VERSION} already published to public npm; skipping."
+          elif [ -n "$BOOTSTRAP_NPM_TOKEN" ]; then
+            npmrc="$(mktemp)"
+            trap 'rm -f "$npmrc"' EXIT
+            printf '@airyschat:registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=%s\n' "$BOOTSTRAP_NPM_TOKEN" > "$npmrc"
+            (
+              cd packages/server
+              NPM_CONFIG_USERCONFIG="$npmrc" npm publish --registry https://registry.npmjs.org/ --access public --provenance
+            )
           else
             (
               cd packages/server
-              NPM_CONFIG_USERCONFIG="$npmrc" npm publish --registry https://registry.npmjs.org --access public --provenance
+              rm -f ~/.npmrc
+              npm publish --access public --provenance --loglevel=verbose
             )
           fi
 
