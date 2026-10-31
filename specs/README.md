@@ -60,7 +60,7 @@ gantt
 | [007-apps-elicitation-tasks](007-apps-elicitation-tasks/tasks.md) | APP | Done (2026-10-28) |
 | [008-admin-and-help-center](008-admin-and-help-center/tasks.md) | ADM | Done (2026-10-28) |
 | [009-airys-platform-toolset](009-airys-platform-toolset/tasks.md) | PLT | Done (2026-10-30; all 7 endpoints live on staging & `api.airys.chat` prod via `AirysBR/airys-platform#29`) |
-| [010-distribution-ga](010-distribution-ga/tasks.md) | GA | Done (2026-10-30; `@airyschat/mcp@1.0.0` on `npmjs.org` OIDC + `chat.airys/mcp` active in Official MCP Registry + `https://mcp.airys.chat` live) |
+| [010-distribution-ga](010-distribution-ga/tasks.md) | GA | Done (2026-10-31; `@airyschat/mcp@1.0.1` on `npmjs.org` passwordless OIDC + `chat.airys/mcp@1.0.1` active in Official MCP Registry + `https://mcp.airys.chat` `1.0.1` live) |
 
 ## Owner decisions
 

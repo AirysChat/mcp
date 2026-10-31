@@ -22,6 +22,9 @@
      - **Organization / User**: `AirysChat`
      - **Repository**: `mcp`
      - **Workflow filename**: `release.yml`
+     - **Environment name**: *(leave empty)*
+     - **Allowed actions**: check **`Allow npm publish`** and **`Allow npm dist-tag`**
+   - Click **Set up connection** and complete 2FA so the saved row appears on `/access` (do not click `Update Package Settings` before saving the connection).
    - Remove the temporary bootstrap token (`gh secret delete NPM_TOKEN --repo AirysChat/mcp`) and revoke it on `npmjs.com`. Node 24 / npm 11 exchanges the GitHub Actions OIDC token natively.
 3. Verify provenance after release:
    ```bash

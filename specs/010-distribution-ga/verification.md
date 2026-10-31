@@ -42,3 +42,15 @@
 - **Hosted Streamable HTTP service (`image.yml`)**:
   - Staging (`41123063034`): `GET https://mcp-tdtyqbghua-rj.a.run.app/health` -> `200 OK` (`{"status":"ok","version":"1.0.0"}`).
   - Production (`41126501900`): `GET https://mcp.airys.chat/healthz` -> `200 OK` (`{"status":"ok","version":"1.0.0"}`), `GET https://mcp.airys.chat/.well-known/oauth-protected-resource` -> `200 OK` (`{"resource":"https://mcp.airys.chat/mcp","authorization_servers":["https://airys.chat"]}`).
+
+## 5. `v1.0.1` Passwordless OIDC Release & Live Claude Code Verification (2026-10-31)
+
+- **Passwordless npm OIDC publish (`GA-05`)**:
+  - `@airyschat/mcp@1.0.1` published to `https://registry.npmjs.org` without `NPM_TOKEN` via native GitHub Actions OIDC token exchange (`POST 201 /-/npm/v1/oidc/token/exchange/package/@airyschat%2fmcp` in `release.yml` run `41222912232`).
+  - SLSA v1 provenance attestation verified: `https://registry.npmjs.org/-/npm/v1/attestations/@airyschat%2fmcp@1.0.1` (`predicateType: "https://slsa.dev/provenance/v1"`, Sigstore transparency `logIndex=3614517580`).
+  - Live `npx -y @airyschat/mcp@latest` verified resolving `bin.mcp` (`dist/index.js`) from public npm (`AirysChat/mcp#182`).
+- **Official MCP Registry & GitHub Release (`GA-06`)**:
+  - `release.yml` run `41223228284` (`success`) published `chat.airys/mcp@1.0.1` (`status: "active"`, `isLatest: true` on `https://registry.modelcontextprotocol.io/v0/servers?search=chat.airys/mcp`) and created GitHub Release `https://github.com/AirysChat/mcp/releases/tag/%40airyschat/mcp%401.0.1`.
+- **Hosted Streamable HTTP & Claude Code Live OAuth 2.1 + PKCE (`REM-10`, `GA-01`)**:
+  - Promoted `1.0.1` container image to production Cloud Run (`image.yml` run `41223231775` -> `success`); `GET https://mcp.airys.chat/healthz` -> `{"status":"ok","version":"1.0.1"}`.
+  - Shipped RFC 8252 §7.3 loopback ephemeral-port matching in `AirysChat/AirysChat#555` (`621f7d987c`, deployed to `staging.airys.app` in run `41212028379` and `airys.chat` in run `41212673016`) and verified live Claude Code OAuth 2.1 + PKCE login (`https://claude.ai/oauth/claude-code-client-metadata` -> `https://airys.chat/oauth/authorize` -> `https://mcp.airys.chat/mcp`).
