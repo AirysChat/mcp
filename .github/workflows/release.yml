@@ -106,8 +106,16 @@ jobs:
             (
               cd packages/server
               rm -f ~/.npmrc
-              npm publish --access public --provenance --loglevel=verbose
+              npm publish --access public --provenance
             )
+            echo "Waiting for npm async indexing of @airyschat/mcp@${VERSION}..."
+            for i in $(seq 1 24); do
+              if [ "$(curl -s -o /dev/null -w '%{http_code}' "https://registry.npmjs.org/@airyschat%2fmcp/${VERSION}?t=$(date +%s)")" = "200" ]; then
+                echo "@airyschat/mcp@${VERSION} is visible on registry.npmjs.org after ~$((i*10))s."
+                break
+              fi
+              sleep 10
+            done
           fi
 
       # Official MCP Registry (`chat.airys/mcp`) when MCP_REGISTRY_PUBLISH_ENABLED=true (GA-06).
