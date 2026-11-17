@@ -5,24 +5,9 @@
 
 name: Container Image
 
+# Manual dispatch only (`LCI-03`). Local container smoke runs via `pnpm docker:smoke`;
+# local Cloud Run deployments run via `pnpm deploy:staging` and `pnpm deploy:prod`.
 on:
-  push:
-    tags:
-      - '@airyschat/mcp@*'
-    branches: [main]
-    paths:
-      - 'Dockerfile'
-      - '.dockerignore'
-      - 'packages/server/**'
-      - 'scripts/inventory/**'
-      - 'docs/api/**'
-      - '.github/workflows/image.yml'
-  pull_request:
-    paths:
-      - 'Dockerfile'
-      - '.dockerignore'
-      - 'packages/server/**'
-      - '.github/workflows/image.yml'
   workflow_dispatch:
     inputs:
       environment:

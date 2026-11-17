@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Pre-push gate: runs fast local CI (`pnpm ci:fast`) before pushing branches.
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+exec bash scripts/ci/local-ci.sh --fast

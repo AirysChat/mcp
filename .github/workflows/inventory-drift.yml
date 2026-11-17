@@ -9,8 +9,6 @@ name: Inventory Drift
 # locally with the sync-api-inventory skill until that cross-repo artifact is wired).
 
 on:
-  schedule:
-    - cron: '0 9 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -30,5 +28,4 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm inventory:check
-      - run: node scripts/inventory/extract-swagger-params.mjs --check
       - run: node scripts/inventory/build-catalog.mjs --stats

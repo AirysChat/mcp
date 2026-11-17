@@ -12,6 +12,10 @@
     "typecheck": "pnpm -r typecheck",
     "smoke": "pnpm -r smoke",
     "check": "pnpm typecheck && pnpm test && pnpm smoke && pnpm inventory:check && pnpm plugins:check && pnpm docs:check && pnpm security:scan",
+    "ci:local": "bash scripts/ci/local-ci.sh",
+    "ci:fast": "bash scripts/ci/local-ci.sh --fast",
+    "docker:smoke": "bash scripts/ci/docker-smoke.sh",
+    "hooks:install": "git config core.hooksPath .githooks",
     "inventory": "node scripts/inventory/build-inventory.mjs",
     "inventory:check": "node scripts/inventory/build-inventory.mjs --check",
     "inventory:sync": "bash scripts/inventory/sync.sh",
@@ -22,6 +26,9 @@
     "security:scan": "node scripts/security/secret-scan.mjs",
     "changeset": "changeset",
     "release:prepare": "bash scripts/release/prepare.sh",
+    "release:publish": "bash scripts/release/publish.sh",
+    "deploy:staging": "bash scripts/deploy/cloud-run.sh staging",
+    "deploy:prod": "bash scripts/deploy/cloud-run.sh prod",
     "test": "pnpm -r test"
   },
   "devDependencies": {

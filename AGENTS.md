@@ -44,9 +44,11 @@ read `AGENTS.md` directly.
 pnpm install
 pnpm typecheck          # tsc --noEmit across packages (src + tests)
 pnpm test               # unit tests (node:test + tsx), coverage gate 80% on core modules
-pnpm smoke              # builds, drives the server over stdio against a mock API
+pnpm smoke              # builds, drives the server over stdio & HTTP against a mock API
 pnpm inventory:check    # inventory/coverage docs match code and the curated map
-pnpm check              # typecheck + test + smoke + inventory:check — run before every PR
+pnpm check              # typecheck + test + smoke + inventory:check + plugins:check + docs:check + security:scan
+pnpm ci:local           # full local CI gate (frozen install + check + prod audit + history secret scan + distroless Docker smoke)
+pnpm hooks:install      # wire .githooks/pre-push to run pnpm ci:fast before pushes
 pnpm changeset          # record a user-visible change
 ```
 

@@ -21,7 +21,7 @@ Dates are targets; the lane scope is the contract (ADR 0003).
 | **0.8.0** | Admin & help center | [008](008-admin-and-help-center/spec.md) | 2027-04-12 | 213 | Admin toolset `beta`, destructive ops gated |
 | **0.9.0** | Airys API (platform) toolset | [009](009-airys-platform-toolset/spec.md) | after airys-platform M2 | — | Number health and alerts from `api.airys.chat` |
 | **1.0.0** | GA & distribution | [010](010-distribution-ga/spec.md) | 2027-05-31 | — | Public repo/npm, MCP Registry, 4 client plugins, connector directories |
-| **1.1.0** | Action tools promotion & scope alignment | [011](011-action-tools-promotion/spec.md) | 2026-11-17 | — | 8 CRM/WhatsApp action tools `stable`, `crm_deal_move`/`crm_deal_update`/`wa_campaign_create` aligned to `mcp:irreversible`, staging verified |
+| **1.1.0** | Action tools promotion & local CI | [011](011-action-tools-promotion/spec.md), [012](012-local-ci-and-deploy/spec.md) | 2026-11-17 | — | 8 CRM/WhatsApp action tools `stable`, `mcp:irreversible` aligned, zero-cost local CI & deploy operational |
 
 > Renumbered on 2026-10-27: hosted MCP (lane 005) moved from 0.5 to 0.6 because the owner chose
 > scoped MCP tokens issued by AirysChat (ADR 0006), which needs an AirysChat lane first. WhatsApp &
@@ -63,6 +63,7 @@ gantt
 | [009-airys-platform-toolset](009-airys-platform-toolset/tasks.md) | PLT | Done (2026-10-30; all 7 endpoints live on staging & `api.airys.chat` prod via `AirysBR/airys-platform#29`) |
 | [010-distribution-ga](010-distribution-ga/tasks.md) | GA | Done (2026-10-31; `@airyschat/mcp@1.0.1` on `npmjs.org` passwordless OIDC + `chat.airys/mcp@1.0.1` active in Official MCP Registry + `https://mcp.airys.chat` `1.0.1` live) |
 | [011-action-tools-promotion](011-action-tools-promotion/tasks.md) | ACT | Done (2026-11-17; 8 CRM & WhatsApp action tools promoted to `stable`, `mcp:irreversible` aligned) |
+| [012-local-ci-and-deploy](012-local-ci-and-deploy/tasks.md) | LCI | Done (2026-11-17; `pnpm ci:local` + distroless Docker smoke + local Cloud Run/release scripts; GitHub Actions manual-only) |
 
 ## Owner decisions
 
