@@ -6,11 +6,18 @@
 #
 # Usage:
 #   pnpm release:publish --dry-run
-#   pnpm release:publish
+#   pnpm release:publish [--skip-npm]
 set -euo pipefail
 
 DRY_RUN=0
-[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1
+SKIP_NPM=0
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY_RUN=1 ;;
+    --skip-npm) SKIP_NPM=1 ;;
+    *) echo "Unknown argument: $arg" >&2; exit 2 ;;
+  esac
+done
 
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
@@ -39,17 +46,19 @@ if [[ "$DRY_RUN" == "1" ]]; then
   exit 0
 fi
 
-bash scripts/ci/local-ci.sh
-
+ALREADY_ON_NPM=0
 if [[ "$(npm view "@airyschat/mcp@${VERSION}" version --registry https://registry.npmjs.org/ 2>/dev/null || true)" == "$VERSION" ]]; then
-  echo "→ @airyschat/mcp@${VERSION} already published on registry.npmjs.org; skipping npm publish."
-else
-  echo "→ Publishing @airyschat/mcp@${VERSION} to registry.npmjs.org…"
-  (
-    cd packages/server
-    npm publish --registry https://registry.npmjs.org/ --access public
-  )
+  ALREADY_ON_NPM=1
 fi
+
+if [[ "$SKIP_NPM" == "0" && "$ALREADY_ON_NPM" == "0" ]]; then
+  if ! npm whoami --registry https://registry.npmjs.org/ >/dev/null 2>&1; then
+    echo "npm authentication missing for registry.npmjs.org. Run 'npm login' and retry (or pass '--skip-npm' to tag/release on GitHub only)." >&2
+    exit 1
+  fi
+fi
+
+bash scripts/ci/local-ci.sh
 
 if ! git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
   echo "→ Tagging and pushing ${TAG}…"
@@ -64,6 +73,18 @@ if ! gh release view "$TAG" >/dev/null 2>&1; then
   prerelease=()
   [[ "$VERSION" == 0.* ]] && prerelease=(--prerelease)
   gh release create "$TAG" --title "@airyschat/mcp ${VERSION}" --notes-file "$notes_file" --verify-tag "${prerelease[@]}"
+fi
+
+if [[ "$SKIP_NPM" == "1" ]]; then
+  echo "→ Skipping npm publish (--skip-npm)."
+elif [[ "$ALREADY_ON_NPM" == "1" ]]; then
+  echo "→ @airyschat/mcp@${VERSION} already published on registry.npmjs.org; skipping npm publish."
+else
+  echo "→ Publishing @airyschat/mcp@${VERSION} to registry.npmjs.org…"
+  (
+    cd packages/server
+    npm publish --registry https://registry.npmjs.org/ --access public
+  )
 fi
 
 if [[ -n "${MCP_REGISTRY_DNS_PRIVATE_KEY:-}" ]]; then
