@@ -131,7 +131,7 @@ treat request shapes as unverified, and tell the user so.
 
 1. `wa_templates_list` with `status: "approved"` — confirm the template exists and is approved.
 2. `wa_audience_estimate` — report `with_identifier`, not `total`, as the reachable count.
-3. `wa_campaign_create` with `save_mode: "draft"`.
+3. `wa_campaign_create` with `save_mode: "draft"` (pass `confirm: true` after showing the preview).
 4. `wa_campaign_preflight` — show the user `allowed`, `blocking_issues`, `warnings`, and
    `eligible_count`.
 5. Only if `allowed` is true and the user approves: `wa_campaign_launch` with `confirm: true`.

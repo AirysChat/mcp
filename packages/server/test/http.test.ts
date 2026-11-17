@@ -195,6 +195,9 @@ test('createHttpApp serves health, metadata, anti-SSRF 400, OAuth challenges, an
   const crmNames = listWriteCrmJson.result.tools.map((tool) => tool.name);
   assert.ok(crmNames.includes('crm_deals_search'));
   assert.ok(crmNames.includes('crm_deal_create'));
+  assert.ok(crmNames.includes('crm_activity_create'));
+  assert.equal(crmNames.includes('crm_deal_update'), false); // irreversible hidden on mcp:write
+  assert.equal(crmNames.includes('crm_deal_move'), false); // irreversible hidden on mcp:write
   assert.equal(crmNames.includes('crm_deal_close'), false); // irreversible hidden on mcp:write
   assert.equal(crmNames.includes('wa_templates_list'), false); // whatsapp toolset not in token scope
 
