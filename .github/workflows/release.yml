@@ -8,8 +8,6 @@ name: Release
 # a tag and create a release, which GITHUB_TOKEN may do.
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       mcp_registry_only:

@@ -1,9 +1,8 @@
 name: CI
 
+# Manual dispatch only (`LCI-03`). Day-to-day CI runs locally via `pnpm ci:local` (`scripts/ci/local-ci.sh`).
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read

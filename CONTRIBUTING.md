@@ -17,8 +17,10 @@ lane (specs/0NN-*) → task (e.g. CRM-04) → issue → branch → PR + changese
    Scopes: toolset names, `server`, `catalog`, `plugins`, `specs`, `ci`, `deps`.
 4. **Changeset** if users see a difference: `pnpm changeset`.
 5. **PR** title = Conventional Commit; body links the task and `Closes #NN`. Fill the template's
-   safety checklist. `pnpm check` must pass; CI is required.
-6. **Squash merge** to `main`. Releases are cut by a release PR opened with `pnpm release:prepare` (see `.agents/skills/release`).
+   safety checklist. Run `pnpm ci:local` locally before merging (GitHub Actions workflows are manual-only
+   `workflow_dispatch`; local CI + distroless container smoke is the primary gate).
+6. **Squash merge** to `main`. Releases are cut by a release PR opened with `pnpm release:prepare`
+   and published via `pnpm release:publish` or `gh workflow run release.yml` (see `.agents/skills/release`).
 
 ## Feature control
 
