@@ -169,6 +169,10 @@
       "whatsapp",
       "0.5.0"
     ],
+    "salvy_calls": [
+      "whatsapp",
+      "1.1.0"
+    ],
     "companies": [
       "crm",
       "0.3.0"
@@ -257,6 +261,10 @@
       "crm",
       "0.3.0"
     ],
+    "crm_connectors": [
+      "crm",
+      "1.1.0"
+    ],
     "closure_reasons": [
       "crm",
       "0.3.0"
@@ -317,6 +325,7 @@
     "twitter": "OAuth authorize redirect for channel setup; browser-only flow",
     "channels": "Channel provisioning callback; browser-only flow",
     "callbacks": "Facebook/Instagram page registration callbacks; browser-only flow",
-    "upload": "Multipart file upload; needs an MCP file/resource design before exposure"
+    "upload": "Multipart file upload; needs an MCP file/resource design before exposure",
+    "mcp_tokens": "OAuth/MCP token management; forbidden over MCP"
   }
 }

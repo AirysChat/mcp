@@ -19,3 +19,4 @@
 | CRM-15 | P1 | S | `canned_responses_list`, global `search`, `notifications_list`, `custom_filters_list` | live readback | Done (2026-10-27) |
 | CRM-16 | P1 | S | Skill `plugins/claude/.../crm-pipeline-review` (stuck deals, next actions) | Skill invoked end-to-end on staging | Done (2026-10-27) |
 | CRM-17 | P0 | XS | Promote read tools to `stable`; changeset; coverage ≥ 60% `crm` | `inventory:check` + release notes | Done (2026-10-27) |
+| CRM-18 | P1 | S | Market CRM connector, RD Station CRM read: `rd_station_pipelines_list`, `rd_station_deals_search` (`experimental`), over AirysChat `GET /crm_connectors/rd_station/{pipelines,deals}` (AirysChat lane 033, T053) | unit test + `inventory:sync` after the AirysChat routes reach `develop` + live readback on staging | VERIFIED_OPEN (2026-11-17 — tools and unit test written; `inventory:check` fails until the AirysChat PR merges and the inventory is synced; no live readback) |

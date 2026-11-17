@@ -2,7 +2,7 @@
 
 > Generated from `packages/server/src/tools/*.ts` via `pnpm docs:tools`. Do not edit by hand.
 
-Total curated & catalog tools: **212** (**88** `stable`, **111** `beta`, **13** `experimental`).
+Total curated & catalog tools: **214** (**88** `stable`, **111** `beta`, **15** `experimental`).
 
 ## Summary by Toolset
 
@@ -11,7 +11,7 @@ Total curated & catalog tools: **212** (**88** `stable`, **111** `beta`, **13** 
 | `always-on` | on | 2 | 2 | 0 | 0 |
 | `core` | on | 24 | 15 | 9 | 0 |
 | `whatsapp` | on | 32 | 18 | 14 | 0 |
-| `crm` | off | 42 | 19 | 11 | 12 |
+| `crm` | off | 44 | 19 | 11 | 14 |
 | `ai_agents` | off | 24 | 2 | 22 | 0 |
 | `meta_agent` | off | 20 | 0 | 19 | 1 |
 | `reports` | off | 9 | 9 | 0 | 0 |
@@ -124,6 +124,8 @@ Total curated & catalog tools: **212** (**88** `stable`, **111** `beta`, **13** 
 | `crm_close_reasons_list` | `stable` | `mcp:read` | — | — | List CRM closure reasons |
 | `crm_loss_reasons_list` | `stable` | `mcp:read` | — | — | List CRM loss reasons with 90-day usage breakdown |
 | `crm_views_list` | `stable` | `mcp:read` | — | — | List CRM saved views |
+| `rd_station_pipelines_list` | `experimental` | `mcp:read` | — | — | List RD Station CRM pipelines |
+| `rd_station_deals_search` | `experimental` | `mcp:read` | — | — | List or search RD Station CRM deals |
 | `crm_pipeline_upsert` | `stable` | `mcp:write` | — | — | Create or update a CRM pipeline |
 | `crm_stage_upsert` | `stable` | `mcp:write` | — | — | Create, update, or reorder CRM pipeline stages |
 | `crm_close_reason_upsert` | `experimental` | `mcp:write` | — | — | Create or update a CRM closure reason |

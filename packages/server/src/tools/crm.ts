@@ -13,6 +13,7 @@ import { failure, json, requireConfirmation, untrustedJson, type ToolResult } fr
 
 const ISO_TIME_WITH_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/;
 const BULK_CONFIRM_THRESHOLD = 5;
+const RD_STATION_ID = /^[0-9a-f]{24}$/i;
 
 function validateIsoOffset(field: string, value: string | undefined) {
   if (!value) return null;
@@ -1059,6 +1060,44 @@ export const crmTools = [
       'List saved CRM board/list views visible to the authenticated user (personal views and views shared with the account).',
     inputSchema: z.object({}),
     handler: async (_args, { client }) => json(await client.request('/crm_saved_views', { prefix: 'saas' })),
+  }),
+
+  // ---------------------------------------------------------------- Market CRM connectors (experimental)
+  // AirysChat keeps the account's CRM credential and proxies the read; this server never sees it.
+  defineTool({
+    name: 'rd_station_pipelines_list',
+    stability: 'experimental',
+    title: 'List RD Station CRM pipelines',
+    description:
+      'List the sales pipelines of the RD Station CRM account connected to this AirysChat account, each with its ordered ' +
+      'stages (`id`, `name`, `nickname`, `order`). Read-only. This is the external RD Station CRM, not the native AirysChat ' +
+      'CRM (`crm_pipelines_list`). Fails with a clear message when the connector is not enabled or not connected ' +
+      '(an administrator connects it in Settings > Integrations).',
+    inputSchema: z.object({}),
+    handler: async (_args, { client }) =>
+      untrustedJson(await client.request('/crm_connectors/rd_station/pipelines', { prefix: 'saas' })),
+  }),
+
+  defineTool({
+    name: 'rd_station_deals_search',
+    stability: 'experimental',
+    title: 'List or search RD Station CRM deals',
+    description:
+      'List or search deals in the RD Station CRM account connected to this AirysChat account. Returns `payload` (deal `id`, ' +
+      '`name`, `status` open/won/lost/paused, amounts, `stage`, `owner`, contact names, dates) and `meta` (`total`, `has_more`, ' +
+      '`page`, `limit`). Read-only. IDs are 24-character RD Station IDs from `rd_station_pipelines_list`. What is visible ' +
+      'follows the RD Station user who owns the connected token. RD Station allows 120 requests per minute.',
+    inputSchema: z.object({
+      name: z.string().max(120).optional().describe('Filter by deal name (partial match)'),
+      pipeline_id: z.string().regex(RD_STATION_ID).optional().describe('RD Station pipeline ID'),
+      stage_id: z.string().regex(RD_STATION_ID).optional().describe('RD Station stage ID'),
+      owner_id: z.string().regex(RD_STATION_ID).optional().describe('RD Station user ID of the deal owner'),
+      status: z.enum(['open', 'won', 'lost']).optional().describe('Omit for every status'),
+      page: z.number().int().min(1).optional(),
+      limit: z.number().int().min(1).max(50).optional().describe('Max 50, default 20'),
+    }),
+    handler: async (args, { client }) =>
+      untrustedJson(await client.request('/crm_connectors/rd_station/deals', { prefix: 'saas', query: args })),
   }),
 
   // ---------------------------------------------------------------- Phase B: CRM configuration
