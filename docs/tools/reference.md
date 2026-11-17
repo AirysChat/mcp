@@ -2,7 +2,7 @@
 
 > Generated from `packages/server/src/tools/*.ts` via `pnpm docs:tools`. Do not edit by hand.
 
-Total curated & catalog tools: **212** (**80** `stable`, **117** `beta`, **15** `experimental`).
+Total curated & catalog tools: **212** (**88** `stable`, **111** `beta`, **13** `experimental`).
 
 ## Summary by Toolset
 
@@ -10,8 +10,8 @@ Total curated & catalog tools: **212** (**80** `stable`, **117** `beta`, **15** 
 |---|---|---:|---:|---:|---:|
 | `always-on` | on | 2 | 2 | 0 | 0 |
 | `core` | on | 24 | 15 | 9 | 0 |
-| `whatsapp` | on | 32 | 16 | 16 | 0 |
-| `crm` | off | 42 | 13 | 15 | 14 |
+| `whatsapp` | on | 32 | 18 | 14 | 0 |
+| `crm` | off | 42 | 19 | 11 | 12 |
 | `ai_agents` | off | 24 | 2 | 22 | 0 |
 | `meta_agent` | off | 20 | 0 | 19 | 1 |
 | `reports` | off | 9 | 9 | 0 | 0 |
@@ -63,7 +63,7 @@ Total curated & catalog tools: **212** (**80** `stable`, **117** `beta`, **15** 
 | `wa_template_get` | `stable` | `mcp:read` | — | — | Get a WhatsApp message template |
 | `wa_template_analytics` | `stable` | `mcp:read` | — | — | Get template analytics |
 | `wa_templates_sync` | `beta` | `mcp:write` | yes | — | Sync templates from Meta |
-| `wa_template_upsert` | `beta` | `mcp:irreversible` | — | — | Create, update, appeal, or duplicate a WhatsApp template |
+| `wa_template_upsert` | `stable` | `mcp:irreversible` | — | — | Create, update, appeal, or duplicate a WhatsApp template |
 | `wa_template_delete` | `beta` | `mcp:irreversible` | — | — | Delete a WhatsApp message template |
 | `wa_template_rejection_explain` | `stable` | `mcp:read` | — | — | Explain a WhatsApp template rejection and suggest fixes |
 | `wa_scheduled_messages_list` | `stable` | `mcp:read` | — | — | List scheduled WhatsApp messages for a conversation |
@@ -80,7 +80,7 @@ Total curated & catalog tools: **212** (**80** `stable`, **117** `beta`, **15** 
 | `wa_audience_estimate` | `stable` | `mcp:read` | — | — | Estimate a campaign audience |
 | `wa_campaign_preflight` | `stable` | `mcp:read` | — | `ui://airyschat/campaign-preflight-report.html` | Run a campaign preflight risk check |
 | `campaign_preflight_report` | `stable` | `mcp:read` | — | `ui://airyschat/campaign-preflight-report.html` | Generate an interactive WhatsApp campaign preflight report (MCP App) |
-| `wa_campaign_create` | `beta` | `mcp:write` | — | — | Create a campaign |
+| `wa_campaign_create` | `stable` | `mcp:irreversible` | — | — | Create a campaign |
 | `wa_campaign_update` | `beta` | `mcp:irreversible` | — | — | Update a draft or scheduled campaign |
 | `wa_campaign_delete` | `beta` | `mcp:irreversible` | — | — | Delete a campaign |
 | `wa_campaign_launch` | `beta` | `mcp:irreversible` | — | — | Launch a campaign |
@@ -102,9 +102,9 @@ Total curated & catalog tools: **212** (**80** `stable`, **117** `beta`, **15** 
 | `crm_board` | `stable` | `mcp:read` | — | `ui://airyschat/crm-board.html` | Load the interactive CRM pipeline board (MCP App) |
 | `crm_deal_get` | `stable` | `mcp:read` | — | — | Get a CRM deal |
 | `crm_deal_timeline` | `stable` | `mcp:read` | — | — | Get a CRM deal timeline |
-| `crm_deal_create` | `beta` | `mcp:write` | — | — | Create a CRM deal |
-| `crm_deal_update` | `beta` | `mcp:write` | — | — | Update a CRM deal |
-| `crm_deal_move` | `beta` | `mcp:write` | — | `ui://airyschat/crm-board.html` | Move a CRM deal to another open stage |
+| `crm_deal_create` | `stable` | `mcp:write` | — | — | Create a CRM deal |
+| `crm_deal_update` | `stable` | `mcp:irreversible` | — | — | Update a CRM deal |
+| `crm_deal_move` | `stable` | `mcp:irreversible` | — | `ui://airyschat/crm-board.html` | Move a CRM deal to another open stage |
 | `crm_deal_close` | `beta` | `mcp:irreversible` | — | — | Close a CRM deal as won or lost |
 | `crm_deal_delete` | `beta` | `mcp:irreversible` | — | — | Delete a CRM deal |
 | `crm_deals_bulk_update` | `beta` | `mcp:irreversible` | — | — | Bulk update CRM deals |
@@ -113,7 +113,7 @@ Total curated & catalog tools: **212** (**80** `stable`, **117** `beta`, **15** 
 | `crm_deal_note_update` | `beta` | `mcp:write` | — | — | Update a note on a CRM deal |
 | `crm_deal_note_delete` | `beta` | `mcp:irreversible` | — | — | Delete a note on a CRM deal |
 | `crm_activities_list` | `stable` | `mcp:read` | — | — | List or get CRM activities |
-| `crm_activity_create` | `beta` | `mcp:write` | — | — | Schedule a CRM activity |
+| `crm_activity_create` | `stable` | `mcp:write` | — | — | Schedule a CRM activity |
 | `crm_activity_update` | `beta` | `mcp:write` | — | — | Update a CRM activity |
 | `crm_activity_complete` | `beta` | `mcp:write` | yes | — | Mark a CRM activity completed |
 | `crm_activity_postpone` | `beta` | `mcp:write` | — | — | Postpone a CRM activity |
@@ -124,8 +124,8 @@ Total curated & catalog tools: **212** (**80** `stable`, **117** `beta`, **15** 
 | `crm_close_reasons_list` | `stable` | `mcp:read` | — | — | List CRM closure reasons |
 | `crm_loss_reasons_list` | `stable` | `mcp:read` | — | — | List CRM loss reasons with 90-day usage breakdown |
 | `crm_views_list` | `stable` | `mcp:read` | — | — | List CRM saved views |
-| `crm_pipeline_upsert` | `experimental` | `mcp:write` | — | — | Create or update a CRM pipeline |
-| `crm_stage_upsert` | `experimental` | `mcp:write` | — | — | Create, update, or reorder CRM pipeline stages |
+| `crm_pipeline_upsert` | `stable` | `mcp:write` | — | — | Create or update a CRM pipeline |
+| `crm_stage_upsert` | `stable` | `mcp:write` | — | — | Create, update, or reorder CRM pipeline stages |
 | `crm_close_reason_upsert` | `experimental` | `mcp:write` | — | — | Create or update a CRM closure reason |
 | `crm_view_upsert` | `experimental` | `mcp:write` | — | — | Create or update a CRM saved view |
 | `crm_settings_get` | `experimental` | `mcp:read` | — | — | Get CRM pipeline settings |

@@ -608,18 +608,16 @@ export function renderCrmBoardAppHtml(): string {
     }
 
     function requestDealMove(dealId, targetCol) {
-      const isWon = targetCol.stage_type === 'won' || Boolean(targetCol.conversion_event_name);
-      if (isWon) {
-        pendingMove = { dealId, stageId: targetCol.id, isWon: true };
-        modalBodyEl.textContent =
-          'Move deal #' + dealId + ' to stage "' + targetCol.name + '"? ' +
-          (targetCol.conversion_event_name
-            ? 'This stage triggers Meta Conversions API event "' + targetCol.conversion_event_name + '".'
-            : 'Closing or moving into a won stage may emit a Meta Conversions API Purchase event.');
-        modalEl.classList.add('active');
-        return;
-      }
-      executeDealMove(dealId, targetCol.id, false);
+      const isWon = targetCol.stage_type === 'won';
+      pendingMove = { dealId, stageId: targetCol.id, isWon };
+      modalBodyEl.textContent =
+        'Move deal #' + dealId + ' to stage "' + targetCol.name + '"? ' +
+        (isWon
+          ? 'Closing as won records revenue and may emit a Meta Conversions API Purchase event.'
+          : targetCol.conversion_event_name
+            ? 'This stage triggers Meta Conversions API event "' + targetCol.conversion_event_name + '" and any stage automations.'
+            : 'Moving stages triggers any configured stage automations or follow-ups.');
+      modalEl.classList.add('active');
     }
 
     function executeDealMove(dealId, stageId, isWonConfirmed) {
@@ -634,6 +632,7 @@ export function renderCrmBoardAppHtml(): string {
         : bridge.callTool('crm_deal_move', {
             deal_id: dealId,
             saas_pipeline_stage_id: stageId,
+            confirm: true,
           });
       callPromise
         .then(() => {

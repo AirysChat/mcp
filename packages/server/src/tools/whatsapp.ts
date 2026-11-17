@@ -226,7 +226,7 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_template_upsert',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Create, update, appeal, or duplicate a WhatsApp template',
     description:
       'Create, edit, appeal, or duplicate a WhatsApp message template (`action: "create" | "update" | "appeal" | "duplicate"`). ' +
@@ -238,7 +238,10 @@ export const whatsappTools = [
     write: true,
     irreversible: true,
     inputSchema: z.object({
-      action: z.enum(['create', 'update', 'appeal', 'duplicate']).default('create'),
+      action: z
+        .enum(['create', 'update', 'appeal', 'duplicate'])
+        .optional()
+        .describe('Action to perform (defaults to "create")'),
       template_id: z.number().int().optional().describe('Required for update, appeal, and duplicate'),
       name: z
         .string()
@@ -260,7 +263,8 @@ export const whatsappTools = [
       confirm: z.boolean().optional(),
     }),
     handler: async (args, { client }) => {
-      if (args.action === 'create') {
+      const action = args.action ?? 'create';
+      if (action === 'create') {
         const refusal = requireConfirmation(
           args.confirm,
           `Create WhatsApp template "${args.name ?? 'unnamed'}" (${args.language ?? 'unknown'}, category: ${args.category ?? 'unknown'})${args.inbox_id ? ` and submit to Meta on inbox ${args.inbox_id}` : ' as local draft'}.`,
@@ -281,13 +285,13 @@ export const whatsappTools = [
       }
 
       if (!args.template_id) {
-        throw new Error(`template_id is required when action is "${args.action}"`);
+        throw new Error(`template_id is required when action is "${action}"`);
       }
 
       const existing = (await client.request(`/message_templates/${args.template_id}`)) as Record<string, unknown>;
       const label = `template ${args.template_id} ("${String(existing.name ?? 'unknown')}", ${String(existing.language ?? '')}, status: ${String(existing.status ?? 'unknown')})`;
 
-      if (args.action === 'update') {
+      if (action === 'update') {
         const refusal = requireConfirmation(
           args.confirm,
           `Update ${label}${existing.platform_template_id ? ' and resubmit to Meta' : ''}. Note: name, language, inbox_id, and channel_type are locked after initial Meta submission.`,
@@ -303,7 +307,7 @@ export const whatsappTools = [
         return untrustedJson(await client.request(`/message_templates/${args.template_id}`, { method: 'PATCH', body }));
       }
 
-      if (args.action === 'appeal') {
+      if (action === 'appeal') {
         const refusal = requireConfirmation(args.confirm, `Submit Meta rejection appeal for ${label}.`);
         if (refusal) return refusal;
         return untrustedJson(
@@ -726,13 +730,16 @@ export const whatsappTools = [
 
   defineTool({
     name: 'wa_campaign_create',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Create a campaign',
     description:
-      'Create a campaign. Creating does NOT send anything — use wa_campaign_launch for that. ' +
-      'For WhatsApp inboxes, anything other than `save_mode: "draft"` must pass a preflight check, and a blocked preflight ' +
-      'fails the create with the full preflight result. `message` is the name of an approved template, not message text.',
+      'Create a campaign (`POST /campaigns`). With `save_mode: "draft"` (default when `scheduled_at` is omitted), saves a local ' +
+      'draft without sending anything — use `wa_campaign_launch` later to send. With `save_mode: "schedule"` (or when `scheduled_at` ' +
+      'is set without `save_mode: "draft"`), schedules a billed WhatsApp broadcast and enforces preflight immediately (a blocked ' +
+      'preflight fails the create with 422 and the full preflight payload). `message` is the name of an approved template, not ' +
+      'message text. Always requires `confirm: true`.',
     write: true,
+    irreversible: true,
     inputSchema: z.object({
       title: z.string().min(1),
       message: z.string().min(1).describe('Name of an approved WhatsApp template'),
@@ -744,8 +751,21 @@ export const whatsappTools = [
       sender_id: z.number().int().optional(),
       audience: audienceSelector.optional(),
       template_params: z.record(z.string(), z.unknown()).optional(),
+      confirm: z.boolean().optional().describe('Set true only after the user confirms the exact preview'),
     }),
-    handler: async (args, { client }) => json(await client.request('/campaigns', { method: 'POST', body: { campaign: args } })),
+    handler: async ({ confirm, ...campaign }, { client }) => {
+      const effectiveMode = campaign.save_mode ?? (campaign.scheduled_at ? 'schedule' : 'draft');
+      const modeDetail =
+        effectiveMode === 'schedule'
+          ? `SCHEDULED FOR DELIVERY${campaign.scheduled_at ? ` at ${campaign.scheduled_at}` : ''} (billed WhatsApp messages will be sent at the scheduled time)`
+          : 'as a local draft (nothing will be sent until wa_campaign_launch)';
+      const refusal = requireConfirmation(
+        confirm,
+        `Create campaign "${campaign.title}" on inbox #${campaign.inbox_id} using template "${campaign.message}" ${modeDetail}.`,
+      );
+      if (refusal) return refusal;
+      return untrustedJson(await client.request('/campaigns', { method: 'POST', body: { campaign } }));
+    },
   }),
 
   defineTool({
@@ -1046,7 +1066,10 @@ export const whatsappTools = [
     write: true,
     irreversible: true,
     inputSchema: z.object({
-      action: z.enum(['create', 'update', 'publish', 'deprecate', 'sync', 'delete']).default('create'),
+      action: z
+        .enum(['create', 'update', 'publish', 'deprecate', 'sync', 'delete'])
+        .optional()
+        .describe('Action to perform (defaults to "create")'),
       flow_id: z.number().int().optional().describe('Required for update, publish, deprecate, sync, and delete'),
       name: z.string().optional().describe('Required for create'),
       inbox_id: z.number().int().optional(),
@@ -1056,7 +1079,8 @@ export const whatsappTools = [
       confirm: z.boolean().optional(),
     }),
     handler: async (args, { client }) => {
-      if (args.action === 'create') {
+      const action = args.action ?? 'create';
+      if (action === 'create') {
         const refusal = requireConfirmation(
           args.confirm,
           `Create WhatsApp Flow "${args.name ?? 'unnamed'}"${args.inbox_id ? ` on inbox ${args.inbox_id}` : ''}.`,
@@ -1078,14 +1102,14 @@ export const whatsappTools = [
         );
       }
 
-      if (!args.flow_id) throw new Error(`flow_id is required when action is "${args.action}"`);
+      if (!args.flow_id) throw new Error(`flow_id is required when action is "${action}"`);
       const existing = (await client.request(`/whatsapp_flows/${args.flow_id}`)) as Record<string, unknown>;
       const label = `WhatsApp Flow ${args.flow_id} ("${String(existing.name ?? 'unnamed')}", status: ${String(existing.status ?? 'unknown')})`;
 
-      const refusal = requireConfirmation(args.confirm, `Execute "${args.action}" on ${label}.`);
+      const refusal = requireConfirmation(args.confirm, `Execute "${action}" on ${label}.`);
       if (refusal) return refusal;
 
-      if (args.action === 'update') {
+      if (action === 'update') {
         return untrustedJson(
           await client.request(`/whatsapp_flows/${args.flow_id}`, {
             method: 'PATCH',
@@ -1101,12 +1125,12 @@ export const whatsappTools = [
         );
       }
 
-      if (args.action === 'delete') {
+      if (action === 'delete') {
         await client.request(`/whatsapp_flows/${args.flow_id}`, { method: 'DELETE' });
         return json({ deleted: true, flow_id: args.flow_id, name: existing.name });
       }
 
-      return untrustedJson(await client.request(`/whatsapp_flows/${args.flow_id}/${args.action}`, { method: 'POST' }));
+      return untrustedJson(await client.request(`/whatsapp_flows/${args.flow_id}/${action}`, { method: 'POST' }));
     },
   }),
 ];

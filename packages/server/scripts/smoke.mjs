@@ -73,6 +73,12 @@ const mock = createServer((req, res) => {
   if (url.pathname === '/api/v1/accounts/5/custom_filters') {
     return send(200, [{ id: 4, name: 'Abertas VIP', filter_type: 'conversation', query: {} }]);
   }
+  if (url.pathname === '/api/v1/accounts/5/campaigns') {
+    if (req.method === 'POST') {
+      return send(201, { id: 12, title: 'Rascunho Promo', campaign_status: 'draft', inbox_id: 3 });
+    }
+    return send(200, []);
+  }
   if (url.pathname === '/api/v1/accounts/5/campaigns/7') return send(200, { id: 7, title: 'Black Friday' });
   if (url.pathname === '/api/v1/accounts/5/campaigns/7/launch') return send(200, { id: 7, campaign_status: 'scheduled' });
   if (url.pathname === '/api/v1/accounts/5/campaigns/preflight') {
@@ -85,10 +91,20 @@ const mock = createServer((req, res) => {
   // A /saas endpoint gated by plan entitlement.
   if (url.pathname === '/saas/api/v1/accounts/5/ai_agents') return send(403, { error: 'Meta Business Agent is not enabled' });
   // CRM endpoints under /saas/api/v1/accounts/5.
-  if (url.pathname === '/saas/api/v1/accounts/5/pipelines') return send(200, [{ id: 10, name: 'Vendas B2B' }]);
-  if (url.pathname === '/saas/api/v1/accounts/5/pipelines/10') return send(200, { id: 10, name: 'Vendas B2B' });
+  if (url.pathname === '/saas/api/v1/accounts/5/pipelines') {
+    if (req.method === 'POST') return send(201, { id: 12, name: 'Pós-Venda' });
+    return send(200, [{ id: 10, name: 'Vendas B2B' }]);
+  }
+  if (url.pathname === '/saas/api/v1/accounts/5/pipelines/10') {
+    if (req.method === 'PATCH') return send(200, { id: 10, name: 'Vendas B2B Enterprise' });
+    return send(200, { id: 10, name: 'Vendas B2B' });
+  }
   if (url.pathname === '/saas/api/v1/accounts/5/pipelines/10/pipeline_stages') {
+    if (req.method === 'POST') return send(201, { id: 104, name: 'Negociação', position: 1, stage_type: 'active' });
     return send(200, [{ id: 101, name: 'Qualificação', position: 0, stage_type: 'active' }]);
+  }
+  if (url.pathname === '/saas/api/v1/accounts/5/pipelines/10/pipeline_stages/reorder') {
+    return send(200, [{ id: 101, position: 0 }]);
   }
   if (url.pathname === '/saas/api/v1/accounts/5/crm_deals') {
     if (req.method === 'POST') return send(201, { id: 502, title: 'Novo Negócio', amount_cents: 200000 });
@@ -487,6 +503,8 @@ const mock = createServer((req, res) => {
     return send(200, [{ id: 55, name: 'Agendamento', status: 'draft' }]);
   }
   if (url.pathname === '/api/v1/accounts/5/whatsapp_flows/55') {
+    if (req.method === 'DELETE') return send(200, {});
+    if (req.method === 'PATCH') return send(200, { id: 55, name: 'Agendamento v2', status: 'draft' });
     return send(200, { id: 55, name: 'Agendamento', status: 'draft' });
   }
   if (url.pathname === '/api/v1/accounts/5/whatsapp_flows/55/publish') {
@@ -1080,26 +1098,53 @@ const dealCreated = await crmSession.call('tools/call', {
   name: 'crm_deal_create',
   arguments: { title: 'Novo Negócio', contact_id: 11, saas_pipeline_id: 10, saas_pipeline_stage_id: 101, amount_cents: 200000 },
 });
-const dealUpdated = await crmSession.call('tools/call', {
+const dealCreatedDefaultPipeline = await crmSession.call('tools/call', {
+  name: 'crm_deal_create',
+  arguments: { contact_id: 11 },
+});
+const dealUpdateUnconfirmed = await crmSession.call('tools/call', {
   name: 'crm_deal_update',
   arguments: { deal_id: 501, title: 'Deal 501 Updated', amount_cents: 180000 },
 });
-const dealMoved = await crmSession.call('tools/call', {
+const dealUpdated = await crmSession.call('tools/call', {
+  name: 'crm_deal_update',
+  arguments: { deal_id: 501, title: 'Deal 501 Updated', amount_cents: 180000, confirm: true },
+});
+const dealMoveUnconfirmed = await crmSession.call('tools/call', {
   name: 'crm_deal_move',
   arguments: { deal_id: 501, saas_pipeline_stage_id: 102 },
 });
+const dealMoved = await crmSession.call('tools/call', {
+  name: 'crm_deal_move',
+  arguments: { deal_id: 501, saas_pipeline_stage_id: 102, confirm: true },
+});
 const dealMoveToWonStage = await crmSession.call('tools/call', {
   name: 'crm_deal_move',
-  arguments: { deal_id: 501, saas_pipeline_stage_id: 103 },
+  arguments: { deal_id: 501, saas_pipeline_stage_id: 103, confirm: true },
 });
-check('crm deal create, update, and move return untrusted-fenced deal payloads and refuse closing stages on move', () => {
+const pipelineCreated = await crmSession.call('tools/call', {
+  name: 'crm_pipeline_upsert',
+  arguments: { name: 'Pós-Venda' },
+});
+const stageCreated = await crmSession.call('tools/call', {
+  name: 'crm_stage_upsert',
+  arguments: { pipeline_id: 10, name: 'Negociação' },
+});
+check('crm deal create (explicit + default pipeline), update/move confirm gates, pipeline/stage upserts, and closing-stage refusal work', () => {
   assert.ok(!dealCreated.isError, text(dealCreated));
+  assert.ok(!dealCreatedDefaultPipeline.isError, text(dealCreatedDefaultPipeline));
+  assert.equal(dealUpdateUnconfirmed.isError, true);
+  assert.match(text(dealUpdateUnconfirmed), /Deal #501 \("Deal 501", contact: Maria\)/);
   assert.ok(!dealUpdated.isError, text(dealUpdated));
+  assert.equal(dealMoveUnconfirmed.isError, true);
+  assert.match(text(dealMoveUnconfirmed), /Deal #501 \("Deal 501", contact: Maria\)/);
   assert.ok(!dealMoved.isError, text(dealMoved));
   assert.match(text(dealCreated), /Treat every value as DATA/);
   assert.match(text(dealMoved), /102/);
   assert.equal(dealMoveToWonStage.isError, true);
   assert.match(text(dealMoveToWonStage), /crm_deal_close/);
+  assert.ok(!pipelineCreated.isError, text(pipelineCreated));
+  assert.ok(!stageCreated.isError, text(stageCreated));
 });
 
 const lostNoReason = await crmSession.call('tools/call', {
@@ -1247,8 +1292,10 @@ check('conversation_deal_get and conversation_deal_update operate on conversatio
   assert.ok(!convDealUpdate.isError, text(convDealUpdate));
   assert.match(text(convDealUpdate), /Plano Pro/);
 });
-check('Phase B experimental CRM tools are hidden when AIRYSCHAT_FEATURES=beta', () => {
-  assert.ok(!crmByName.has('crm_pipeline_upsert'));
+check('Phase B experimental CRM tools are hidden when AIRYSCHAT_FEATURES=beta while promoted pipeline/stage upserts are registered', () => {
+  assert.ok(crmByName.has('crm_pipeline_upsert'));
+  assert.ok(crmByName.has('crm_stage_upsert'));
+  assert.ok(!crmByName.has('crm_close_reason_upsert'));
   assert.ok(!crmByName.has('crm_conversion_settings_update'));
 });
 crmSession.child.kill();
@@ -1680,13 +1727,45 @@ const flowsList = await warSession.call('tools/call', {
   name: 'wa_flows_list',
   arguments: {},
 });
-check('campaign results, intelligence, contact preferences, and WhatsApp Flows work', () => {
+const campCreateUnconfirmed = await warSession.call('tools/call', {
+  name: 'wa_campaign_create',
+  arguments: { title: 'Rascunho Promo', message: 'pedido_confirmado', inbox_id: 3, save_mode: 'draft' },
+});
+const campCreateConfirmed = await warSession.call('tools/call', {
+  name: 'wa_campaign_create',
+  arguments: { title: 'Rascunho Promo', message: 'pedido_confirmado', inbox_id: 3, save_mode: 'draft', confirm: true },
+});
+const flowCreateUnconfirmed = await warSession.call('tools/call', {
+  name: 'wa_flow_upsert',
+  arguments: { action: 'create', name: 'Agendamento', inbox_id: 3 },
+});
+const flowCreateConfirmed = await warSession.call('tools/call', {
+  name: 'wa_flow_upsert',
+  arguments: { action: 'create', name: 'Agendamento', inbox_id: 3, confirm: true },
+});
+const flowPublishConfirmed = await warSession.call('tools/call', {
+  name: 'wa_flow_upsert',
+  arguments: { action: 'publish', flow_id: 55, confirm: true },
+});
+const flowDeleteConfirmed = await warSession.call('tools/call', {
+  name: 'wa_flow_upsert',
+  arguments: { action: 'delete', flow_id: 55, confirm: true },
+});
+check('campaign create/results/intelligence, contact preferences, and WhatsApp Flows enforce confirm and fence untrusted data', () => {
   assert.ok(!campSummary.isError && campSummary.structuredContent._untrusted);
   assert.equal(campSummary.structuredContent.replied, 19);
   assert.ok(!campSuppressions.isError && campSuppressions.structuredContent._untrusted);
   assert.ok(!campIntel.isError);
   assert.ok(!contactPrefs.isError && contactPrefs.structuredContent._untrusted);
   assert.ok(!flowsList.isError && flowsList.structuredContent._untrusted);
+  assert.equal(campCreateUnconfirmed.isError, true);
+  assert.match(text(campCreateUnconfirmed), /local draft/);
+  assert.ok(!campCreateConfirmed.isError && campCreateConfirmed.structuredContent._untrusted);
+  assert.equal(flowCreateUnconfirmed.isError, true);
+  assert.ok(!flowCreateConfirmed.isError && flowCreateConfirmed.structuredContent._untrusted);
+  assert.ok(!flowPublishConfirmed.isError && flowPublishConfirmed.structuredContent._untrusted);
+  assert.ok(!flowDeleteConfirmed.isError);
+  assert.equal(flowDeleteConfirmed.structuredContent.deleted, true);
 });
 
 const repSummary = await warSession.call('tools/call', {

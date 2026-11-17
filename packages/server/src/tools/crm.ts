@@ -7,8 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { AirysChatClient } from '../client.js';
 import { defineTool } from '../toolsets.js';
-import { failure, json, requireConfirmation, untrustedJson } from '../result.js';
+import { failure, json, requireConfirmation, untrustedJson, type ToolResult } from '../result.js';
 
 const ISO_TIME_WITH_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/;
 const BULK_CONFIRM_THRESHOLD = 5;
@@ -21,6 +22,98 @@ function validateIsoOffset(field: string, value: string | undefined) {
     );
   }
   return null;
+}
+
+function pickFirstOpenStage(stages: unknown): Record<string, unknown> | undefined {
+  if (!Array.isArray(stages) || stages.length === 0) return undefined;
+  const typed = stages as Array<Record<string, unknown>>;
+  return typed.find((s) => s?.stage_type === 'active') ?? typed[0];
+}
+
+async function resolveDealPipelineAndStage(
+  client: AirysChatClient,
+  pipelineId: number | undefined,
+  stageId: number | undefined,
+): Promise<{ saas_pipeline_id: number; saas_pipeline_stage_id: number } | { error: ToolResult }> {
+  if (pipelineId !== undefined && stageId !== undefined) {
+    return { saas_pipeline_id: pipelineId, saas_pipeline_stage_id: stageId };
+  }
+
+  if (pipelineId !== undefined && stageId === undefined) {
+    const stages = await client.request(`/pipelines/${pipelineId}/pipeline_stages`, { prefix: 'saas' });
+    const chosen = pickFirstOpenStage(stages);
+    if (!chosen || typeof chosen.id !== 'number') {
+      return {
+        error: failure(
+          `Pipeline #${pipelineId} has no stages configured. Create one with \`crm_stage_upsert\` or pass \`saas_pipeline_stage_id\`.`,
+        ),
+      };
+    }
+    return { saas_pipeline_id: pipelineId, saas_pipeline_stage_id: chosen.id };
+  }
+
+  const settings = (await client
+    .request('/crm_pipeline_settings', { prefix: 'saas' })
+    .catch(() => null)) as Record<string, unknown> | null;
+  const defaultPipelineId =
+    typeof settings?.default_pipeline_id === 'number' ? settings.default_pipeline_id : undefined;
+  const defaultStageId =
+    typeof settings?.default_stage_id === 'number' ? settings.default_stage_id : undefined;
+
+  if (pipelineId === undefined && stageId !== undefined) {
+    if (defaultStageId === stageId && defaultPipelineId !== undefined) {
+      return { saas_pipeline_id: defaultPipelineId, saas_pipeline_stage_id: stageId };
+    }
+    const pipelines = (await client.request('/pipelines', { prefix: 'saas' })) as Array<Record<string, unknown>>;
+    if (Array.isArray(pipelines)) {
+      for (const p of pipelines) {
+        if (typeof p?.id !== 'number') continue;
+        const stages = (await client.request(`/pipelines/${p.id}/pipeline_stages`, {
+          prefix: 'saas',
+        })) as Array<Record<string, unknown>>;
+        if (Array.isArray(stages) && stages.some((s) => s?.id === stageId)) {
+          return { saas_pipeline_id: p.id, saas_pipeline_stage_id: stageId };
+        }
+      }
+    }
+    return {
+      error: failure(
+        `Could not find a pipeline owning stage #${stageId}. Pass \`saas_pipeline_id\` explicitly or check stages with \`crm_pipelines_list\` / \`crm_pipeline_get\`.`,
+      ),
+    };
+  }
+
+  // Neither pipelineId nor stageId was provided.
+  if (defaultPipelineId !== undefined && defaultStageId !== undefined) {
+    return { saas_pipeline_id: defaultPipelineId, saas_pipeline_stage_id: defaultStageId };
+  }
+
+  let resolvedPipelineId = defaultPipelineId;
+  if (resolvedPipelineId === undefined) {
+    const pipelines = (await client.request('/pipelines', { prefix: 'saas' })) as Array<Record<string, unknown>>;
+    const first = Array.isArray(pipelines) ? pipelines[0] : undefined;
+    if (typeof first?.id === 'number') {
+      resolvedPipelineId = first.id;
+    }
+  }
+  if (resolvedPipelineId === undefined) {
+    return {
+      error: failure(
+        'No CRM sales pipeline is configured on this account. Create one with `crm_pipeline_upsert` first or pass `saas_pipeline_id` and `saas_pipeline_stage_id`.',
+      ),
+    };
+  }
+
+  const stages = await client.request(`/pipelines/${resolvedPipelineId}/pipeline_stages`, { prefix: 'saas' });
+  const chosen = pickFirstOpenStage(stages);
+  if (!chosen || typeof chosen.id !== 'number') {
+    return {
+      error: failure(
+        `Pipeline #${resolvedPipelineId} has no stages configured. Create one with \`crm_stage_upsert\` or pass \`saas_pipeline_stage_id\`.`,
+      ),
+    };
+  }
+  return { saas_pipeline_id: resolvedPipelineId, saas_pipeline_stage_id: chosen.id };
 }
 
 export const crmTools = [
@@ -226,17 +319,32 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_deal_create',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Create a CRM deal',
     description:
-      'Create a new CRM deal in a pipeline stage. `amount_cents` is in integer minor units (e.g. 150000 = R$ 1.500,00). ' +
-      'To link a conversation, prefer `conversation_display_id` (the number shown in the UI and returned by `conversations_list`).',
+      'Create a new CRM deal in a pipeline stage. Only `contact_id` is required: when `saas_pipeline_id` or `saas_pipeline_stage_id` ' +
+      'are omitted, resolves the account’s configured default pipeline/stage (or the first pipeline’s first active stage); when ' +
+      '`title` is omitted, AirysChat defaults it to the contact name, conversation display ID, or "New CRM deal". ' +
+      '`amount_cents` is in integer minor units (e.g. 150000 = R$ 1.500,00). To link a conversation, prefer `conversation_display_id` ' +
+      '(the number shown in the UI and returned by `conversations_list`).',
     write: true,
     inputSchema: z.object({
-      title: z.string().min(1).describe('Deal title'),
       contact_id: z.number().int().describe('Contact ID'),
-      saas_pipeline_id: z.number().int().describe('Sales pipeline ID'),
-      saas_pipeline_stage_id: z.number().int().describe('Initial pipeline stage ID'),
+      title: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('Deal title (optional; defaults upstream to contact name, conversation display ID, or "New CRM deal")'),
+      saas_pipeline_id: z
+        .number()
+        .int()
+        .optional()
+        .describe('Sales pipeline ID (optional; defaults to account default pipeline or first pipeline)'),
+      saas_pipeline_stage_id: z
+        .number()
+        .int()
+        .optional()
+        .describe('Initial pipeline stage ID (optional; defaults to account default stage or first active stage of the pipeline)'),
       conversation_display_id: z.number().int().optional().describe('Account-scoped conversation display ID'),
       conversation_id: z.number().int().optional().describe('Conversation primary key or display ID'),
       owner_id: z.number().int().nullable().optional().describe('Assigned seller user ID'),
@@ -247,24 +355,36 @@ export const crmTools = [
       expected_close_on: z.string().optional().describe('Expected close date (YYYY-MM-DD)'),
       position: z.number().int().min(0).optional(),
     }),
-    handler: async (args, { client }) =>
-      untrustedJson(
+    handler: async (args, { client }) => {
+      const resolved = await resolveDealPipelineAndStage(client, args.saas_pipeline_id, args.saas_pipeline_stage_id);
+      if ('error' in resolved) return resolved.error;
+      return untrustedJson(
         await client.request('/crm_deals', {
           prefix: 'saas',
           method: 'POST',
-          body: { crm_deal: args },
+          body: {
+            crm_deal: {
+              ...args,
+              saas_pipeline_id: resolved.saas_pipeline_id,
+              saas_pipeline_stage_id: resolved.saas_pipeline_stage_id,
+            },
+          },
         }),
-      ),
+      );
+    },
   }),
 
   defineTool({
     name: 'crm_deal_update',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Update a CRM deal',
     description:
       'Update fields on an existing CRM deal (`title`, `amount_cents`, `product_name`, `owner_id`, `expected_close_on`, `probability`). ' +
-      'To move a deal between stages use `crm_deal_move`; to close as won/lost use `crm_deal_close`.',
+      'Requires `confirm: true` (and `mcp:irreversible` scope) because deal mutations dispatch domain events and stage/lifecycle ' +
+      'updates. Call without `confirm` first to inspect the server-derived preview. To move a deal between stages use `crm_deal_move`; ' +
+      'to close as won/lost use `crm_deal_close`.',
     write: true,
+    irreversible: true,
     inputSchema: z.object({
       deal_id: z.number().int().describe('CRM deal ID'),
       title: z.string().min(1).optional(),
@@ -278,10 +398,22 @@ export const crmTools = [
       probability: z.number().int().min(0).max(100).nullable().optional(),
       expected_close_on: z.string().nullable().optional().describe('YYYY-MM-DD'),
       position: z.number().int().min(0).optional(),
+      confirm: z.boolean().optional().describe('Set true only after the user confirms the exact preview'),
     }),
-    handler: async ({ deal_id, ...fields }, { client }) => {
+    handler: async ({ deal_id, confirm, ...fields }, { client }) => {
       if (Object.keys(fields).length === 0) {
         return json({ changed: false, reason: 'No deal fields to update were provided.' });
+      }
+      if (!confirm) {
+        const deal = (await client.request(`/crm_deals/${deal_id}`, { prefix: 'saas' })) as Record<string, unknown> | null;
+        const title = String(deal?.title ?? `#${deal_id}`);
+        const contact = (deal?.contact as Record<string, unknown> | undefined)?.name ?? 'unknown contact';
+        const changedKeys = Object.keys(fields).join(', ');
+        const refusal = requireConfirmation(
+          confirm,
+          `Deal #${deal_id} ("${title}", contact: ${String(contact)}) will be updated (fields: ${changedKeys}).`,
+        );
+        if (refusal) return refusal;
       }
       return untrustedJson(
         await client.request(`/crm_deals/${deal_id}`, {
@@ -295,22 +427,24 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_deal_move',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Move a CRM deal to another open stage',
     description:
       'Move a CRM deal to an open pipeline stage `saas_pipeline_stage_id` (`/crm_deals/:id/move`). Enforces any `required_fields` ' +
-      'configured on the target stage (returns 422 with `missing_fields` if unmet) and triggers stage entry automations. ' +
-      'Refuses moving to a `won` or `lost` closing stage — use `crm_deal_close` instead so closing requirements and Meta CAPI ' +
-      'confirmation are enforced.',
+      'configured on the target stage (returns 422 with `missing_fields` if unmet) and triggers stage entry automations, scheduled ' +
+      'follow-ups, and any mapped Meta CAPI stage event. Refuses moving to a `won` or `lost` closing stage — use `crm_deal_close` ' +
+      'instead. Always requires `confirm: true`; call without `confirm` first to inspect the server-derived preview.',
     write: true,
+    irreversible: true,
     inputSchema: z.object({
       deal_id: z.number().int().describe('CRM deal ID'),
       saas_pipeline_stage_id: z.number().int().describe('Destination open pipeline stage ID'),
       after_deal_id: z.number().int().optional().describe('Place card after this deal ID in the stage column'),
       position: z.number().int().min(0).optional(),
       amount_cents: z.number().int().min(0).optional().describe('Supply if required by the destination stage'),
+      confirm: z.boolean().optional().describe('Set true only after the user confirms the exact preview'),
     }),
-    handler: async ({ deal_id, ...body }, { client }) => {
+    handler: async ({ deal_id, confirm, ...body }, { client }) => {
       const deal = (await client.request(`/crm_deals/${deal_id}`, { prefix: 'saas' })) as Record<string, unknown> | null;
       const stages = ((deal?.pipeline as Record<string, unknown> | undefined)?.stages ?? []) as Array<Record<string, unknown>>;
       const targetStage = stages.find((s) => s?.id === body.saas_pipeline_stage_id);
@@ -319,6 +453,25 @@ export const crmTools = [
           `Stage #${body.saas_pipeline_stage_id} ("${String(targetStage.name ?? '')}") has stage_type "${String(targetStage.stage_type)}". ` +
             'Use `crm_deal_close` to mark a deal won or lost so closing requirements and Meta Conversions API confirmation are enforced.',
         );
+      }
+      if (!confirm) {
+        const title = String(deal?.title ?? `#${deal_id}`);
+        const contact = (deal?.contact as Record<string, unknown> | undefined)?.name ?? 'unknown contact';
+        const currentStage =
+          (deal?.stage as Record<string, unknown> | undefined)?.name ??
+          stages.find((s) => s?.id === deal?.saas_pipeline_stage_id)?.name ??
+          (deal?.saas_pipeline_stage_id ? `#${String(deal.saas_pipeline_stage_id)}` : 'current stage');
+        const targetLabel = targetStage?.name
+          ? `#${body.saas_pipeline_stage_id} ("${String(targetStage.name)}")`
+          : `#${body.saas_pipeline_stage_id}`;
+        const capiNote = targetStage?.conversion_event_name
+          ? ` and may emit Meta Conversions API event "${String(targetStage.conversion_event_name)}"`
+          : '';
+        const refusal = requireConfirmation(
+          confirm,
+          `Deal #${deal_id} ("${title}", contact: ${String(contact)}) will move from "${String(currentStage)}" to stage ${targetLabel}${capiNote}, triggering any configured stage automations or follow-ups.`,
+        );
+        if (refusal) return refusal;
       }
       return untrustedJson(
         await client.request(`/crm_deals/${deal_id}/move`, {
@@ -662,7 +815,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_activity_create',
-    stability: 'beta',
+    stability: 'stable',
     title: 'Schedule a CRM activity',
     description:
       'Create a scheduled activity on a CRM deal (`/crm_activities`). `due_at` must be an ISO-8601 timestamp with an explicit ' +
@@ -908,10 +1061,10 @@ export const crmTools = [
     handler: async (_args, { client }) => json(await client.request('/crm_saved_views', { prefix: 'saas' })),
   }),
 
-  // ---------------------------------------------------------------- Phase B: CRM configuration (experimental)
+  // ---------------------------------------------------------------- Phase B: CRM configuration
   defineTool({
     name: 'crm_pipeline_upsert',
-    stability: 'experimental',
+    stability: 'stable',
     title: 'Create or update a CRM pipeline',
     description:
       'Create a new CRM sales pipeline (`POST /pipelines`) or update an existing one when `pipeline_id` is passed ' +
@@ -947,7 +1100,7 @@ export const crmTools = [
 
   defineTool({
     name: 'crm_stage_upsert',
-    stability: 'experimental',
+    stability: 'stable',
     title: 'Create, update, or reorder CRM pipeline stages',
     description:
       'Manage stages in a CRM pipeline (`/pipelines/:pipeline_id/pipeline_stages`). Admin-only (`account:update?`). ' +
@@ -993,11 +1146,24 @@ export const crmTools = [
           }),
         );
       }
+      let resolvedPosition = stageFields.position;
+      if (resolvedPosition === undefined) {
+        const existingStages = (await client
+          .request(`/pipelines/${pipeline_id}/pipeline_stages`, { prefix: 'saas' })
+          .catch(() => [])) as Array<Record<string, unknown>>;
+        const maxPos = Array.isArray(existingStages)
+          ? existingStages.reduce(
+              (max, s) => (typeof s?.position === 'number' && s.position > max ? s.position : max),
+              -1,
+            )
+          : -1;
+        resolvedPosition = maxPos + 1;
+      }
       return json(
         await client.request(`/pipelines/${pipeline_id}/pipeline_stages`, {
           prefix: 'saas',
           method: 'POST',
-          body: { pipeline_stage: stageFields },
+          body: { pipeline_stage: { ...stageFields, position: resolvedPosition } },
         }),
       );
     },
